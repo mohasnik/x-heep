@@ -6,70 +6,56 @@ set PORT_CS  {spi_flash_csb_o}
 set PORT_SD0 {spi_flash_sd_io[0]}
 set PORT_SD1 {spi_flash_sd_io[1]}
 
-proc must1 {lst what} {
-  if {[llength $lst] == 0} { 
-    error "ECO: cannot find $what"
-  }
-  return [lindex $lst 0]
-}
-
-# Find PS wrapper
-set ps_wrapper [must1 [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i"}] "PS wrapper"]
-
 # Find PS SPI pins
-set ps_sck_pin  [must1 [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_sck_o"}] "PS SCK pin"]
-set ps_cs_pin   [must1 [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_cs_o*"}] "PS CS pin"]
-set ps_mosi_pin [must1 [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_mosi_o"}] "PS MOSI pin"]
-set ps_miso_pin [must1 [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/ps_spi_flash_miso_i"}] "PS MISO pin"]
+set ps_sck_pin  [lindex [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_sck_o"}] 0]
+set ps_cs_pin   [lindex [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_cs_o*"}] 0]
+set ps_mosi_pin [lindex [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_mosi_o"}] 0]
+set ps_miso_pin [lindex [get_pins -quiet -hier -regexp {^xilinx_ps_wizard_wrapper_i(/xilinx_ps_wizard_i)?/ps_spi_flash_miso_i$}] 0]
 
-# Get PS SPI nets (for outputs only - MISO is handled differently)
-set PS_SCK  [must1 [get_nets -quiet -of_objects $ps_sck_pin] "PS SCK net"]
-set PS_CS   [must1 [get_nets -quiet -of_objects $ps_cs_pin] "PS CS net"]
-set PS_MOSI [must1 [get_nets -quiet -of_objects $ps_mosi_pin] "PS MOSI net"]
+# Get PS SPI nets
+set PS_SCK          [lindex [get_nets -quiet -of_objects $ps_sck_pin] 0]
+set PS_CS           [lindex [get_nets -quiet -of_objects $ps_cs_pin] 0]
+set PS_MOSI         [lindex [get_nets -quiet -of_objects $ps_mosi_pin] 0]
+set PS_MISO_NET_INT [lindex [get_nets -quiet -of_objects $ps_miso_pin] 0]
 
 # Find selection signal (ps_gpio_o[4])
-set sel_pin_candidates [list]
-lappend sel_pin_candidates [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_gpio_o[4]"}]
-lappend sel_pin_candidates [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/ps_gpio_o[4]"}]
-lappend sel_pin_candidates [get_pins -quiet -hier -filter {NAME =~ "*axi_gpio*/gpio_io_o[4]"}]
-
-set sel_pin ""
-foreach candidate $sel_pin_candidates {
-  if {[llength $candidate] > 0} {
-    set sel_pin $candidate
-    break
-  }
-}
-
-if {$sel_pin == ""} {
-  set sel_net_candidates [get_nets -quiet -hier -filter {NAME =~ "*ps_gpio_o*4*" || NAME =~ "*ps_x_heep_o*4*"}]
-  set SEL [must1 $sel_net_candidates "SEL net"]
-} else {
-  set SEL [must1 [get_nets -of_objects $sel_pin] "SEL net"]
-}
+set sel_net [get_nets -quiet -hier -regexp {ps_x_heep_o(__0)?\[4\]}]
+set SEL [lindex $sel_net 0]
 
 # Get port nets
-set NET_SCK_PORT [must1 [get_nets -of_objects [get_ports $PORT_SCK]] "SCK port net"]
-set NET_CS_PORT  [must1 [get_nets -of_objects [get_ports $PORT_CS]] "CS port net"]
-set NET_SD0_PORT [must1 [get_nets -of_objects [get_ports $PORT_SD0]] "SD0 port net"]
-set NET_SD1_PORT [must1 [get_nets -of_objects [get_ports $PORT_SD1]] "SD1 port net"]
+set NET_SCK_PORT [lindex [get_nets -quiet -of_objects [get_ports $PORT_SCK]] 0]
+set NET_CS_PORT  [lindex [get_nets -quiet -of_objects [get_ports $PORT_CS]] 0]
+set NET_SD0_PORT [lindex [get_nets -quiet -of_objects [get_ports $PORT_SD0]] 0]
+set NET_SD1_PORT [lindex [get_nets -quiet -of_objects [get_ports $PORT_SD1]] 0]
 
-# SD0 (MOSI) IOBUF modifications - Master Output, Slave Input
-set SD0_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sd_0*"}]
-if {[llength $SD0_IOBUF] == 0} {
-  set SD0_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sd*0*"}]
+set ps_miso_hpin [lindex [get_pins -quiet -of_objects $PS_MISO_NET_INT -filter {NAME =~ "xilinx_ps_wizard_wrapper_i/*" && NAME !~ "*xilinx_ps_wizard_i/*"}] 0]
+set ps_miso_hpin_net_old [lindex [get_nets -quiet -of_objects $ps_miso_hpin] 0]
+set do_connect 1
+if {$ps_miso_hpin_net_old ne ""} {
+  if {[get_property NAME $ps_miso_hpin_net_old] eq [get_property NAME $NET_SD1_PORT]} {
+    set do_connect 0
+  } else {
+    disconnect_net -net $ps_miso_hpin_net_old -objects $ps_miso_hpin
+  }
 }
-set SD0_IOBUF [must1 $SD0_IOBUF "SD0 IOBUF"]
+if {$do_connect} {
+  connect_net -hier -net $NET_SD1_PORT -objects [list $ps_miso_hpin]
+}
 
-# Reconnect IO pin to port
-set SD0_PIN_IO     [must1 [get_pins -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="IO"}] "SD0 IO pin"]
-set SD0_NET_IO_OLD [must1 [get_nets -of_objects $SD0_PIN_IO] "SD0 IO net"]
+# SD0 IOBUF modifications
+set SD0_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sd_0*"}]
+if {[llength $SD0_IOBUF] == 0} {
+  set SD0_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sd*0*"}]
+}
+set SD0_IOBUF [lindex $SD0_IOBUF 0]
+
+set SD0_PIN_IO     [lindex [get_pins -quiet -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
+set SD0_NET_IO_OLD [lindex [get_nets -quiet -of_objects $SD0_PIN_IO] 0]
 disconnect_net -net $SD0_NET_IO_OLD -objects $SD0_PIN_IO
 connect_net -hier -net $NET_SD0_PORT -objects [list $SD0_PIN_IO]
 
-# Mux the I pin (data to pad): sel ? PS_MOSI : XHEEP_MOSI
-set SD0_PIN_I     [must1 [get_pins -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="I"}] "SD0 I pin"]
-set SD0_NET_I_OLD [must1 [get_nets -of_objects $SD0_PIN_I] "SD0 I net"]
+set SD0_PIN_I     [lindex [get_pins -quiet -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="I"}] 0]
+set SD0_NET_I_OLD [lindex [get_nets -quiet -of_objects $SD0_PIN_I] 0]
 disconnect_net -net $SD0_NET_I_OLD -objects $SD0_PIN_I
 
 create_net SD0_ECO_I
@@ -80,9 +66,8 @@ connect_net -hier -net $PS_MOSI       -objects [list [get_pins SD0_LUTI/I1]]
 connect_net -hier -net $SEL           -objects [list [get_pins SD0_LUTI/I2]]
 connect_net -hier -net SD0_ECO_I      -objects [list [get_pins SD0_LUTI/O] $SD0_PIN_I]
 
-# Mux the T pin (tristate control): sel ? 0 (drive) : XHEEP_T
-set SD0_PIN_T     [must1 [get_pins -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="T"}] "SD0 T pin"]
-set SD0_NET_T_OLD [must1 [get_nets -of_objects $SD0_PIN_T] "SD0 T net"]
+set SD0_PIN_T     [lindex [get_pins -quiet -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
+set SD0_NET_T_OLD [lindex [get_nets -quiet -of_objects $SD0_PIN_T] 0]
 disconnect_net -net $SD0_NET_T_OLD -objects $SD0_PIN_T
 
 create_net SD0_ECO_T
@@ -92,46 +77,32 @@ connect_net -hier -net $SD0_NET_T_OLD -objects [list [get_pins SD0_LUTT/I0]]
 connect_net -hier -net $SEL           -objects [list [get_pins SD0_LUTT/I1]]
 connect_net -hier -net SD0_ECO_T      -objects [list [get_pins SD0_LUTT/O] $SD0_PIN_T]
 
-# SD1 (MISO) IOBUF modifications - Master Input, Slave Output
-set SD1_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sd_1*"}]
+# SD1 IOBUF modifications
+set SD1_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sd_1*"}]
 if {[llength $SD1_IOBUF] == 0} {
-  set SD1_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sd*1*"}]
+  set SD1_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sd*1*"}]
 }
-set SD1_IOBUF [must1 $SD1_IOBUF "SD1 IOBUF"]
+set SD1_IOBUF [lindex $SD1_IOBUF 0]
 
-# Reconnect IO pin to port
-set SD1_PIN_IO     [must1 [get_pins -of_objects $SD1_IOBUF -filter {REF_PIN_NAME=="IO"}] "SD1 IO pin"]
-set SD1_NET_IO_OLD [must1 [get_nets -of_objects $SD1_PIN_IO] "SD1 IO net"]
+set SD1_PIN_IO     [lindex [get_pins -quiet -of_objects $SD1_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
+set SD1_NET_IO_OLD [lindex [get_nets -quiet -of_objects $SD1_PIN_IO] 0]
 disconnect_net -net $SD1_NET_IO_OLD -objects $SD1_PIN_IO
 connect_net -hier -net $NET_SD1_PORT -objects [list $SD1_PIN_IO]
 
-# Get the O pin (data from pad) - this is the MISO signal from flash
-set SD1_PIN_O     [must1 [get_pins -of_objects $SD1_IOBUF -filter {REF_PIN_NAME=="O"}] "SD1 O pin"]
-set SD1_NET_O_OLD [must1 [get_nets -of_objects $SD1_PIN_O] "SD1 O net (XHEEP MISO)"]
-
-# Disconnect the old MISO net and connect to PS MISO input
-# The O pin will now drive both X-HEEP's MISO receiver and PS MISO input
-connect_net -hier -net $SD1_NET_O_OLD -objects [list $ps_miso_pin]
-
-# SD1 tristate: Both PS and X-HEEP want this as input (tristated)
-# No need to modify T pin - flash drives this line
-
 # SCK IOBUF modifications
-set SCK_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sck*"}]
+set SCK_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sck*"}]
 if {[llength $SCK_IOBUF] == 0} {
-  set SCK_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sck*"}]
+  set SCK_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sck*"}]
 }
-set SCK_IOBUF [must1 $SCK_IOBUF "SCK IOBUF"]
+set SCK_IOBUF [lindex $SCK_IOBUF 0]
 
-# Reconnect IO pin to port
-set SCK_PIN_IO     [must1 [get_pins -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="IO"}] "SCK IO pin"]
-set SCK_NET_IO_OLD [must1 [get_nets -of_objects $SCK_PIN_IO] "SCK IO net"]
+set SCK_PIN_IO     [lindex [get_pins -quiet -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
+set SCK_NET_IO_OLD [lindex [get_nets -quiet -of_objects $SCK_PIN_IO] 0]
 disconnect_net -net $SCK_NET_IO_OLD -objects $SCK_PIN_IO
 connect_net -hier -net $NET_SCK_PORT -objects [list $SCK_PIN_IO]
 
-# Mux the I pin: sel ? PS_SCK : XHEEP_SCK
-set SCK_PIN_I     [must1 [get_pins -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="I"}] "SCK I pin"]
-set SCK_NET_I_OLD [must1 [get_nets -of_objects $SCK_PIN_I] "SCK I net"]
+set SCK_PIN_I     [lindex [get_pins -quiet -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="I"}] 0]
+set SCK_NET_I_OLD [lindex [get_nets -quiet -of_objects $SCK_PIN_I] 0]
 disconnect_net -net $SCK_NET_I_OLD -objects $SCK_PIN_I
 
 create_net SCK_ECO_I
@@ -142,9 +113,8 @@ connect_net -hier -net $PS_SCK        -objects [list [get_pins SCK_LUTI/I1]]
 connect_net -hier -net $SEL           -objects [list [get_pins SCK_LUTI/I2]]
 connect_net -hier -net SCK_ECO_I      -objects [list [get_pins SCK_LUTI/O] $SCK_PIN_I]
 
-# Mux the T pin: sel ? 0 (drive) : XHEEP_T
-set SCK_PIN_T     [must1 [get_pins -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="T"}] "SCK T pin"]
-set SCK_NET_T_OLD [must1 [get_nets -of_objects $SCK_PIN_T] "SCK T net"]
+set SCK_PIN_T     [lindex [get_pins -quiet -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
+set SCK_NET_T_OLD [lindex [get_nets -quiet -of_objects $SCK_PIN_T] 0]
 disconnect_net -net $SCK_NET_T_OLD -objects $SCK_PIN_T
 
 create_net SCK_ECO_T
@@ -155,21 +125,19 @@ connect_net -hier -net $SEL           -objects [list [get_pins SCK_LUTT/I1]]
 connect_net -hier -net SCK_ECO_T      -objects [list [get_pins SCK_LUTT/O] $SCK_PIN_T]
 
 # CS IOBUF modifications
-set CS_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_cs*"}]
+set CS_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_cs*"}]
 if {[llength $CS_IOBUF] == 0} {
-  set CS_IOBUF [get_cells -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_csb*"}]
+  set CS_IOBUF [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_csb*"}]
 }
-set CS_IOBUF [must1 $CS_IOBUF "CS IOBUF"]
+set CS_IOBUF [lindex $CS_IOBUF 0]
 
-# Reconnect IO pin to port
-set CS_PIN_IO     [must1 [get_pins -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="IO"}] "CS IO pin"]
-set CS_NET_IO_OLD [must1 [get_nets -of_objects $CS_PIN_IO] "CS IO net"]
+set CS_PIN_IO     [lindex [get_pins -quiet -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
+set CS_NET_IO_OLD [lindex [get_nets -quiet -of_objects $CS_PIN_IO] 0]
 disconnect_net -net $CS_NET_IO_OLD -objects $CS_PIN_IO
 connect_net -hier -net $NET_CS_PORT -objects [list $CS_PIN_IO]
 
-# Mux the I pin: sel ? PS_CS : XHEEP_CS
-set CS_PIN_I     [must1 [get_pins -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="I"}] "CS I pin"]
-set CS_NET_I_OLD [must1 [get_nets -of_objects $CS_PIN_I] "CS I net"]
+set CS_PIN_I     [lindex [get_pins -quiet -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="I"}] 0]
+set CS_NET_I_OLD [lindex [get_nets -quiet -of_objects $CS_PIN_I] 0]
 disconnect_net -net $CS_NET_I_OLD -objects $CS_PIN_I
 
 create_net CS_ECO_I
@@ -180,9 +148,8 @@ connect_net -hier -net $PS_CS        -objects [list [get_pins CS_LUTI/I1]]
 connect_net -hier -net $SEL          -objects [list [get_pins CS_LUTI/I2]]
 connect_net -hier -net CS_ECO_I      -objects [list [get_pins CS_LUTI/O] $CS_PIN_I]
 
-# Mux the T pin: sel ? 0 (drive) : XHEEP_T
-set CS_PIN_T     [must1 [get_pins -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="T"}] "CS T pin"]
-set CS_NET_T_OLD [must1 [get_nets -of_objects $CS_PIN_T] "CS T net"]
+set CS_PIN_T     [lindex [get_pins -quiet -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
+set CS_NET_T_OLD [lindex [get_nets -quiet -of_objects $CS_PIN_T] 0]
 disconnect_net -net $CS_NET_T_OLD -objects $CS_PIN_T
 
 create_net CS_ECO_T

@@ -31,8 +31,6 @@ module xilinx_core_v_mini_mcu_wrapper
     output logic clk_led_o,
 
 `ifdef PS_ENABLE
-    output logic spi_flash_sel_led_o,
-
 `ifndef FPGA_ZCU104
 `ifndef FPGA_ZCU102
 `ifndef FPGA_AUP_ZU3
@@ -128,10 +126,10 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
-  (* KEEP = "TRUE" *)wire ps_spi_flash_cs;
-  (* KEEP = "TRUE" *)wire ps_spi_flash_sck;
-  (* KEEP = "TRUE" *)wire ps_spi_flash_mosi;
-  (* KEEP = "TRUE" *)wire ps_spi_flash_miso;
+  (* KEEP = "TRUE" *)wire       ps_spi_flash_cs;
+  (* KEEP = "TRUE" *)wire       ps_spi_flash_sck;
+  (* KEEP = "TRUE" *)wire       ps_spi_flash_mosi;
+  (* KEEP = "TRUE" *)wire       ps_spi_flash_miso;
 `endif
 
 `ifdef FPGA_NEXYS
@@ -376,44 +374,41 @@ module xilinx_core_v_mini_mcu_wrapper
   assign exit_valid_o   = exit_valid;
 
   // SPI flash mux hooks (PS/X-HEEP)
-  (* DONT_TOUCH = "TRUE" *)
-  LUT1 #(
+  (* KEEP = "TRUE" *)wire keep_ps_spi_flash_sel;
+  (* KEEP = "TRUE" *)wire keep_ps_spi_flash_cs;
+  (* KEEP = "TRUE" *)wire keep_ps_spi_flash_sck;
+  (* KEEP = "TRUE" *)wire keep_ps_spi_flash_mosi;
+  (* KEEP = "TRUE" *)wire keep_ps_spi_flash_miso;
+
+  (* DONT_TOUCH = "TRUE" *) LUT1 #(
       .INIT(2'b10)
   ) u_keep_ps_spi_flash_sel (
       .I0(ps_x_heep_o[4]),
-      .O ()
+      .O (keep_ps_spi_flash_sel)
   );
-
-  (* DONT_TOUCH = "TRUE" *)
-  LUT1 #(
+  (* DONT_TOUCH = "TRUE" *) LUT1 #(
       .INIT(2'b10)
   ) u_keep_ps_spi_flash_cs (
       .I0(ps_spi_flash_cs),
-      .O ()
+      .O (keep_ps_spi_flash_cs)
   );
-
-  (* DONT_TOUCH = "TRUE" *)
-  LUT1 #(
+  (* DONT_TOUCH = "TRUE" *) LUT1 #(
       .INIT(2'b10)
   ) u_keep_ps_spi_flash_sck (
       .I0(ps_spi_flash_sck),
-      .O ()
+      .O (keep_ps_spi_flash_sck)
   );
-
-  (* DONT_TOUCH = "TRUE" *)
-  LUT1 #(
+  (* DONT_TOUCH = "TRUE" *) LUT1 #(
       .INIT(2'b10)
   ) u_keep_ps_spi_flash_mosi (
       .I0(ps_spi_flash_mosi),
-      .O ()
+      .O (keep_ps_spi_flash_mosi)
   );
-
-  (* DONT_TOUCH = "TRUE" *)
-  LUT1 #(
+  (* DONT_TOUCH = "TRUE" *) LUT1 #(
       .INIT(2'b10)
   ) u_keep_ps_spi_flash_miso (
       .I0(ps_spi_flash_miso),
-      .O ()
+      .O (keep_ps_spi_flash_miso)
   );
 `endif
 endmodule
