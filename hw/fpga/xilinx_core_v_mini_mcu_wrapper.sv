@@ -126,10 +126,13 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
-  (* KEEP = "TRUE" *)wire       ps_spi_flash_cs;
-  (* KEEP = "TRUE" *)wire       ps_spi_flash_sck;
-  (* KEEP = "TRUE" *)wire       ps_spi_flash_mosi;
-  (* KEEP = "TRUE" *)wire       ps_spi_flash_miso;
+  // PS QuadSPI wires - kept alive by DONT_TOUCH LUTs below for ECO script
+  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io0_io;
+  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io1_io;
+  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io2_io;
+  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io3_io;
+  wire       ps_quadspi_io_sck_io;
+  wire [0:0] ps_quadspi_io_ss_io;
 `endif
 
 `ifdef FPGA_NEXYS
@@ -197,10 +200,12 @@ module xilinx_core_v_mini_mcu_wrapper
       .ps_tms_o(ps_tms),
       .ps_uart_rx_i(ps_uart_rx),
       .ps_uart_tx_o(ps_uart_tx),
-      .ps_spi_flash_cs_o(ps_spi_flash_cs),
-      .ps_spi_flash_sck_o(ps_spi_flash_sck),
-      .ps_spi_flash_mosi_o(ps_spi_flash_mosi),
-      .ps_spi_flash_miso_i(ps_spi_flash_miso)
+      .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
+      .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
+      .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
+      .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
+      .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
+      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io)
   );
 `else
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
@@ -233,10 +238,12 @@ module xilinx_core_v_mini_mcu_wrapper
       .ps_tms_o(ps_tms),
       .ps_uart_rx_i(ps_uart_rx),
       .ps_uart_tx_o(ps_uart_tx),
-      .ps_spi_flash_cs_o(ps_spi_flash_cs),
-      .ps_spi_flash_sck_o(ps_spi_flash_sck),
-      .ps_spi_flash_mosi_o(ps_spi_flash_mosi),
-      .ps_spi_flash_miso_i(ps_spi_flash_miso)
+      .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
+      .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
+      .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
+      .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
+      .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
+      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io)
   );
 `endif
 `endif
@@ -373,7 +380,7 @@ module xilinx_core_v_mini_mcu_wrapper
 
   assign exit_valid_o   = exit_valid;
 
-  // SPI flash mux hooks (PS/X-HEEP)
+  // QuadSPI flash mux hook
   (* DONT_TOUCH = "TRUE" *)
   LUT1 #(
       .INIT(2'b10)
@@ -381,28 +388,20 @@ module xilinx_core_v_mini_mcu_wrapper
       .I0(ps_x_heep_o[4]),
       .O ()
   );
-  (* DONT_TOUCH = "TRUE" *) LUT1 #(
+
+  (* DONT_TOUCH = "TRUE" *)
+  LUT1 #(
       .INIT(2'b10)
-  ) u_keep_ps_spi_flash_cs (
-      .I0(ps_spi_flash_cs),
+  ) u_keep_ps_quadspi_sck (
+      .I0(ps_quadspi_io_sck_io),
       .O ()
   );
-  (* DONT_TOUCH = "TRUE" *) LUT1 #(
+
+  (* DONT_TOUCH = "TRUE" *)
+  LUT1 #(
       .INIT(2'b10)
-  ) u_keep_ps_spi_flash_sck (
-      .I0(ps_spi_flash_sck),
-      .O ()
-  );
-  (* DONT_TOUCH = "TRUE" *) LUT1 #(
-      .INIT(2'b10)
-  ) u_keep_ps_spi_flash_mosi (
-      .I0(ps_spi_flash_mosi),
-      .O ()
-  );
-  (* DONT_TOUCH = "TRUE" *) LUT1 #(
-      .INIT(2'b10)
-  ) u_keep_ps_spi_flash_miso (
-      .I0(ps_spi_flash_miso),
+  ) u_keep_ps_quadspi_ss (
+      .I0(ps_quadspi_io_ss_io[0]),
       .O ()
   );
 `endif

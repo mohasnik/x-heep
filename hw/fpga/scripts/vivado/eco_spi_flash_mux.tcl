@@ -1,168 +1,289 @@
-# ECO script to multiplex SPI flash signals between PS and X-HEEP
-# This should run AFTER opt_design in the implementation flow
+# ECO script to multiplex QuadSPI spi signals between PS (axi_quad_spi in PL) and X-HEEP
+# The mux output drives the X-HEEP pad-ring IOBUFs connected to top-level ports spi_flash_*.
+# Run AFTER opt_design, BEFORE place_design.
+#
+# X-HEEP has IOBUFs in pad_ring for spi_flash signals
+# PS has IOBUFs in xilinx_ps_wizard_wrapper for ps_quadspi signals
+# Both connect to the same physical spi (shared)
+# SEL signal (ps_x_heep_o[4]): 0=X-HEEP controls spi, 1=PS controls spi
+#
+# What this script does:
+#   1. Remove PS IOBUFs
+#   2. Create MUX logic that selects between X-HEEP and PS output signals
+#   3. Drive X-HEEP IOBUFs with muxed signals
+#   4. Feed X-HEEP IOBUF.O (data from spi) back to PS axi_quad_spi inputs
 
-set PORT_SCK {spi_flash_sck_o}
-set PORT_CS  {spi_flash_csb_o}
-set PORT_SD0 {spi_flash_sd_io[0]}
-set PORT_SD1 {spi_flash_sd_io[1]}
+# Get the MUX select signal from the DONT_TOUCH LUT
+set keep_sel_pin [lindex [get_pins -quiet -hier -filter {NAME =~ "*u_keep_ps_spi_flash_sel/I0"}] 0]
+set SEL [lindex [get_nets -quiet -of_objects $keep_sel_pin] 0]
 
-# Find PS SPI pins
-set ps_sck_pin  [lindex [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_sck_o"}] 0]
-set ps_cs_pin   [lindex [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_cs_o*"}] 0]
-set ps_mosi_pin [lindex [get_pins -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_spi_flash_mosi_o"}] 0]
-set ps_miso_pin [lindex [get_pins -quiet -hier -regexp {^xilinx_ps_wizard_wrapper_i(/xilinx_ps_wizard_i)?/ps_spi_flash_miso_i$}] 0]
+# Find X-HEEP IOBUFs (in pad_ring)
+set X_IOBUF_SD0 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_0_i/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD1 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_1_i/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD2 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_2_i/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD3 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_3_i/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SCK [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sck_i/xilinx_iobuf_i"}] 0]
+set X_IOBUF_CS  [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_cs_0_i/xilinx_iobuf_i"}] 0]
 
-# Get PS SPI nets
-set PS_SCK        [lindex [get_nets -quiet -of_objects $ps_sck_pin] 0]
-set PS_CS         [lindex [get_nets -quiet -of_objects $ps_cs_pin] 0]
-set PS_MOSI       [lindex [get_nets -quiet -of_objects $ps_mosi_pin] 0]
-set PS_MISO_NET_I [lindex [get_nets -quiet -of_objects $ps_miso_pin] 0]
+# Get X-HEEP IOBUF pins and their current nets
+set X_SD0_I_PIN [get_pins -quiet -of_objects $X_IOBUF_SD0 -filter {REF_PIN_NAME=="I"}]
+set X_SD0_T_PIN [get_pins -quiet -of_objects $X_IOBUF_SD0 -filter {REF_PIN_NAME=="T"}]
+set X_SD0_O_PIN [get_pins -quiet -of_objects $X_IOBUF_SD0 -filter {REF_PIN_NAME=="O"}]
+set X_SD1_I_PIN [get_pins -quiet -of_objects $X_IOBUF_SD1 -filter {REF_PIN_NAME=="I"}]
+set X_SD1_T_PIN [get_pins -quiet -of_objects $X_IOBUF_SD1 -filter {REF_PIN_NAME=="T"}]
+set X_SD1_O_PIN [get_pins -quiet -of_objects $X_IOBUF_SD1 -filter {REF_PIN_NAME=="O"}]
+set X_SD2_I_PIN [get_pins -quiet -of_objects $X_IOBUF_SD2 -filter {REF_PIN_NAME=="I"}]
+set X_SD2_T_PIN [get_pins -quiet -of_objects $X_IOBUF_SD2 -filter {REF_PIN_NAME=="T"}]
+set X_SD2_O_PIN [get_pins -quiet -of_objects $X_IOBUF_SD2 -filter {REF_PIN_NAME=="O"}]
+set X_SD3_I_PIN [get_pins -quiet -of_objects $X_IOBUF_SD3 -filter {REF_PIN_NAME=="I"}]
+set X_SD3_T_PIN [get_pins -quiet -of_objects $X_IOBUF_SD3 -filter {REF_PIN_NAME=="T"}]
+set X_SD3_O_PIN [get_pins -quiet -of_objects $X_IOBUF_SD3 -filter {REF_PIN_NAME=="O"}]
+set X_SCK_I_PIN [get_pins -quiet -of_objects $X_IOBUF_SCK -filter {REF_PIN_NAME=="I"}]
+set X_SCK_T_PIN [get_pins -quiet -of_objects $X_IOBUF_SCK -filter {REF_PIN_NAME=="T"}]
+set X_CS_I_PIN  [get_pins -quiet -of_objects $X_IOBUF_CS  -filter {REF_PIN_NAME=="I"}]
+set X_CS_T_PIN  [get_pins -quiet -of_objects $X_IOBUF_CS  -filter {REF_PIN_NAME=="T"}]
 
-# Find selection signal (ps_gpio_o[4])
-set SEL [lindex [get_nets -quiet -hier -regexp {ps_x_heep_o(__0)?\[4\]}] 0]
+# Get current nets connected to X-HEEP IOBUF pins (these are from X-HEEP's SPI controller)
+set X_SD0_I_NET [get_nets -quiet -of_objects $X_SD0_I_PIN]
+set X_SD0_T_NET [get_nets -quiet -of_objects $X_SD0_T_PIN]
+set X_SD0_O_NET [get_nets -quiet -of_objects $X_SD0_O_PIN]
+set X_SD1_I_NET [get_nets -quiet -of_objects $X_SD1_I_PIN]
+set X_SD1_T_NET [get_nets -quiet -of_objects $X_SD1_T_PIN]
+set X_SD1_O_NET [get_nets -quiet -of_objects $X_SD1_O_PIN]
+set X_SD2_I_NET [get_nets -quiet -of_objects $X_SD2_I_PIN]
+set X_SD2_T_NET [get_nets -quiet -of_objects $X_SD2_T_PIN]
+set X_SD2_O_NET [get_nets -quiet -of_objects $X_SD2_O_PIN]
+set X_SD3_I_NET [get_nets -quiet -of_objects $X_SD3_I_PIN]
+set X_SD3_T_NET [get_nets -quiet -of_objects $X_SD3_T_PIN]
+set X_SD3_O_NET [get_nets -quiet -of_objects $X_SD3_O_PIN]
+set X_SCK_I_NET [get_nets -quiet -of_objects $X_SCK_I_PIN]
+set X_SCK_T_NET [get_nets -quiet -of_objects $X_SCK_T_PIN]
+set X_CS_I_NET  [get_nets -quiet -of_objects $X_CS_I_PIN]
+set X_CS_T_NET  [get_nets -quiet -of_objects $X_CS_T_PIN]
 
-# Get port nets
-set NET_SCK_PORT [lindex [get_nets -quiet -of_objects [get_ports $PORT_SCK]] 0]
-set NET_CS_PORT  [lindex [get_nets -quiet -of_objects [get_ports $PORT_CS ]] 0]
-set NET_SD0_PORT [lindex [get_nets -quiet -of_objects [get_ports $PORT_SD0]] 0]
-set NET_SD1_PORT [lindex [get_nets -quiet -of_objects [get_ports $PORT_SD1]] 0]
+# Find PS IOBUFs for bidirectional data (IO0-IO3)
+set PS_IOBUF_IO0 [lindex [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_quadspi_io_io0_iobuf"}] 0]
+set PS_IOBUF_IO1 [lindex [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_quadspi_io_io1_iobuf"}] 0]
+set PS_IOBUF_IO2 [lindex [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_quadspi_io_io2_iobuf"}] 0]
+set PS_IOBUF_IO3 [lindex [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_quadspi_io_io3_iobuf"}] 0]
 
-# Connect PS MISO input to the pad net (IO1)
-set ps_miso_hpin [lindex [get_pins -quiet -of_objects $PS_MISO_NET_I -filter {NAME =~ "xilinx_ps_wizard_wrapper_i/*" && NAME !~ "*xilinx_ps_wizard_i/*"}] 0]
-set ps_miso_hpin_net_old [lindex [get_nets -quiet -of_objects $ps_miso_hpin] 0]
-if {$ps_miso_hpin_net_old ne ""} {
-  disconnect_net -net $ps_miso_hpin_net_old -objects $ps_miso_hpin
-}
-connect_net -hier -net $NET_SD1_PORT -objects [list $ps_miso_hpin]
+# Get PS output signals (from axi_quad_spi, going external)
+# For IO0-IO3, get from IOBUF.I and IOBUF.T
+set PS_IO0_O [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO0 -filter {REF_PIN_NAME=="I"}]]
+set PS_IO0_T [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO0 -filter {REF_PIN_NAME=="T"}]]
+set PS_IO1_O [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO1 -filter {REF_PIN_NAME=="I"}]]
+set PS_IO1_T [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO1 -filter {REF_PIN_NAME=="T"}]]
+set PS_IO2_O [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO2 -filter {REF_PIN_NAME=="I"}]]
+set PS_IO2_T [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO2 -filter {REF_PIN_NAME=="T"}]]
+set PS_IO3_O [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO3 -filter {REF_PIN_NAME=="I"}]]
+set PS_IO3_T [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_IO3 -filter {REF_PIN_NAME=="T"}]]
 
-# SD0 IOBUF modifications
-set SD0_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sd_0*"}] 0]
-if {$SD0_IOBUF eq ""} {
-  set SD0_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sd*0*"}] 0]
-}
+# For SCK and SS - find the IOBUFs and get nets from their pins
+set PS_IOBUF_SCK [lindex [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_quadspi_io_sck_iobuf"}] 0]
+set PS_IOBUF_SS  [lindex [get_cells -quiet -hier -filter {NAME =~ "*xilinx_ps_wizard_wrapper_i/ps_quadspi_io_ss_iobuf_0"}] 0]
 
-set SD0_PIN_IO     [lindex [get_pins -quiet -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
-set SD0_NET_IO_OLD [lindex [get_nets -quiet -of_objects $SD0_PIN_IO] 0]
-disconnect_net -net $SD0_NET_IO_OLD -objects $SD0_PIN_IO
-connect_net -hier -net $NET_SD0_PORT -objects [list $SD0_PIN_IO]
+# Get nets from the IOBUF pins
+set PS_SCK_O [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_SCK -filter {REF_PIN_NAME=="I"}]]
+set PS_SCK_T [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_SCK -filter {REF_PIN_NAME=="T"}]]
 
-set SD0_PIN_I     [lindex [get_pins -quiet -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="I"}] 0]
-set SD0_NET_I_OLD [lindex [get_nets -quiet -of_objects $SD0_PIN_I] 0]
-disconnect_net -net $SD0_NET_I_OLD -objects $SD0_PIN_I
+set PS_SS_O [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_SS -filter {REF_PIN_NAME=="I"}]]
+set PS_SS_T [get_nets -quiet -of_objects [get_pins -quiet -of_objects $PS_IOBUF_SS -filter {REF_PIN_NAME=="T"}]]
 
-create_net SD0_ECO_I
-create_cell -reference LUT3 SD0_LUTI
-set_property INIT 8'hCA [get_cells SD0_LUTI]
-connect_net -hier -net $SD0_NET_I_OLD -objects [list [get_pins SD0_LUTI/I0]]
-connect_net -hier -net $PS_MOSI       -objects [list [get_pins SD0_LUTI/I1]]
-connect_net -hier -net $SEL           -objects [list [get_pins SD0_LUTI/I2]]
-connect_net -hier -net SD0_ECO_I      -objects [list [get_pins SD0_LUTI/O] $SD0_PIN_I]
-
-set SD0_PIN_T     [lindex [get_pins -quiet -of_objects $SD0_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
-set SD0_NET_T_OLD [lindex [get_nets -quiet -of_objects $SD0_PIN_T] 0]
-disconnect_net -net $SD0_NET_T_OLD -objects $SD0_PIN_T
-
-# When SEL=1 (PS), force SD0 drive enabled (T=0). When SEL=0, keep old T.
-# T = old_T & ~SEL
-create_net SD0_ECO_T
-create_cell -reference LUT2 SD0_LUTT
-set_property INIT 4'h2 [get_cells SD0_LUTT]
-connect_net -hier -net $SD0_NET_T_OLD -objects [list [get_pins SD0_LUTT/I0]]
-connect_net -hier -net $SEL           -objects [list [get_pins SD0_LUTT/I1]]
-connect_net -hier -net SD0_ECO_T      -objects [list [get_pins SD0_LUTT/O] $SD0_PIN_T]
-
-# SD1 IOBUF modifications
-set SD1_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sd_1*"}] 0]
-if {$SD1_IOBUF eq ""} {
-  set SD1_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sd*1*"}] 0]
-}
-
-set SD1_PIN_IO     [lindex [get_pins -quiet -of_objects $SD1_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
-set SD1_NET_IO_OLD [lindex [get_nets -quiet -of_objects $SD1_PIN_IO] 0]
-disconnect_net -net $SD1_NET_IO_OLD -objects $SD1_PIN_IO
-connect_net -hier -net $NET_SD1_PORT -objects [list $SD1_PIN_IO]
-
-# Force IO1 to input when PS selected:
-# SD1_T = old_T | SEL  (SEL=1 => T=1 => Hi-Z)
-set SD1_PIN_T     [lindex [get_pins -quiet -of_objects $SD1_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
-set SD1_NET_T_OLD [lindex [get_nets -quiet -of_objects $SD1_PIN_T] 0]
-disconnect_net -net $SD1_NET_T_OLD -objects $SD1_PIN_T
-
-create_net SD1_ECO_T
-create_cell -reference LUT2 SD1_LUTT
-set_property INIT 4'hE [get_cells SD1_LUTT]
-connect_net -hier -net $SD1_NET_T_OLD -objects [list [get_pins SD1_LUTT/I0]]
-connect_net -hier -net $SEL           -objects [list [get_pins SD1_LUTT/I1]]
-connect_net -hier -net SD1_ECO_T      -objects [list [get_pins SD1_LUTT/O] $SD1_PIN_T]
-
-# SCK IOBUF modifications
-set SCK_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_sck*"}] 0]
-if {$SCK_IOBUF eq ""} {
-  set SCK_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_sck*"}] 0]
+# Disable IOB property for PS input registers
+foreach io_name {IO0_I_REG IO1_I_REG IO2_I_REG IO3_I_REG} {
+  set ps_ff [lindex [get_cells -quiet -hier -filter "NAME =~ *xilinx_ps_wizard_i*axi_quad_spi*$io_name*"] 0]
+  if {$ps_ff ne ""} {
+    set_property IOB FALSE $ps_ff
+  }
 }
 
-set SCK_PIN_IO     [lindex [get_pins -quiet -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
-set SCK_NET_IO_OLD [lindex [get_nets -quiet -of_objects $SCK_PIN_IO] 0]
-disconnect_net -net $SCK_NET_IO_OLD -objects $SCK_PIN_IO
-connect_net -hier -net $NET_SCK_PORT -objects [list $SCK_PIN_IO]
+# Remove the DONT_TOUCH LUTs that were used to keep SCK/SS signals alive
+set keep_sck_lut [lindex [get_cells -quiet -hier -filter {NAME =~ "*u_keep_ps_quadspi_sck"}] 0]
+set keep_ss_lut [lindex [get_cells -quiet -hier -filter {NAME =~ "*u_keep_ps_quadspi_ss"}] 0]
 
-set SCK_PIN_I     [lindex [get_pins -quiet -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="I"}] 0]
-set SCK_NET_I_OLD [lindex [get_nets -quiet -of_objects $SCK_PIN_I] 0]
-disconnect_net -net $SCK_NET_I_OLD -objects $SCK_PIN_I
-
-create_net SCK_ECO_I
-create_cell -reference LUT3 SCK_LUTI
-set_property INIT 8'hCA [get_cells SCK_LUTI]
-connect_net -hier -net $SCK_NET_I_OLD -objects [list [get_pins SCK_LUTI/I0]]
-connect_net -hier -net $PS_SCK        -objects [list [get_pins SCK_LUTI/I1]]
-connect_net -hier -net $SEL           -objects [list [get_pins SCK_LUTI/I2]]
-connect_net -hier -net SCK_ECO_I      -objects [list [get_pins SCK_LUTI/O] $SCK_PIN_I]
-
-set SCK_PIN_T     [lindex [get_pins -quiet -of_objects $SCK_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
-set SCK_NET_T_OLD [lindex [get_nets -quiet -of_objects $SCK_PIN_T] 0]
-disconnect_net -net $SCK_NET_T_OLD -objects $SCK_PIN_T
-
-# When SEL=1 (PS), force SCK drive enabled (T=0). When SEL=0, keep old T.
-# T = old_T & ~SEL
-create_net SCK_ECO_T
-create_cell -reference LUT2 SCK_LUTT
-set_property INIT 4'h2 [get_cells SCK_LUTT]
-connect_net -hier -net $SCK_NET_T_OLD -objects [list [get_pins SCK_LUTT/I0]]
-connect_net -hier -net $SEL           -objects [list [get_pins SCK_LUTT/I1]]
-connect_net -hier -net SCK_ECO_T      -objects [list [get_pins SCK_LUTT/O] $SCK_PIN_T]
-
-# CS IOBUF modifications
-set CS_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*pad_spi_flash_cs*"}] 0]
-if {$CS_IOBUF eq ""} {
-  set CS_IOBUF [lindex [get_cells -quiet -hier -filter {REF_NAME == IOBUF && NAME =~ "*spi_flash_csb*"}] 0]
+if {$keep_sck_lut ne ""} {
+  reset_property DONT_TOUCH $keep_sck_lut
+  remove_cell $keep_sck_lut
 }
 
-set CS_PIN_IO     [lindex [get_pins -quiet -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="IO"}] 0]
-set CS_NET_IO_OLD [lindex [get_nets -quiet -of_objects $CS_PIN_IO] 0]
-disconnect_net -net $CS_NET_IO_OLD -objects $CS_PIN_IO
-connect_net -hier -net $NET_CS_PORT -objects [list $CS_PIN_IO]
+if {$keep_ss_lut ne ""} {
+  reset_property DONT_TOUCH $keep_ss_lut
+  remove_cell $keep_ss_lut
+}
 
-set CS_PIN_I     [lindex [get_pins -quiet -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="I"}] 0]
-set CS_NET_I_OLD [lindex [get_nets -quiet -of_objects $CS_PIN_I] 0]
-disconnect_net -net $CS_NET_I_OLD -objects $CS_PIN_I
+# Remove DONT_TOUCH from the top-level nets so they can be cleaned up after IOBUF removal
+set sck_net [lindex [get_nets -quiet -hier -filter {NAME =~ "ps_quadspi_io_sck_io"}] 0]
+set ss_net [lindex [get_nets -quiet -hier -filter {NAME =~ "ps_quadspi_io_ss_io"}] 0]
+if {$sck_net ne ""} {
+  puts "Removing DONT_TOUCH from net: $sck_net"
+  reset_property DONT_TOUCH $sck_net
+}
+if {$ss_net ne ""} {
+  puts "Removing DONT_TOUCH from net: $ss_net"
+  reset_property DONT_TOUCH $ss_net
+}
 
-create_net CS_ECO_I
-create_cell -reference LUT3 CS_LUTI
-set_property INIT 8'hCA [get_cells CS_LUTI]
-connect_net -hier -net $CS_NET_I_OLD -objects [list [get_pins CS_LUTI/I0]]
-connect_net -hier -net $PS_CS        -objects [list [get_pins CS_LUTI/I1]]
-connect_net -hier -net $SEL          -objects [list [get_pins CS_LUTI/I2]]
-connect_net -hier -net CS_ECO_I      -objects [list [get_pins CS_LUTI/O] $CS_PIN_I]
+# Remove PS IOBUFs
+if {$PS_IOBUF_IO0 ne ""} { remove_cell $PS_IOBUF_IO0; }
+if {$PS_IOBUF_IO1 ne ""} { remove_cell $PS_IOBUF_IO1; }
+if {$PS_IOBUF_IO2 ne ""} { remove_cell $PS_IOBUF_IO2; }
+if {$PS_IOBUF_IO3 ne ""} { remove_cell $PS_IOBUF_IO3; }
+if {$PS_IOBUF_SCK ne ""} { remove_cell $PS_IOBUF_SCK; }
+if {$PS_IOBUF_SS  ne ""} { remove_cell $PS_IOBUF_SS;  }
 
-set CS_PIN_T     [lindex [get_pins -quiet -of_objects $CS_IOBUF -filter {REF_PIN_NAME=="T"}] 0]
-set CS_NET_T_OLD [lindex [get_nets -quiet -of_objects $CS_PIN_T] 0]
-disconnect_net -net $CS_NET_T_OLD -objects $CS_PIN_T
+# Disconnect X-HEEP IOBUF inputs from X-HEEP signals
+disconnect_net -net $X_SD0_I_NET -objects $X_SD0_I_PIN
+disconnect_net -net $X_SD0_T_NET -objects $X_SD0_T_PIN
+disconnect_net -net $X_SD1_I_NET -objects $X_SD1_I_PIN
+disconnect_net -net $X_SD1_T_NET -objects $X_SD1_T_PIN
+disconnect_net -net $X_SD2_I_NET -objects $X_SD2_I_PIN
+disconnect_net -net $X_SD2_T_NET -objects $X_SD2_T_PIN
+disconnect_net -net $X_SD3_I_NET -objects $X_SD3_I_PIN
+disconnect_net -net $X_SD3_T_NET -objects $X_SD3_T_PIN
+disconnect_net -net $X_SCK_I_NET -objects $X_SCK_I_PIN
+disconnect_net -net $X_SCK_T_NET -objects $X_SCK_T_PIN
+disconnect_net -net $X_CS_I_NET  -objects $X_CS_I_PIN
+disconnect_net -net $X_CS_T_NET  -objects $X_CS_T_PIN
 
-# When SEL=1 (PS), force CS drive enabled (T=0). When SEL=0, keep old T.
-# T = old_T & ~SEL
-create_net CS_ECO_T
-create_cell -reference LUT2 CS_LUTT
-set_property INIT 4'h2 [get_cells CS_LUTT]
-connect_net -hier -net $CS_NET_T_OLD -objects [list [get_pins CS_LUTT/I0]]
-connect_net -hier -net $SEL          -objects [list [get_pins CS_LUTT/I1]]
-connect_net -hier -net CS_ECO_T      -objects [list [get_pins CS_LUTT/O] $CS_PIN_T]
+# Create MUX LUTs
+# LUT3 with INIT=8'hCA implements: O = SEL ? I1 : I0
+# When SEL=0 (X-HEEP mode): output = I0 (X-HEEP signal)
+# When SEL=1 (PS mode):     output = I1 (PS signal)
+
+# Create nets for mux outputs
+create_net ECO_MUX_SD0_I
+create_net ECO_MUX_SD0_T
+create_net ECO_MUX_SD1_I
+create_net ECO_MUX_SD1_T
+create_net ECO_MUX_SD2_I
+create_net ECO_MUX_SD2_T
+create_net ECO_MUX_SD3_I
+create_net ECO_MUX_SD3_T
+create_net ECO_MUX_SCK_I
+create_net ECO_MUX_SCK_T
+create_net ECO_MUX_CS_I
+create_net ECO_MUX_CS_T
+
+# SD0 data mux
+create_cell -reference LUT3 ECO_MUX_SD0_I_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD0_I_LUT]
+connect_net -hier -net $X_SD0_I_NET -objects [get_pins ECO_MUX_SD0_I_LUT/I0]
+connect_net -hier -net $PS_IO0_O    -objects [get_pins ECO_MUX_SD0_I_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD0_I_LUT/I2]
+connect_net -hier -net ECO_MUX_SD0_I -objects [get_pins ECO_MUX_SD0_I_LUT/O]
+
+# SD0 tristate mux
+create_cell -reference LUT3 ECO_MUX_SD0_T_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD0_T_LUT]
+connect_net -hier -net $X_SD0_T_NET -objects [get_pins ECO_MUX_SD0_T_LUT/I0]
+connect_net -hier -net $PS_IO0_T    -objects [get_pins ECO_MUX_SD0_T_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD0_T_LUT/I2]
+connect_net -hier -net ECO_MUX_SD0_T -objects [get_pins ECO_MUX_SD0_T_LUT/O]
+
+# SD1 data mux
+create_cell -reference LUT3 ECO_MUX_SD1_I_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD1_I_LUT]
+connect_net -hier -net $X_SD1_I_NET -objects [get_pins ECO_MUX_SD1_I_LUT/I0]
+connect_net -hier -net $PS_IO1_O    -objects [get_pins ECO_MUX_SD1_I_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD1_I_LUT/I2]
+connect_net -hier -net ECO_MUX_SD1_I -objects [get_pins ECO_MUX_SD1_I_LUT/O]
+
+# SD1 tristate mux
+create_cell -reference LUT3 ECO_MUX_SD1_T_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD1_T_LUT]
+connect_net -hier -net $X_SD1_T_NET -objects [get_pins ECO_MUX_SD1_T_LUT/I0]
+connect_net -hier -net $PS_IO1_T    -objects [get_pins ECO_MUX_SD1_T_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD1_T_LUT/I2]
+connect_net -hier -net ECO_MUX_SD1_T -objects [get_pins ECO_MUX_SD1_T_LUT/O]
+
+# SD2 data mux
+create_cell -reference LUT3 ECO_MUX_SD2_I_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD2_I_LUT]
+connect_net -hier -net $X_SD2_I_NET -objects [get_pins ECO_MUX_SD2_I_LUT/I0]
+connect_net -hier -net $PS_IO2_O    -objects [get_pins ECO_MUX_SD2_I_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD2_I_LUT/I2]
+connect_net -hier -net ECO_MUX_SD2_I -objects [get_pins ECO_MUX_SD2_I_LUT/O]
+
+# SD2 tristate mux
+create_cell -reference LUT3 ECO_MUX_SD2_T_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD2_T_LUT]
+connect_net -hier -net $X_SD2_T_NET -objects [get_pins ECO_MUX_SD2_T_LUT/I0]
+connect_net -hier -net $PS_IO2_T    -objects [get_pins ECO_MUX_SD2_T_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD2_T_LUT/I2]
+connect_net -hier -net ECO_MUX_SD2_T -objects [get_pins ECO_MUX_SD2_T_LUT/O]
+
+# SD3 data mux
+create_cell -reference LUT3 ECO_MUX_SD3_I_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD3_I_LUT]
+connect_net -hier -net $X_SD3_I_NET -objects [get_pins ECO_MUX_SD3_I_LUT/I0]
+connect_net -hier -net $PS_IO3_O    -objects [get_pins ECO_MUX_SD3_I_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD3_I_LUT/I2]
+connect_net -hier -net ECO_MUX_SD3_I -objects [get_pins ECO_MUX_SD3_I_LUT/O]
+
+# SD3 tristate mux
+create_cell -reference LUT3 ECO_MUX_SD3_T_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SD3_T_LUT]
+connect_net -hier -net $X_SD3_T_NET -objects [get_pins ECO_MUX_SD3_T_LUT/I0]
+connect_net -hier -net $PS_IO3_T    -objects [get_pins ECO_MUX_SD3_T_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SD3_T_LUT/I2]
+connect_net -hier -net ECO_MUX_SD3_T -objects [get_pins ECO_MUX_SD3_T_LUT/O]
+
+# SCK mux
+create_cell -reference LUT3 ECO_MUX_SCK_I_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SCK_I_LUT]
+connect_net -hier -net $X_SCK_I_NET -objects [get_pins ECO_MUX_SCK_I_LUT/I0]
+connect_net -hier -net $PS_SCK_O    -objects [get_pins ECO_MUX_SCK_I_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SCK_I_LUT/I2]
+connect_net -hier -net ECO_MUX_SCK_I -objects [get_pins ECO_MUX_SCK_I_LUT/O]
+
+create_cell -reference LUT3 ECO_MUX_SCK_T_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_SCK_T_LUT]
+connect_net -hier -net $X_SCK_T_NET -objects [get_pins ECO_MUX_SCK_T_LUT/I0]
+connect_net -hier -net $PS_SCK_T    -objects [get_pins ECO_MUX_SCK_T_LUT/I1]
+connect_net -hier -net $SEL         -objects [get_pins ECO_MUX_SCK_T_LUT/I2]
+connect_net -hier -net ECO_MUX_SCK_T -objects [get_pins ECO_MUX_SCK_T_LUT/O]
+
+# CS mux
+create_cell -reference LUT3 ECO_MUX_CS_I_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_CS_I_LUT]
+connect_net -hier -net $X_CS_I_NET -objects [get_pins ECO_MUX_CS_I_LUT/I0]
+connect_net -hier -net $PS_SS_O    -objects [get_pins ECO_MUX_CS_I_LUT/I1]
+connect_net -hier -net $SEL        -objects [get_pins ECO_MUX_CS_I_LUT/I2]
+connect_net -hier -net ECO_MUX_CS_I -objects [get_pins ECO_MUX_CS_I_LUT/O]
+
+create_cell -reference LUT3 ECO_MUX_CS_T_LUT
+set_property INIT 8'hCA [get_cells ECO_MUX_CS_T_LUT]
+connect_net -hier -net $X_CS_T_NET -objects [get_pins ECO_MUX_CS_T_LUT/I0]
+connect_net -hier -net $PS_SS_T    -objects [get_pins ECO_MUX_CS_T_LUT/I1]
+connect_net -hier -net $SEL        -objects [get_pins ECO_MUX_CS_T_LUT/I2]
+connect_net -hier -net ECO_MUX_CS_T -objects [get_pins ECO_MUX_CS_T_LUT/O]
+
+# Connect MUX outputs to X-HEEP IOBUFs
+connect_net -hier -net ECO_MUX_SD0_I -objects [list $X_SD0_I_PIN]
+connect_net -hier -net ECO_MUX_SD0_T -objects [list $X_SD0_T_PIN]
+connect_net -hier -net ECO_MUX_SD1_I -objects [list $X_SD1_I_PIN]
+connect_net -hier -net ECO_MUX_SD1_T -objects [list $X_SD1_T_PIN]
+connect_net -hier -net ECO_MUX_SD2_I -objects [list $X_SD2_I_PIN]
+connect_net -hier -net ECO_MUX_SD2_T -objects [list $X_SD2_T_PIN]
+connect_net -hier -net ECO_MUX_SD3_I -objects [list $X_SD3_I_PIN]
+connect_net -hier -net ECO_MUX_SD3_T -objects [list $X_SD3_T_PIN]
+connect_net -hier -net ECO_MUX_SCK_I -objects [list $X_SCK_I_PIN]
+connect_net -hier -net ECO_MUX_SCK_T -objects [list $X_SCK_T_PIN]
+connect_net -hier -net ECO_MUX_CS_I  -objects [list $X_CS_I_PIN]
+connect_net -hier -net ECO_MUX_CS_T  -objects [list $X_CS_T_PIN]
+
+# Connect X-HEEP IOBUF.O (flash read data) to PS axi_quad_spi inputs
+# The PS needs to receive data from flash when it's the active controller
+# X-HEEP IOBUF.O carries data from flash, this goes to both X-HEEP and PS
+
+# Find the actual axi_quad_spi input pins and reconnect
+foreach {idx x_o_net} [list 0 $X_SD0_O_NET 1 $X_SD1_O_NET 2 $X_SD2_O_NET 3 $X_SD3_O_NET] {
+  set qspi_pin [lindex [get_pins -quiet -hier -filter "NAME =~ *axi_quad_spi/io${idx}_i"] 0]
+  if {$qspi_pin ne ""} {
+    set old_net [get_nets -quiet -of_objects $qspi_pin]
+    if {$old_net ne ""} {
+      disconnect_net -net $old_net -objects $qspi_pin
+    }
+    connect_net -hier -net $x_o_net -objects [list $qspi_pin]
+  }
+}
