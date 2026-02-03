@@ -126,11 +126,10 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
-  // PS QuadSPI wires - kept alive by DONT_TOUCH LUTs below for ECO script
-  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io0_io;
-  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io1_io;
-  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io2_io;
-  (* DONT_TOUCH = "TRUE" *) wire       ps_quadspi_io_io3_io;
+  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
+  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
+  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
+  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io3_io;
   wire       ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
 `endif

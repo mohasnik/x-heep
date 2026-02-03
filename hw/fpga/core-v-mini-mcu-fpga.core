@@ -34,6 +34,7 @@ filesets:
     files:
     - scripts/pynq-z2/xilinx_generate_clk_wizard.tcl
     - "PS_ENABLE ? (scripts/pynq-z2/xilinx_generate_ps_wizard.tcl)"
+    - "PS_ENABLE ? (scripts/vivado/set_eco_hook.tcl)"
     file_type: tclSource
 
   ip-fpga-nexys:
@@ -53,12 +54,10 @@ filesets:
     
   ip-fpga-aup-zu3:
     files:
-    - scripts/aup-zu3/xilinx_generate_clk_wizard.tcl: { file_type: tclSource }
-    - "PS_ENABLE ? (scripts/aup-zu3/xilinx_generate_ps_wizard.tcl)": { file_type: tclSource }
-    - "PS_ENABLE ? (scripts/vivado/set_eco_hook.tcl)": { file_type: tclSource }
-    - "PS_ENABLE ? (scripts/vivado/eco_spi_flash_mux.tcl)": { file_type: user }
-
-
+    - scripts/aup-zu3/xilinx_generate_clk_wizard.tcl
+    - "PS_ENABLE ? (scripts/aup-zu3/xilinx_generate_ps_wizard.tcl)"
+    - "PS_ENABLE ? (scripts/vivado/set_eco_hook.tcl)"
+    file_type: tclSource
 
   ip-fpga-genesys2:
     files:
@@ -119,6 +118,17 @@ filesets:
     - constraints/common/sync.xdc
     file_type: xdc
 
+  eco-fpga-pynq-z2:
+    files:
+    - "PS_ENABLE ? (scripts/vivado/eco_spi_flash_mux.tcl)"
+    file_type: user
+
+  eco-fpga-aup-zu3:
+    files:
+    - "PS_ENABLE ? (scripts/vivado/eco_spi_flash_mux.tcl)"
+    file_type: user
+
+
 parameters:
   PS_ENABLE:
     datatype: bool
@@ -132,6 +142,7 @@ targets:
     - ip-fpga
     - target_pynq-z2 ? (ip-fpga-pynq-z2)
     - target_pynq-z2 ? (xdc-fpga-pynq-z2)
+    - target_pynq-z2 ? (eco-fpga-pynq-z2)
     - target_nexys-a7-100t ? (ip-fpga-nexys)
     - target_nexys-a7-100t ? (xdc-fpga-nexys)
     - target_zcu104 ? (ip-fpga-zcu104)
@@ -140,6 +151,7 @@ targets:
     - target_zcu102 ? (xdc-fpga-zcu102)
     - target_aup-zu3 ? (xdc-fpga-aup-zu3)
     - target_aup-zu3 ? (ip-fpga-aup-zu3)
+    - target_aup-zu3 ? (eco-fpga-aup-zu3)
     - target_genesys2 ? (ip-fpga-genesys2)
     - target_genesys2 ? (xdc-fpga-genesys2)
 
