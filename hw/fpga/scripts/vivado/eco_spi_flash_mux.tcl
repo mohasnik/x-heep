@@ -287,3 +287,19 @@ foreach {idx x_o_net} [list 0 $X_SD0_O_NET 1 $X_SD1_O_NET 2 $X_SD2_O_NET 3 $X_SD
     connect_net -hier -net $x_o_net -objects [list $qspi_pin]
   }
 }
+
+set ss_input_pin [lindex [get_pins -quiet -hier -filter "NAME =~ *axi_quad_spi*ss_i*"] 0]
+if {$ss_input_pin ne ""} {
+  puts "INFO: Found SS input pin: $ss_input_pin - tying HIGH to prevent MODF"
+  set old_ss_net [get_nets -quiet -of_objects $ss_input_pin]
+  if {$old_ss_net ne ""} {
+    disconnect_net -net $old_ss_net -objects $ss_input_pin
+  }
+  # Create VCC to tie SS input high (inactive, prevents MODF)
+  create_cell -reference VCC ECO_VCC_SS_INPUT
+  create_net ECO_SS_INPUT_HIGH
+  connect_net -hier -net ECO_SS_INPUT_HIGH -objects [get_pins ECO_VCC_SS_INPUT/P]
+  connect_net -hier -net ECO_SS_INPUT_HIGH -objects [list $ss_input_pin]
+} else {
+  puts "WARNING: Could not find SS input pin for axi_quad_spi"
+}
