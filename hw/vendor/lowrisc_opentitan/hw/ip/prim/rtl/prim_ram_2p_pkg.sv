@@ -19,4 +19,4 @@ package prim_ram_2p_pkg;
 
   parameter ram_2p_cfg_t RAM_2P_CFG_DEFAULT = '0;
 
-endpackage // prim_ram_2p_pkg
+endpackage  // prim_ram_2p_pkg

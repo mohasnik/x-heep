@@ -12,16 +12,16 @@
 
 /// Testbench for the module `rr_arb_tree`
 module rr_arb_tree_tb #(
-  /// Number of input streams to the DUT
-  parameter int unsigned NumInp    = 32'd7,
-  /// Number of requests per input
-  parameter int unsigned NumReqs   = 32'd20000,
-  /// Handshaking as in AXI
-  parameter bit          AxiVldRdy = 1'b1,
-  /// Do not deassert the input request
-  parameter bit          LockIn    = 1'b1,
-  /// Enable fair arbitration, when disabled, no assertion for fairness
-  parameter bit          FairArb   = 1'b1
+    /// Number of input streams to the DUT
+    parameter int unsigned NumInp    = 32'd7,
+    /// Number of requests per input
+    parameter int unsigned NumReqs   = 32'd20000,
+    /// Handshaking as in AXI
+    parameter bit          AxiVldRdy = 1'b1,
+    /// Do not deassert the input request
+    parameter bit          LockIn    = 1'b1,
+    /// Enable fair arbitration, when disabled, no assertion for fairness
+    parameter bit          FairArb   = 1'b1
 );
 
   localparam time CyclTime = 10ns;
@@ -32,28 +32,28 @@ module rr_arb_tree_tb #(
   // more than this value
   localparam real error_threshold = 0.1;
 
-  localparam int unsigned IdxWidth  = (NumInp > 32'd1) ? unsigned'($clog2(NumInp)) : 32'd1;
+  localparam int unsigned IdxWidth = (NumInp > 32'd1) ? unsigned'($clog2(NumInp)) : 32'd1;
   localparam int unsigned DataWidth = 32'd45;
-  typedef logic [IdxWidth-1:0]  idx_t;
+  typedef logic [IdxWidth-1:0] idx_t;
   typedef logic [DataWidth-1:0] data_t;
 
   // clock signal
-  logic               clk;
-  logic               rst_n;
-  logic               flush;
-  idx_t               rr,       idx;
-  logic  [NumInp-1:0] req_inp,  gnt_inp, end_of_sim;
+  logic clk;
+  logic rst_n;
+  logic flush;
+  idx_t rr, idx;
+  logic [NumInp-1:0] req_inp, gnt_inp, end_of_sim;
   data_t [NumInp-1:0] data_inp;
-  logic               req_oup,  gnt_oup;
-  data_t              data_oup;
+  logic req_oup, gnt_oup;
+  data_t data_oup;
 
   // clock and rst gen
   clk_rst_gen #(
-    .ClkPeriod    ( CyclTime ),
-    .RstClkCycles ( 5        )
+      .ClkPeriod   (CyclTime),
+      .RstClkCycles(5)
   ) i_clk_rst_gen (
-    .clk_o  ( clk   ),
-    .rst_no ( rst_n )
+      .clk_o (clk),
+      .rst_no(rst_n)
   );
 
   // drive input streams
@@ -69,7 +69,7 @@ module rr_arb_tree_tb #(
       req_inp[i]  = 1'b0;
 
       // First have them continuously active for a number of time
-      for (int unsigned j = 0; j < (i+1) * NumReqs; j++) begin
+      for (int unsigned j = 0; j < (i + 1) * NumReqs; j++) begin
         data_inp[i] <= #ApplTime data_t'(i);
         req_inp[i]  <= #ApplTime 1'b1;
         @(posedge clk);
@@ -78,11 +78,11 @@ module rr_arb_tree_tb #(
       req_inp[i]  <= #ApplTime 1'b0;
 
       // wait until all other processes have their fixed request finished.
-      repeat ((NumInp-i)*NumReqs) @(posedge clk);
+      repeat ((NumInp - i) * NumReqs) @(posedge clk);
       repeat (1000) @(posedge clk);
 
       // First have them continuously active for a number of time
-      for (int unsigned j = 0; j < (NumInp-i) * NumReqs; j++) begin
+      for (int unsigned j = 0; j < (NumInp - i) * NumReqs; j++) begin
         data_inp[i] <= #ApplTime data_t'(i);
         req_inp[i]  <= #ApplTime 1'b1;
         @(posedge clk);
@@ -90,11 +90,11 @@ module rr_arb_tree_tb #(
       data_inp[i] <= #ApplTime '0;
       req_inp[i]  <= #ApplTime 1'b0;
 
-      repeat ((1+i)*NumReqs) @(posedge clk);
+      repeat ((1 + i) * NumReqs) @(posedge clk);
       repeat (1000) @(posedge clk);
 
       // First have them continuously active for a number of time
-      for (int unsigned j = 0; j < (NumInp-i) * NumReqs; j++) begin
+      for (int unsigned j = 0; j < (NumInp - i) * NumReqs; j++) begin
         if ((i % 2) == 0) begin
           data_inp[i] <= #ApplTime data_t'(i);
           req_inp[i]  <= #ApplTime 1'b1;
@@ -104,7 +104,7 @@ module rr_arb_tree_tb #(
       data_inp[i] <= #ApplTime '0;
       req_inp[i]  <= #ApplTime 1'b0;
 
-      repeat ((1+i)*NumReqs) @(posedge clk);
+      repeat ((1 + i) * NumReqs) @(posedge clk);
       repeat (1000) @(posedge clk);
 
 
@@ -112,7 +112,7 @@ module rr_arb_tree_tb #(
       for (int unsigned j = 0; j < NumReqs; j++) begin
         data_inp[i] <= #ApplTime new_stimuli();
         req_inp[i]  <= #ApplTime 1'b1;
-        rand_wait = $urandom_range(1, 2*NumInp);
+        rand_wait = $urandom_range(1, 2 * NumInp);
         if (LockIn) begin
           #TestTime;
           while (!gnt_inp[i]) begin
@@ -177,11 +177,11 @@ module rr_arb_tree_tb #(
     initial begin : proc_throughput_checker
       automatic longint unsigned tot_active [NumInp:1];
       automatic longint unsigned tot_served [NumInp:1];
-      automatic int     unsigned num_active;
-      automatic real             throughput, exp_through, error;
+      automatic int unsigned     num_active;
+      automatic real throughput, exp_through, error;
       for (int unsigned j = 0; j < NumInp; j++) begin
-       tot_active[j] = 0;
-       tot_served[j] = 0;
+        tot_active[j] = 0;
+        tot_served[j] = 0;
       end
 
       @(posedge rst_n);
@@ -206,15 +206,16 @@ module rr_arb_tree_tb #(
 
       for (int unsigned j = 1; j <= NumInp; j++) begin
         if (tot_active[j] > 0) begin
-          throughput  = real'(tot_served[j])/real'(tot_active[j]);
-          exp_through = real'(1)/real'(j);
+          throughput  = real'(tot_served[j]) / real'(tot_active[j]);
+          exp_through = real'(1) / real'(j);
           error       = throughput - exp_through;
           if (FairArb && LockIn) begin
-            assert(error < error_threshold && error > -error_threshold) else
-                $warning("Line: %0d is unfair!", i);
+            assert (error < error_threshold && error > -error_threshold)
+            else $warning("Line: %0d is unfair!", i);
           end
-          $display("Line: %0d, TotActice: %0d Throughput: %0f Ideal: %0f Diff: %0f",
-              i, j, throughput, exp_through, error);        end
+          $display("Line: %0d, TotActice: %0d Throughput: %0f Ideal: %0f Diff: %0f", i, j,
+                   throughput, exp_through, error);
+        end
       end
     end
   end
@@ -236,30 +237,30 @@ module rr_arb_tree_tb #(
       // check that the right data is observed
       if (req_oup && gnt_oup) begin
         exp_data = data_queues[idx].pop_front();
-        assert(exp_data === data_oup);
+        assert (exp_data === data_oup);
       end
     end
   end
 
   // DUT
   rr_arb_tree #(
-    .NumIn     ( NumInp    ),
-    .DataWidth ( DataWidth ),
-    .ExtPrio   ( 1'b0      ),
-    .AxiVldRdy ( AxiVldRdy ),
-    .LockIn    ( LockIn    ),
-    .FairArb   ( FairArb   )
+      .NumIn    (NumInp),
+      .DataWidth(DataWidth),
+      .ExtPrio  (1'b0),
+      .AxiVldRdy(AxiVldRdy),
+      .LockIn   (LockIn),
+      .FairArb  (FairArb)
   ) i_rr_arb_tree_dut (
-    .clk_i  ( clk      ),
-    .rst_ni ( rst_n    ),
-    .flush_i( flush    ),
-    .rr_i   ( '0       ),
-    .req_i  ( req_inp  ),
-    .gnt_o  ( gnt_inp  ),
-    .data_i ( data_inp ),
-    .gnt_i  ( gnt_oup  ),
-    .req_o  ( req_oup  ),
-    .data_o ( data_oup ),
-    .idx_o  ( idx      )
+      .clk_i  (clk),
+      .rst_ni (rst_n),
+      .flush_i(flush),
+      .rr_i   ('0),
+      .req_i  (req_inp),
+      .gnt_o  (gnt_inp),
+      .data_i (data_inp),
+      .gnt_i  (gnt_oup),
+      .req_o  (req_oup),
+      .data_o (data_oup),
+      .idx_o  (idx)
   );
 endmodule

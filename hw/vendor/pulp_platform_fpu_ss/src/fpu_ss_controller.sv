@@ -12,7 +12,7 @@
 // Contributor: Moritz Imfeld <moimfeld@student.ethz.ch>
 
 module fpu_ss_controller
-    import fpu_ss_pkg::*;
+  import fpu_ss_pkg::*;
 #(
     parameter PULP_ZFINX = 0,
     parameter INPUT_BUFFER_DEPTH = 0,
@@ -24,16 +24,16 @@ module fpu_ss_controller
     input logic rst_ni,
 
     // Predecoder
-    input  logic       in_buf_push_ready_i,
-    input  logic [2:0] prd_rsp_use_rs_i,
+    input logic       in_buf_push_ready_i,
+    input logic [2:0] prd_rsp_use_rs_i,
 
     // Issue Interface
     input  logic [2:0] x_issue_req_rs_valid_i,
     output logic       x_issue_ready_o,
 
     // Commit Interface
-    input  logic       x_commit_valid_i,
-    input  x_commit_t  x_commit_i,
+    input logic      x_commit_valid_i,
+    input x_commit_t x_commit_i,
 
     // Input Buffer
     input  logic in_buf_pop_valid_i,
@@ -64,8 +64,8 @@ module fpu_ss_controller
 
     // Memory Request/Repsonse Interface
     output logic x_mem_valid_o,
-    input  logic x_mem_ready_i,
-    input  logic [X_ID_WIDTH-1:0] x_mem_req_id_i,
+    input logic x_mem_ready_i,
+    input logic [X_ID_WIDTH-1:0] x_mem_req_id_i,
     output logic x_mem_req_we_o,
     output logic x_mem_req_spec_o,
     output logic x_mem_req_last_o,
@@ -77,7 +77,7 @@ module fpu_ss_controller
     input  fpu_ss_pkg::mem_metadata_t mem_pop_data_i,
 
     // Memory Result Interface
-    input  logic x_mem_result_valid_i,
+    input logic x_mem_result_valid_i,
 
     // FPnew
     input  logic       use_fpu_i,
@@ -95,21 +95,21 @@ module fpu_ss_controller
 
   // dependencies and forwarding
   logic [2:0] valid_operands;
-  logic       dep_rs1;
-  logic       dep_rs2;
+  logic dep_rs1;
+  logic dep_rs2;
   logic       dep_rs1_add; // seperate dependency for the addition and subtraction instruction, since they have different operand assignments (--> see FPnew documentation)
   logic       dep_rs2_add; // seperate dependency for the addition and subtraction instruction, since they have different operand assignments (--> see FPnew documentation)
-  logic       dep_rs3;
+  logic dep_rs3;
 
   // handshakes
   logic x_result_hs;
   logic x_mem_req_hs;
 
   // status signals and scoreboards
-  logic        instr_inflight_d;
-  logic        instr_inflight_q;
-  logic        instr_offloaded_d;
-  logic        instr_offloaded_q;
+  logic instr_inflight_d;
+  logic instr_inflight_q;
+  logic instr_offloaded_d;
+  logic instr_offloaded_q;
   logic [31:0] rd_scoreboard_d;
   logic [31:0] rd_scoreboard_q;
   logic [15:0] id_scoreboard_d;
@@ -303,4 +303,4 @@ module fpu_ss_controller
     end
   end
 
-endmodule // fpu_ss_controller
+endmodule  // fpu_ss_controller

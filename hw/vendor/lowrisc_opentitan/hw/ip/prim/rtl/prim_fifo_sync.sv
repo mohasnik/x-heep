@@ -7,28 +7,28 @@
 `include "prim_assert.sv"
 
 module prim_fifo_sync #(
-  parameter int unsigned Width       = 16,
-  parameter bit Pass                 = 1'b1, // if == 1 allow requests to pass through empty FIFO
-  parameter int unsigned Depth       = 4,
-  parameter bit OutputZeroIfEmpty    = 1'b1, // if == 1 always output 0 when FIFO is empty
-  // derived parameter
-  localparam int          DepthW     = prim_util_pkg::vbits(Depth+1)
+    parameter int unsigned Width = 16,
+    parameter bit Pass = 1'b1,  // if == 1 allow requests to pass through empty FIFO
+    parameter int unsigned Depth = 4,
+    parameter bit OutputZeroIfEmpty = 1'b1,  // if == 1 always output 0 when FIFO is empty
+    // derived parameter
+    localparam int DepthW = prim_util_pkg::vbits(Depth + 1)
 ) (
-  input                   clk_i,
-  input                   rst_ni,
-  // synchronous clear / flush port
-  input                   clr_i,
-  // write port
-  input                   wvalid_i,
-  output                  wready_o,
-  input   [Width-1:0]     wdata_i,
-  // read port
-  output                  rvalid_o,
-  input                   rready_i,
-  output  [Width-1:0]     rdata_o,
-  // occupancy
-  output                  full_o,
-  output  [DepthW-1:0]    depth_o
+    input               clk_i,
+    input               rst_ni,
+    // synchronous clear / flush port
+    input               clr_i,
+    // write port
+    input               wvalid_i,
+    output              wready_o,
+    input  [ Width-1:0] wdata_i,
+    // read port
+    output              rvalid_o,
+    input               rready_i,
+    output [ Width-1:0] rdata_o,
+    // occupancy
+    output              full_o,
+    output [DepthW-1:0] depth_o
 );
 
 
@@ -36,28 +36,28 @@ module prim_fifo_sync #(
   if (Depth == 0) begin : gen_passthru_fifo
     `ASSERT_INIT(paramCheckPass, Pass == 1)
 
-    assign depth_o = 1'b0; //output is meaningless
+    assign depth_o  = 1'b0;  //output is meaningless
 
     // devie facing
     assign rvalid_o = wvalid_i;
-    assign rdata_o = wdata_i;
+    assign rdata_o  = wdata_i;
 
     // host facing
     assign wready_o = rready_i;
-    assign full_o = rready_i;
+    assign full_o   = rready_i;
 
     // this avoids lint warnings
     logic unused_clr;
     assign unused_clr = clr_i;
 
-  // Normal FIFO construction
+    // Normal FIFO construction
   end else begin : gen_normal_fifo
 
-    localparam int unsigned PTRV_W    = prim_util_pkg::vbits(Depth);
-    localparam int unsigned PTR_WIDTH = PTRV_W+1;
+    localparam int unsigned PTRV_W = prim_util_pkg::vbits(Depth);
+    localparam int unsigned PTR_WIDTH = PTRV_W + 1;
 
     logic [PTR_WIDTH-1:0] fifo_wptr, fifo_rptr;
-    logic                 fifo_incr_wptr, fifo_incr_rptr, fifo_empty;
+    logic fifo_incr_wptr, fifo_incr_rptr, fifo_empty;
 
     // module under reset flag
     logic under_rst;
@@ -70,11 +70,11 @@ module prim_fifo_sync #(
     end
 
     // create the write and read pointers
-    logic  full, empty;
-    logic  wptr_msb;
-    logic  rptr_msb;
-    logic  [PTRV_W-1:0] wptr_value;
-    logic  [PTRV_W-1:0] rptr_value;
+    logic full, empty;
+    logic wptr_msb;
+    logic rptr_msb;
+    logic [PTRV_W-1:0] wptr_value;
+    logic [PTRV_W-1:0] rptr_value;
 
     assign wptr_msb = fifo_wptr[PTR_WIDTH-1];
     assign rptr_msb = fifo_rptr[PTR_WIDTH-1];
@@ -91,39 +91,39 @@ module prim_fifo_sync #(
     // The latter can be '0' when under reset, while the former is an indication that no more
     // entries can be written.
     assign wready_o = ~full & ~under_rst;
-    assign full_o   = full;
+    assign full_o = full;
     assign rvalid_o = ~empty & ~under_rst;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        fifo_wptr <= {(PTR_WIDTH){1'b0}};
+        fifo_wptr <= {(PTR_WIDTH) {1'b0}};
       end else if (clr_i) begin
-        fifo_wptr <= {(PTR_WIDTH){1'b0}};
+        fifo_wptr <= {(PTR_WIDTH) {1'b0}};
       end else if (fifo_incr_wptr) begin
-        if (fifo_wptr[PTR_WIDTH-2:0] == (PTR_WIDTH-1)'(Depth-1)) begin
-          fifo_wptr <= {~fifo_wptr[PTR_WIDTH-1],{(PTR_WIDTH-1){1'b0}}};
+        if (fifo_wptr[PTR_WIDTH-2:0] == (PTR_WIDTH - 1)'(Depth - 1)) begin
+          fifo_wptr <= {~fifo_wptr[PTR_WIDTH-1], {(PTR_WIDTH - 1) {1'b0}}};
         end else begin
-          fifo_wptr <= fifo_wptr + {{(PTR_WIDTH-1){1'b0}},1'b1};
+          fifo_wptr <= fifo_wptr + {{(PTR_WIDTH - 1) {1'b0}}, 1'b1};
         end
       end
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        fifo_rptr <= {(PTR_WIDTH){1'b0}};
+        fifo_rptr <= {(PTR_WIDTH) {1'b0}};
       end else if (clr_i) begin
-        fifo_rptr <= {(PTR_WIDTH){1'b0}};
+        fifo_rptr <= {(PTR_WIDTH) {1'b0}};
       end else if (fifo_incr_rptr) begin
-        if (fifo_rptr[PTR_WIDTH-2:0] == (PTR_WIDTH-1)'(Depth-1)) begin
-          fifo_rptr <= {~fifo_rptr[PTR_WIDTH-1],{(PTR_WIDTH-1){1'b0}}};
+        if (fifo_rptr[PTR_WIDTH-2:0] == (PTR_WIDTH - 1)'(Depth - 1)) begin
+          fifo_rptr <= {~fifo_rptr[PTR_WIDTH-1], {(PTR_WIDTH - 1) {1'b0}}};
         end else begin
-          fifo_rptr <= fifo_rptr + {{(PTR_WIDTH-1){1'b0}},1'b1};
+          fifo_rptr <= fifo_rptr + {{(PTR_WIDTH - 1) {1'b0}}, 1'b1};
         end
       end
     end
 
-    assign  full       = (fifo_wptr == (fifo_rptr ^ {1'b1,{(PTR_WIDTH-1){1'b0}}}));
-    assign  fifo_empty = (fifo_wptr ==  fifo_rptr);
+    assign full       = (fifo_wptr == (fifo_rptr ^ {1'b1, {(PTR_WIDTH - 1) {1'b0}}}));
+    assign fifo_empty = (fifo_wptr == fifo_rptr);
 
 
     // the generate blocks below are needed to avoid lint errors due to array indexing
@@ -137,7 +137,7 @@ module prim_fifo_sync #(
         if (fifo_incr_wptr) begin
           storage[0] <= wdata_i;
         end
-    // fifo with more than one storage element
+      // fifo with more than one storage element
     end else begin : gen_depth_gt1
       assign storage_rdata = storage[fifo_rptr[PTR_WIDTH-2:0]];
 
@@ -163,7 +163,7 @@ module prim_fifo_sync #(
     end
 
     `ASSERT(depthShallNotExceedParamDepth, !empty |-> depth_o <= DepthW'(Depth))
-  end // block: gen_normal_fifo
+  end  // block: gen_normal_fifo
 
 
   //////////////////////

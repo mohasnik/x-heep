@@ -20,39 +20,39 @@
 ///
 /// This module does not support atomic operations (ATOPs).
 module axi_sim_mem #(
-  /// AXI Address Width
-  parameter int unsigned AddrWidth = 32'd0,
-  /// AXI Data Width
-  parameter int unsigned DataWidth = 32'd0,
-  /// AXI ID Width
-  parameter int unsigned IdWidth = 32'd0,
-  /// AXI User Width.
-  parameter int unsigned UserWidth = 32'd0,
-  /// AXI4 request struct definition
-  parameter type req_t = logic,
-  /// AXI4 response struct definition
-  parameter type rsp_t = logic,
-  /// Warn on accesses to uninitialized bytes
-  parameter bit WarnUninitialized = 1'b0,
-  /// Application delay (measured after rising clock edge)
-  parameter time ApplDelay = 0ps,
-  /// Acquisition delay (measured after rising clock edge)
-  parameter time AcqDelay = 0ps
+    /// AXI Address Width
+    parameter int unsigned AddrWidth = 32'd0,
+    /// AXI Data Width
+    parameter int unsigned DataWidth = 32'd0,
+    /// AXI ID Width
+    parameter int unsigned IdWidth = 32'd0,
+    /// AXI User Width.
+    parameter int unsigned UserWidth = 32'd0,
+    /// AXI4 request struct definition
+    parameter type req_t = logic,
+    /// AXI4 response struct definition
+    parameter type rsp_t = logic,
+    /// Warn on accesses to uninitialized bytes
+    parameter bit WarnUninitialized = 1'b0,
+    /// Application delay (measured after rising clock edge)
+    parameter time ApplDelay = 0ps,
+    /// Acquisition delay (measured after rising clock edge)
+    parameter time AcqDelay = 0ps
 ) (
-  /// Rising-edge clock
-  input  logic clk_i,
-  /// Active-low reset
-  input  logic rst_ni,
-  /// AXI4 request struct
-  input  req_t axi_req_i,
-  /// AXI4 response struct
-  output rsp_t axi_rsp_o
+    /// Rising-edge clock
+    input  logic clk_i,
+    /// Active-low reset
+    input  logic rst_ni,
+    /// AXI4 request struct
+    input  req_t axi_req_i,
+    /// AXI4 response struct
+    output rsp_t axi_rsp_o
 );
 
   localparam int unsigned StrbWidth = DataWidth / 8;
   typedef logic [AddrWidth-1:0] addr_t;
   typedef logic [DataWidth-1:0] data_t;
-  typedef logic [IdWidth-1:0]   id_t;
+  typedef logic [IdWidth-1:0] id_t;
   typedef logic [StrbWidth-1:0] strb_t;
   typedef logic [UserWidth-1:0] user_t;
   `AXI_TYPEDEF_AW_CHAN_T(aw_t, addr_t, id_t, user_t)
@@ -66,7 +66,7 @@ module axi_sim_mem #(
   initial begin
     automatic ar_t ar_queue[$];
     automatic aw_t aw_queue[$];
-    automatic b_t b_queue[$];
+    automatic b_t  b_queue [$];
     automatic shortint unsigned r_cnt = 0, w_cnt = 0;
     axi_rsp_o = '0;
     wait (rst_ni);
@@ -94,12 +94,14 @@ module axi_sim_mem #(
             automatic axi_pkg::burst_t burst = aw_queue[0].burst;
             automatic axi_pkg::len_t len = aw_queue[0].len;
             automatic axi_pkg::size_t size = aw_queue[0].size;
-            automatic addr_t addr = axi_pkg::beat_addr(aw_queue[0].addr, size, len, burst,
-                w_cnt);
-            for (shortint unsigned
-                i_byte = axi_pkg::beat_lower_byte(addr, size, len, burst, StrbWidth, w_cnt);
+            automatic addr_t addr = axi_pkg::beat_addr(aw_queue[0].addr, size, len, burst, w_cnt);
+            for (
+                shortint unsigned i_byte = axi_pkg::beat_lower_byte(
+                    addr, size, len, burst, StrbWidth, w_cnt
+                );
                 i_byte <= axi_pkg::beat_upper_byte(addr, size, len, burst, StrbWidth, w_cnt);
-                i_byte++) begin
+                i_byte++
+            ) begin
               if (axi_req_i.w.strb[i_byte]) begin
                 automatic addr_t byte_addr = (addr / StrbWidth) * StrbWidth + i_byte;
                 mem[byte_addr] = axi_req_i.w.data[i_byte*8+:8];
@@ -107,14 +109,16 @@ module axi_sim_mem #(
             end
             if (w_cnt == aw_queue[0].len) begin
               automatic b_t b_beat = '0;
-              assert (axi_req_i.w.last) else $error("Expected last beat of W burst!");
-              b_beat.id = aw_queue[0].id;
+              assert (axi_req_i.w.last)
+              else $error("Expected last beat of W burst!");
+              b_beat.id   = aw_queue[0].id;
               b_beat.resp = axi_pkg::RESP_OKAY;
               b_queue.push_back(b_beat);
               w_cnt = 0;
               void'(aw_queue.pop_front());
             end else begin
-              assert (!axi_req_i.w.last) else $error("Did not expect last beat of W burst!");
+              assert (!axi_req_i.w.last)
+              else $error("Did not expect last beat of W burst!");
               w_cnt++;
             end
           end
@@ -157,17 +161,20 @@ module axi_sim_mem #(
           automatic addr_t addr = axi_pkg::beat_addr(ar_queue[0].addr, size, len, burst, r_cnt);
           automatic r_t r_beat = '0;
           r_beat.data = 'x;
-          r_beat.id = ar_queue[0].id;
+          r_beat.id   = ar_queue[0].id;
           r_beat.resp = axi_pkg::RESP_OKAY;
-          for (shortint unsigned
-              i_byte = axi_pkg::beat_lower_byte(addr, size, len, burst, StrbWidth, r_cnt);
+          for (
+              shortint unsigned i_byte = axi_pkg::beat_lower_byte(
+                  addr, size, len, burst, StrbWidth, r_cnt
+              );
               i_byte <= axi_pkg::beat_upper_byte(addr, size, len, burst, StrbWidth, r_cnt);
-              i_byte++) begin
+              i_byte++
+          ) begin
             automatic addr_t byte_addr = (addr / StrbWidth) * StrbWidth + i_byte;
             if (!mem.exists(byte_addr)) begin
               if (WarnUninitialized) begin
-                $warning("Access to non-initialized byte at address 0x%016x by ID 0x%x.", byte_addr,
-                    r_beat.id);
+                $warning("Access to non-initialized byte at address 0x%016x by ID 0x%x.",
+                         byte_addr, r_beat.id);
               end
               r_beat.data[i_byte*8+:8] = 'x;
             end else begin
@@ -195,10 +202,14 @@ module axi_sim_mem #(
 
   // Parameter Assertions
   initial begin
-    assert (AddrWidth != 0) else $fatal("AddrWidth must be non-zero!", 1);
-    assert (DataWidth != 0) else $fatal("DataWidth must be non-zero!", 1);
-    assert (IdWidth != 0) else $fatal("IdWidth must be non-zero!", 1);
-    assert (UserWidth != 0) else $fatal("UserWidth must be non-zero!", 1);
+    assert (AddrWidth != 0)
+    else $fatal("AddrWidth must be non-zero!", 1);
+    assert (DataWidth != 0)
+    else $fatal("DataWidth must be non-zero!", 1);
+    assert (IdWidth != 0)
+    else $fatal("IdWidth must be non-zero!", 1);
+    assert (UserWidth != 0)
+    else $fatal("UserWidth must be non-zero!", 1);
   end
 
 endmodule

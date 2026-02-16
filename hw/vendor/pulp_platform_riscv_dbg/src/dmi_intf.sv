@@ -7,10 +7,10 @@
 
 // The DV interface additionally carries a clock signal.
 interface DMI_BUS_DV #(
-  /// The width of the address.
-  parameter int ADDR_WIDTH = -1
+    /// The width of the address.
+    parameter int ADDR_WIDTH = -1
 ) (
-  input logic clk_i
+    input logic clk_i
 );
 
   import dm::*;
@@ -30,21 +30,15 @@ interface DMI_BUS_DV #(
   logic    p_valid;
   logic    p_ready;
 
-  modport in  (
-    input  q_addr, q_op, q_data, q_valid, p_ready,
-    output q_ready, p_data, p_resp, p_valid
+  modport in(input q_addr, q_op, q_data, q_valid, p_ready, output q_ready, p_data, p_resp, p_valid);
+  modport out(
+      output q_addr, q_op, q_data, q_valid, p_ready,
+      input q_ready, p_data, p_resp, p_valid
   );
-  modport out (
-    output q_addr, q_op, q_data, q_valid, p_ready,
-    input  q_ready, p_data, p_resp, p_valid
-  );
-  modport monitor (
-    input q_addr, q_op, q_data, q_valid, p_ready,
-          q_ready, p_data, p_resp, p_valid
-  );
+  modport monitor(input q_addr, q_op, q_data, q_valid, p_ready, q_ready, p_data, p_resp, p_valid);
 
   // pragma translate_off
-  `ifndef VERILATOR
+`ifndef VERILATOR
   assert property (@(posedge clk_i) (q_valid && !q_ready |=> $stable(q_addr)));
   assert property (@(posedge clk_i) (q_valid && !q_ready |=> $stable(q_op)));
   assert property (@(posedge clk_i) (q_valid && !q_ready |=> $stable(q_data)));
@@ -53,7 +47,7 @@ interface DMI_BUS_DV #(
   assert property (@(posedge clk_i) (p_valid && !p_ready |=> $stable(p_data)));
   assert property (@(posedge clk_i) (p_valid && !p_ready |=> $stable(p_resp)));
   assert property (@(posedge clk_i) (p_valid && !p_ready |=> p_valid));
-  `endif
+`endif
   // pragma translate_on
 
 endinterface

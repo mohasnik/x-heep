@@ -23,14 +23,16 @@
 //
 // Contributors: Arjan Bink <arjan.bink@silabs.com>
 
-module cv32e40x_rvfi_data_obi import cv32e40x_pkg::*; import cv32e40x_rvfi_pkg::*;
+module cv32e40x_rvfi_data_obi
+  import cv32e40x_pkg::*;
+  import cv32e40x_rvfi_pkg::*;
 (
-  input logic           clk,
-  input logic           rst_n,
-  input obi_data_req_t  buffer_trans_i,
-  input logic           buffer_trans_valid_i,
-  output obi_data_req_t lsu_data_trans_o,
-  output logic          lsu_data_trans_valid_o
+    input  logic          clk,
+    input  logic          rst_n,
+    input  obi_data_req_t buffer_trans_i,
+    input  logic          buffer_trans_valid_i,
+    output obi_data_req_t lsu_data_trans_o,
+    output logic          lsu_data_trans_valid_o
 );
 
   // Intermediate rotate signal, as direct part-select not supported in all tools

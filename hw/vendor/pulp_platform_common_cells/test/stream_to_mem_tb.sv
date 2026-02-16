@@ -13,8 +13,8 @@
 
 // Test bench for `stream_to_mem`
 module stream_to_mem_tb #(
-  parameter int unsigned NumReq   = 32'd10000,
-  parameter int unsigned BufDepth = 32'd1
+    parameter int unsigned NumReq   = 32'd10000,
+    parameter int unsigned BufDepth = 32'd1
 );
 
   localparam time CyclTime = 10ns;
@@ -25,10 +25,10 @@ module stream_to_mem_tb #(
 
 
   // Signals
-  logic     clk,       rst_n,      sim_done;
-  payload_t req,       resp,       mem_req,       mem_resp;
-  logic     req_valid, resp_valid, mem_req_valid, mem_resp_valid;
-  logic     req_ready, resp_ready, mem_req_ready;
+  logic clk, rst_n, sim_done;
+  payload_t req, resp, mem_req, mem_resp;
+  logic req_valid, resp_valid, mem_req_valid, mem_resp_valid;
+  logic req_ready, resp_ready, mem_req_ready;
 
   // check FIFO
   payload_t data_fifo[$];
@@ -73,7 +73,8 @@ module stream_to_mem_tb #(
       #TestTime;
       if (resp_valid && resp_ready) begin
         test_data = data_fifo.pop_front();
-        assert(test_data === resp) else $error("test_data: %h, resp_data: %0h", test_data, resp);
+        assert (test_data === resp)
+        else $error("test_data: %h, resp_data: %0h", test_data, resp);
         num_tested++;
       end
       @(posedge clk);
@@ -122,32 +123,32 @@ module stream_to_mem_tb #(
 
   // CLK generator
   clk_rst_gen #(
-    .ClkPeriod    ( CyclTime ),
-    .RstClkCycles ( 10       )
+      .ClkPeriod   (CyclTime),
+      .RstClkCycles(10)
   ) i_clk_rst_gen (
-    .clk_o  ( clk   ),
-    .rst_no ( rst_n )
+      .clk_o (clk),
+      .rst_no(rst_n)
   );
 
   // DUT
   stream_to_mem #(
-    .mem_req_t  ( payload_t ),
-    .mem_resp_t ( payload_t ),
-    .BufDepth   ( BufDepth  )
+      .mem_req_t (payload_t),
+      .mem_resp_t(payload_t),
+      .BufDepth  (BufDepth)
   ) i_stream_to_mem_dut (
-    .clk_i            ( clk            ),
-    .rst_ni           ( rst_n          ),
-    .req_i            ( req            ),
-    .req_valid_i      ( req_valid      ),
-    .req_ready_o      ( req_ready      ),
-    .resp_o           ( resp           ),
-    .resp_valid_o     ( resp_valid     ),
-    .resp_ready_i     ( resp_ready     ),
-    .mem_req_o        ( mem_req        ),
-    .mem_req_valid_o  ( mem_req_valid  ),
-    .mem_req_ready_i  ( mem_req_ready  ),
-    .mem_resp_i       ( mem_resp       ),
-    .mem_resp_valid_i ( mem_resp_valid )
+      .clk_i           (clk),
+      .rst_ni          (rst_n),
+      .req_i           (req),
+      .req_valid_i     (req_valid),
+      .req_ready_o     (req_ready),
+      .resp_o          (resp),
+      .resp_valid_o    (resp_valid),
+      .resp_ready_i    (resp_ready),
+      .mem_req_o       (mem_req),
+      .mem_req_valid_o (mem_req_valid),
+      .mem_req_ready_i (mem_req_ready),
+      .mem_resp_i      (mem_resp),
+      .mem_resp_valid_i(mem_resp_valid)
   );
 
 endmodule

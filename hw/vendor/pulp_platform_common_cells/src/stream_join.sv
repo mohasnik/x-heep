@@ -15,17 +15,17 @@
 /// dependency rules as in AXI4) to a single output stream.  The output handshake happens only once
 /// all inputs are valid.  The data channel flows outside of this module.
 module stream_join #(
-  /// Number of input streams
-  parameter int unsigned N_INP = 32'd0 // Synopsys DC requires a default value for parameters.
+    /// Number of input streams
+    parameter int unsigned N_INP = 32'd0  // Synopsys DC requires a default value for parameters.
 ) (
-  /// Input streams valid handshakes
-  input  logic  [N_INP-1:0] inp_valid_i,
-  /// Input streams ready handshakes
-  output logic  [N_INP-1:0] inp_ready_o,
-  /// Output stream valid handshake
-  output logic              oup_valid_o,
-  /// Output stream ready handshake
-  input  logic              oup_ready_i
+    /// Input streams valid handshakes
+    input  logic [N_INP-1:0] inp_valid_i,
+    /// Input streams ready handshakes
+    output logic [N_INP-1:0] inp_ready_o,
+    /// Output stream valid handshake
+    output logic             oup_valid_o,
+    /// Output stream ready handshake
+    input  logic             oup_ready_i
 );
 
   assign oup_valid_o = (&inp_valid_i);
@@ -33,11 +33,12 @@ module stream_join #(
     assign inp_ready_o[i] = oup_valid_o & oup_ready_i;
   end
 
-// pragma translate_off
+  // pragma translate_off
 `ifndef VERILATOR
-  initial begin: p_assertions
-    assert (N_INP >= 1) else $fatal(1, "N_INP must be at least 1!");
+  initial begin : p_assertions
+    assert (N_INP >= 1)
+    else $fatal(1, "N_INP must be at least 1!");
   end
 `endif
-// pragma translate_on
+  // pragma translate_on
 endmodule

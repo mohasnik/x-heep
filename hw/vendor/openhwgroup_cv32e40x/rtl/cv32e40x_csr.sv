@@ -8,12 +8,12 @@
 
 
 module cv32e40x_csr #(
-    parameter int unsigned    WIDTH      = 32,
-    parameter bit [WIDTH-1:0] RESETVALUE = '0,
-    parameter bit [WIDTH-1:0] MASK       = '1
- ) (
-    input  logic             clk,
-    input  logic             rst_n,
+    parameter int unsigned             WIDTH      = 32,
+    parameter bit          [WIDTH-1:0] RESETVALUE = '0,
+    parameter bit          [WIDTH-1:0] MASK       = '1
+) (
+    input logic clk,
+    input logic rst_n,
 
     input  logic [WIDTH-1:0] wr_data_i,
     input  logic             wr_en_i,
@@ -37,7 +37,7 @@ module cv32e40x_csr #(
         // Bits with mask cleared are tied off to the reset value
         assign rdata_q[i] = RESETVALUE[i];
       end
-    end // for
+    end  // for
   endgenerate
 
   assign rd_data_o = rdata_q;

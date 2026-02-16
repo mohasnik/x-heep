@@ -19,20 +19,20 @@ module cdc_2phase_tb;
 
   time tck_src = 10ns;
   time tck_dst = 10ns;
-  bit src_done = 0;
-  bit dst_done = 0;
-  bit done;
+  bit  src_done = 0;
+  bit  dst_done = 0;
+  bit  done;
   assign done = src_done & dst_done;
 
   // Signals of the design under test.
-  logic        src_rst_ni  = 1;
-  logic        src_clk_i   = 0;
-  logic [31:0] src_data_i  = 0;
+  logic        src_rst_ni = 1;
+  logic        src_clk_i = 0;
+  logic [31:0] src_data_i = 0;
   logic        src_valid_i = 0;
   logic        src_ready_o;
 
-  logic        dst_rst_ni  = 1;
-  logic        dst_clk_i   = 0;
+  logic        dst_rst_ni = 1;
+  logic        dst_clk_i = 0;
   logic [31:0] dst_data_o;
   logic        dst_valid_o;
   logic        dst_ready_i = 0;
@@ -56,7 +56,7 @@ module cdc_2phase_tb;
   initial begin
     static int num_items, num_clks;
     num_items = 10;
-    num_clks = 0;
+    num_clks  = 0;
     #10ns;
     src_rst_ni = 0;
     #10ns;
@@ -64,17 +64,17 @@ module cdc_2phase_tb;
     #10ns;
     while (!done) begin
       src_clk_i = 1;
-      #(tck_src/2);
+      #(tck_src / 2);
       src_clk_i = 0;
-      #(tck_src/2);
+      #(tck_src / 2);
 
       // Modulate the clock frequency.
       num_clks++;
       if (num_sent >= num_items && num_clks > 10) begin
         num_items = num_sent + 10;
-        num_clks = 0;
-        tck_src = $urandom_range(1000, 10000) * 1ps;
-        assert(tck_src > 0);
+        num_clks  = 0;
+        tck_src   = $urandom_range(1000, 10000) * 1ps;
+        assert (tck_src > 0);
       end
     end
   end
@@ -82,7 +82,7 @@ module cdc_2phase_tb;
   initial begin
     static int num_items, num_clks;
     num_items = 10;
-    num_clks = 0;
+    num_clks  = 0;
     #10ns;
     dst_rst_ni = 0;
     #10ns;
@@ -90,24 +90,24 @@ module cdc_2phase_tb;
     #10ns;
     while (!done) begin
       dst_clk_i = 1;
-      #(tck_dst/2);
+      #(tck_dst / 2);
       dst_clk_i = 0;
-      #(tck_dst/2);
+      #(tck_dst / 2);
 
       // Modulate the clock frequency.
       num_clks++;
       if (num_received >= num_items && num_clks > 10) begin
         num_items = num_received + 10;
-        num_clks = 0;
-        tck_dst = $urandom_range(1000, 10000) * 1ps;
-        assert(tck_dst > 0);
+        num_clks  = 0;
+        tck_dst   = $urandom_range(1000, 10000) * 1ps;
+        assert (tck_dst > 0);
       end
     end
   end
 
   // Source side sender.
   task src_cycle_start;
-    #(tck_src*0.8);
+    #(tck_src * 0.8);
   endtask
 
   task src_cycle_end;
@@ -117,12 +117,12 @@ module cdc_2phase_tb;
   initial begin
     @(negedge src_rst_ni);
     @(posedge src_rst_ni);
-    repeat(3) @(posedge src_clk_i);
+    repeat (3) @(posedge src_clk_i);
     for (int i = 0; i < UNTIL; i++) begin
       static integer stimulus;
       stimulus = $random();
-      src_data_i  <= #(tck_src*0.2) stimulus;
-      src_valid_i <= #(tck_src*0.2) 1;
+      src_data_i  <= #(tck_src * 0.2) stimulus;
+      src_valid_i <= #(tck_src * 0.2) 1;
       dst_mbox.put(stimulus);
       num_sent++;
       src_cycle_start();
@@ -131,14 +131,14 @@ module cdc_2phase_tb;
         src_cycle_start();
       end
       src_cycle_end();
-      src_valid_i <= #(tck_src*0.2) 0;
+      src_valid_i <= #(tck_src * 0.2) 0;
     end
     src_done = 1;
   end
 
   // Destination side receiver.
   task dst_cycle_start;
-    #(tck_dst*0.8);
+    #(tck_dst * 0.8);
   endtask
 
   task dst_cycle_end;
@@ -148,11 +148,11 @@ module cdc_2phase_tb;
   initial begin
     @(negedge dst_rst_ni);
     @(posedge dst_rst_ni);
-    repeat(3) @(posedge dst_clk_i);
+    repeat (3) @(posedge dst_clk_i);
     while (!src_done || dst_mbox.num() > 0) begin
       static integer expected, actual;
       static int cooldown;
-      dst_ready_i <= #(tck_dst*0.2) 1;
+      dst_ready_i <= #(tck_dst * 0.2) 1;
       dst_cycle_start();
       while (!dst_valid_o) begin
         dst_cycle_end();
@@ -171,11 +171,11 @@ module cdc_2phase_tb;
         end
       end
       dst_cycle_end();
-      dst_ready_i <= #(tck_dst*0.2) 0;
+      dst_ready_i <= #(tck_dst * 0.2) 0;
 
       // Insert a random cooldown period.
       cooldown = $urandom_range(0, 40);
-      if (cooldown < 20) repeat(cooldown) @(posedge dst_clk_i);
+      if (cooldown < 20) repeat (cooldown) @(posedge dst_clk_i);
     end
 
     if (num_sent != num_received) begin
@@ -194,19 +194,19 @@ endmodule
 
 
 module cdc_2phase_tb_delay_injector #(
-  parameter time MAX_DELAY = 0ns
-)(
-  input  logic        src_rst_ni,
-  input  logic        src_clk_i,
-  input  logic [31:0] src_data_i,
-  input  logic        src_valid_i,
-  output logic        src_ready_o,
+    parameter time MAX_DELAY = 0ns
+) (
+    input  logic        src_rst_ni,
+    input  logic        src_clk_i,
+    input  logic [31:0] src_data_i,
+    input  logic        src_valid_i,
+    output logic        src_ready_o,
 
-  input  logic        dst_rst_ni,
-  input  logic        dst_clk_i,
-  output logic [31:0] dst_data_o,
-  output logic        dst_valid_o,
-  input  logic        dst_ready_i
+    input  logic        dst_rst_ni,
+    input  logic        dst_clk_i,
+    output logic [31:0] dst_data_o,
+    output logic        dst_valid_o,
+    input  logic        dst_ready_i
 );
 
   logic async_req_o, async_req_i;
@@ -231,25 +231,25 @@ module cdc_2phase_tb_delay_injector #(
   end
 
   cdc_2phase_src #(logic [31:0]) i_src (
-    .rst_ni       ( src_rst_ni   ),
-    .clk_i        ( src_clk_i    ),
-    .data_i       ( src_data_i   ),
-    .valid_i      ( src_valid_i  ),
-    .ready_o      ( src_ready_o  ),
-    .async_req_o  ( async_req_o  ),
-    .async_ack_i  ( async_ack_i  ),
-    .async_data_o ( async_data_o )
+      .rst_ni      (src_rst_ni),
+      .clk_i       (src_clk_i),
+      .data_i      (src_data_i),
+      .valid_i     (src_valid_i),
+      .ready_o     (src_ready_o),
+      .async_req_o (async_req_o),
+      .async_ack_i (async_ack_i),
+      .async_data_o(async_data_o)
   );
 
   cdc_2phase_dst #(logic [31:0]) i_dst (
-    .rst_ni       ( dst_rst_ni   ),
-    .clk_i        ( dst_clk_i    ),
-    .data_o       ( dst_data_o   ),
-    .valid_o      ( dst_valid_o  ),
-    .ready_i      ( dst_ready_i  ),
-    .async_req_i  ( async_req_i  ),
-    .async_ack_o  ( async_ack_o  ),
-    .async_data_i ( async_data_i )
+      .rst_ni      (dst_rst_ni),
+      .clk_i       (dst_clk_i),
+      .data_o      (dst_data_o),
+      .valid_o     (dst_valid_o),
+      .ready_i     (dst_ready_i),
+      .async_req_i (async_req_i),
+      .async_ack_o (async_ack_o),
+      .async_data_i(async_data_i)
   );
 
 endmodule

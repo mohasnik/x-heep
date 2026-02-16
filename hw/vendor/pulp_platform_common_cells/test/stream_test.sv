@@ -16,22 +16,16 @@
 package stream_test;
 
   class stream_driver #(
-    /// Payload data type.
-    parameter type payload_t = logic,
-    /// Stimuli application time.
-    parameter time TA = 2ns,
-    /// Stimuli test time.
-    parameter time TT = 8ns
+      /// Payload data type.
+      parameter type payload_t = logic,
+      /// Stimuli application time.
+      parameter time TA = 2ns,
+      /// Stimuli test time.
+      parameter time TT = 8ns
   );
-    virtual STREAM_DV #(
-      .payload_t (payload_t)
-    ) stream;
+    virtual STREAM_DV #(.payload_t(payload_t)) stream;
 
-    function new (
-      virtual STREAM_DV #(
-        .payload_t (payload_t)
-      ) stream
-    );
+    function new(virtual STREAM_DV #(.payload_t(payload_t)) stream);
       this.stream = stream;
     endfunction
 
@@ -52,11 +46,14 @@ package stream_test;
     endtask
 
     /// Send a packet on the stream interface.
-    task automatic send (input payload_t data);
+    task automatic send(input payload_t data);
       stream.data  <= #TA data;
       stream.valid <= #TA 1'b1;
       cycle_start();
-      while (stream.ready != 1) begin cycle_end(); cycle_start(); end
+      while (stream.ready != 1) begin
+        cycle_end();
+        cycle_start();
+      end
       cycle_end();
       stream.valid <= #TA 1'b0;
     endtask
@@ -65,7 +62,10 @@ package stream_test;
     task automatic recv(output payload_t data);
       stream.ready <= #TA 1'b1;
       cycle_start();
-      while (stream.valid != 1) begin cycle_end(); cycle_start(); end
+      while (stream.valid != 1) begin
+        cycle_end();
+        cycle_start();
+      end
       data = stream.data;
       cycle_end();
       stream.ready <= #TA 1'b0;

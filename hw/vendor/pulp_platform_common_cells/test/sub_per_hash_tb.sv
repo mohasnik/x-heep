@@ -17,29 +17,29 @@ module sub_per_hash_tb;
   // TB parameters
   //---------------------------------------------------------
   localparam time TCycle = 10ns;
-  localparam time TAppli =  2ns;
-  localparam time TTest  =  8ns;
+  localparam time TAppli = 2ns;
+  localparam time TTest = 8ns;
   localparam longint unsigned MaxCycles = 64'd100000000;
 
   //---------------------------------------------------------
   // DUT parameters / signals
   //---------------------------------------------------------
-  localparam int unsigned DataWidth   = 32'd11;
-  localparam int unsigned HashWidth   = 32'd5;
-  localparam int unsigned NoHashes    = 32'd3;
-  localparam int unsigned NoRounds    = 32'd1;
-  typedef logic [DataWidth-1:0]    data_t;
-  typedef logic [HashWidth-1:0]    hash_t;
+  localparam int unsigned DataWidth = 32'd11;
+  localparam int unsigned HashWidth = 32'd5;
+  localparam int unsigned NoHashes = 32'd3;
+  localparam int unsigned NoRounds = 32'd1;
+  typedef logic [DataWidth-1:0] data_t;
+  typedef logic [HashWidth-1:0] hash_t;
   typedef logic [2**HashWidth-1:0] onehot_hash_t;
 
   localparam cb_filter_pkg::cb_seed_t [NoHashes-1:0] Seeds = '{
-    '{PermuteSeed: 32'd299034753, XorSeed: 32'd4094834 },
-    '{PermuteSeed: 32'd19921030,  XorSeed: 32'd995713  },
-    '{PermuteSeed: 32'd294388,    XorSeed: 32'd65146511}
+      '{PermuteSeed: 32'd299034753, XorSeed: 32'd4094834},
+      '{PermuteSeed: 32'd19921030, XorSeed: 32'd995713},
+      '{PermuteSeed: 32'd294388, XorSeed: 32'd65146511}
   };
 
-  logic  clk;
-  logic  rst_n;
+  logic                        clk;
+  logic                        rst_n;
 
   data_t                       data;
   hash_t        [NoHashes-1:0] hash;
@@ -49,11 +49,11 @@ module sub_per_hash_tb;
   // Clock generator
   // -------------
   clk_rst_gen #(
-    .ClkPeriod    ( TCycle ),
-    .RstClkCycles (      1 )
+      .ClkPeriod   (TCycle),
+      .RstClkCycles(1)
   ) i_clk_gen (
-    .clk_o  (   clk ),
-    .rst_no ( rst_n )
+      .clk_o (clk),
+      .rst_no(rst_n)
   );
 
   // ------------------------
@@ -71,7 +71,7 @@ module sub_per_hash_tb;
     @(posedge rst_n);
     repeat (10) @(posedge clk);
 
-    for (longint unsigned i = 0; i < 2**DataWidth; i++) begin
+    for (longint unsigned i = 0; i < 2 ** DataWidth; i++) begin
       set_data(i);
     end
 
@@ -88,7 +88,7 @@ module sub_per_hash_tb;
     @(posedge clk);
   endtask : cycle_end
 
-  task set_data (input longint unsigned nbr);
+  task set_data(input longint unsigned nbr);
     data <= #TAppli data_t'(nbr);
     cycle_end();
   endtask : set_data
@@ -100,15 +100,15 @@ module sub_per_hash_tb;
   // generate duts
   for (genvar i = 0; i < NoHashes; i++) begin : gen_hash_dut
     sub_per_hash #(
-      .InpWidth   ( DataWidth            ),
-      .HashWidth  ( HashWidth            ),
-      .NoRounds   ( NoRounds             ),
-      .PermuteKey ( Seeds[i].PermuteSeed ),
-      .XorKey     ( Seeds[i].XorSeed     )
+        .InpWidth  (DataWidth),
+        .HashWidth (HashWidth),
+        .NoRounds  (NoRounds),
+        .PermuteKey(Seeds[i].PermuteSeed),
+        .XorKey    (Seeds[i].XorSeed)
     ) i_hash (
-      .data_i        ( data           ),
-      .hash_o        ( hash[i]        ),
-      .hash_onehot_o ( onehot_hash[i] )
+        .data_i       (data),
+        .hash_o       (hash[i]),
+        .hash_onehot_o(onehot_hash[i])
     );
   end
 endmodule

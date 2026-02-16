@@ -26,22 +26,21 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_a_decoder import cv32e40x_pkg::*;
-  #(
-      parameter a_ext_e A_EXT = A
-  )
-  (
-   // from IF/ID pipeline
-   input logic [31:0] instr_rdata_i,
+module cv32e40x_a_decoder
+  import cv32e40x_pkg::*;
+#(
+    parameter a_ext_e A_EXT = A
+) (
+    // from IF/ID pipeline
+    input logic [31:0] instr_rdata_i,
 
-   output             decoder_ctrl_t decoder_ctrl_o
-   );
+    output decoder_ctrl_t decoder_ctrl_o
+);
 
   localparam A_LRSC = (A_EXT == A) || (A_EXT == ZALRSC);
-  localparam A_AMO  = (A_EXT == A);
+  localparam A_AMO = (A_EXT == A);
 
-  always_comb
-  begin
+  always_comb begin
 
     // Default assignments
     decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
@@ -50,13 +49,13 @@ module cv32e40x_a_decoder import cv32e40x_pkg::*;
     unique case (instr_rdata_i[6:0])
 
       OPCODE_AMO: begin
-        if (instr_rdata_i[14:12] == 3'b010) begin // RV32A Extension (word)
+        if (instr_rdata_i[14:12] == 3'b010) begin  // RV32A Extension (word)
           decoder_ctrl_o.lsu_en           = 1'b1;
           decoder_ctrl_o.rf_re[0]         = 1'b1;
           decoder_ctrl_o.rf_we            = 1'b1;
           decoder_ctrl_o.alu_op_a_mux_sel = OP_A_REGA_OR_FWD;
           decoder_ctrl_o.alu_op_b_mux_sel = OP_B_NONE;
-          decoder_ctrl_o.lsu_size         = 2'b10; // All atomics are 32-bit word accesses
+          decoder_ctrl_o.lsu_size         = 2'b10;  // All atomics are 32-bit word accesses
           decoder_ctrl_o.lsu_sext         = 1'b1;
           decoder_ctrl_o.lsu_atop         = {1'b1, instr_rdata_i[31:27]};
 
@@ -75,36 +74,27 @@ module cv32e40x_a_decoder import cv32e40x_pkg::*;
             end
             AMO_SC: begin
               if (A_LRSC) begin
-                decoder_ctrl_o.rf_re[1]     = 1'b1;             // Used for operand C
-                decoder_ctrl_o.op_c_mux_sel = OP_C_REGB_OR_FWD; // Used for write data
+                decoder_ctrl_o.rf_re[1]     = 1'b1;  // Used for operand C
+                decoder_ctrl_o.op_c_mux_sel = OP_C_REGB_OR_FWD;  // Used for write data
                 decoder_ctrl_o.lsu_we       = 1'b1;
               end else begin
                 decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
               end
             end
-            AMO_SWAP,
-            AMO_ADD,
-            AMO_XOR,
-            AMO_AND,
-            AMO_OR,
-            AMO_MIN,
-            AMO_MAX,
-            AMO_MINU,
-            AMO_MAXU: begin
+            AMO_SWAP, AMO_ADD, AMO_XOR, AMO_AND, AMO_OR, AMO_MIN, AMO_MAX, AMO_MINU, AMO_MAXU: begin
               if (A_AMO) begin
-                decoder_ctrl_o.rf_re[1]     = 1'b1;             // Used for operand C
-                decoder_ctrl_o.op_c_mux_sel = OP_C_REGB_OR_FWD; // Used for write data
+                decoder_ctrl_o.rf_re[1]     = 1'b1;  // Used for operand C
+                decoder_ctrl_o.op_c_mux_sel = OP_C_REGB_OR_FWD;  // Used for write data
                 decoder_ctrl_o.lsu_we       = 1'b1;
               end else begin
                 decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
               end
             end
-            default : begin
+            default: begin
               decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
             end
           endcase
-        end
-        else begin
+        end else begin
           // No match
           decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
         end

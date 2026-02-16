@@ -26,31 +26,30 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_m_decoder import cv32e40x_pkg::*;
-  #(
+module cv32e40x_m_decoder
+  import cv32e40x_pkg::*;
+#(
     parameter m_ext_e M_EXT = M
-    )
-  (
-   // from IF/ID pipeline
-   input logic [31:0] instr_rdata_i,
-   output             decoder_ctrl_t decoder_ctrl_o
-   );
-  
-  always_comb
-  begin
+) (
+    // from IF/ID pipeline
+    input  logic          [31:0] instr_rdata_i,
+    output decoder_ctrl_t        decoder_ctrl_o
+);
+
+  always_comb begin
 
     // Default assignments
     decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
     decoder_ctrl_o.illegal_insn = 1'b0;
 
     unique case (instr_rdata_i[6:0])
-     
+
       OPCODE_OP: begin
 
         // Common signals for all MUL/DIV 
-        decoder_ctrl_o.rf_we    = 1'b1;
-        decoder_ctrl_o.rf_re[0] = 1'b1;
-        decoder_ctrl_o.rf_re[1] = 1'b1;
+        decoder_ctrl_o.rf_we            = 1'b1;
+        decoder_ctrl_o.rf_re[0]         = 1'b1;
+        decoder_ctrl_o.rf_re[1]         = 1'b1;
 
         // Multiplier and divider has its own operand registers.
         // Settings will be overruled for div(u) and rem(u) which rely on ALU.
@@ -58,28 +57,40 @@ module cv32e40x_m_decoder import cv32e40x_pkg::*;
         decoder_ctrl_o.alu_op_b_mux_sel = OP_B_NONE;
         decoder_ctrl_o.op_c_mux_sel     = OP_C_NONE;
 
-        unique case ({instr_rdata_i[31:25], instr_rdata_i[14:12]})
+        unique case ({
+          instr_rdata_i[31:25], instr_rdata_i[14:12]
+        })
           // supported RV32M instructions
-          {7'b000_0001, 3'b000}: begin // mul
-            decoder_ctrl_o.mul_en        = 1'b1;
-            decoder_ctrl_o.mul_operator  = MUL_M32;
+          {
+            7'b000_0001, 3'b000
+          } : begin  // mul
+            decoder_ctrl_o.mul_en       = 1'b1;
+            decoder_ctrl_o.mul_operator = MUL_M32;
           end
-          {7'b000_0001, 3'b001}: begin // mulh
-            decoder_ctrl_o.mul_en           = 1'b1;
-            decoder_ctrl_o.mul_signed_mode  = 2'b11;
-            decoder_ctrl_o.mul_operator     = MUL_H;
+          {
+            7'b000_0001, 3'b001
+          } : begin  // mulh
+            decoder_ctrl_o.mul_en          = 1'b1;
+            decoder_ctrl_o.mul_signed_mode = 2'b11;
+            decoder_ctrl_o.mul_operator    = MUL_H;
           end
-          {7'b000_0001, 3'b010}: begin // mulhsu
-            decoder_ctrl_o.mul_en           = 1'b1;
-            decoder_ctrl_o.mul_signed_mode  = 2'b01;
-            decoder_ctrl_o.mul_operator     = MUL_H;
+          {
+            7'b000_0001, 3'b010
+          } : begin  // mulhsu
+            decoder_ctrl_o.mul_en          = 1'b1;
+            decoder_ctrl_o.mul_signed_mode = 2'b01;
+            decoder_ctrl_o.mul_operator    = MUL_H;
           end
-          {7'b000_0001, 3'b011}: begin // mulhu
-            decoder_ctrl_o.mul_en           = 1'b1;
-            decoder_ctrl_o.mul_signed_mode  = 2'b00;
-            decoder_ctrl_o.mul_operator     = MUL_H;
+          {
+            7'b000_0001, 3'b011
+          } : begin  // mulhu
+            decoder_ctrl_o.mul_en          = 1'b1;
+            decoder_ctrl_o.mul_signed_mode = 2'b00;
+            decoder_ctrl_o.mul_operator    = MUL_H;
           end
-          {7'b000_0001, 3'b100}: begin // div
+          {
+            7'b000_0001, 3'b100
+          } : begin  // div
             if (M_EXT == M) begin
               decoder_ctrl_o.div_en       = 1'b1;
               decoder_ctrl_o.div_operator = DIV_DIV;
@@ -88,7 +99,9 @@ module cv32e40x_m_decoder import cv32e40x_pkg::*;
               decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
             end
           end
-          {7'b000_0001, 3'b101}: begin // divu
+          {
+            7'b000_0001, 3'b101
+          } : begin  // divu
             if (M_EXT == M) begin
               decoder_ctrl_o.div_en       = 1'b1;
               decoder_ctrl_o.div_operator = DIV_DIVU;
@@ -97,7 +110,9 @@ module cv32e40x_m_decoder import cv32e40x_pkg::*;
               decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
             end
           end
-          {7'b000_0001, 3'b110}: begin // rem
+          {
+            7'b000_0001, 3'b110
+          } : begin  // rem
             if (M_EXT == M) begin
               decoder_ctrl_o.div_en       = 1'b1;
               decoder_ctrl_o.div_operator = DIV_REM;
@@ -106,7 +121,9 @@ module cv32e40x_m_decoder import cv32e40x_pkg::*;
               decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
             end
           end
-          {7'b000_0001, 3'b111}: begin // remu
+          {
+            7'b000_0001, 3'b111
+          } : begin  // remu
             if (M_EXT == M) begin
               decoder_ctrl_o.div_en       = 1'b1;
               decoder_ctrl_o.div_operator = DIV_REMU;
@@ -122,15 +139,15 @@ module cv32e40x_m_decoder import cv32e40x_pkg::*;
           end
         endcase
 
-      end // case: OPCODE_OP
-      
+      end  // case: OPCODE_OP
+
       default: begin
         // No match
         decoder_ctrl_o = DECODER_CTRL_ILLEGAL_INSN;
       end
-      
-    endcase // unique case (instr_rdata_i[6:0])
-    
-  end // always_comb
+
+    endcase  // unique case (instr_rdata_i[6:0])
+
+  end  // always_comb
 
 endmodule

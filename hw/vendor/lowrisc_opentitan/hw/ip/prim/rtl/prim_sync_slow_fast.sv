@@ -13,25 +13,28 @@
 // A ratio of at-least 10:1 in clock speeds is recommended.
 
 module prim_sync_slow_fast #(
-  parameter int unsigned Width = 32
+    parameter int unsigned Width = 32
 ) (
-  input  logic             clk_slow_i,
-  input  logic             clk_fast_i,
-  input  logic             rst_fast_ni,
-  input  logic [Width-1:0] wdata_i,    // Slow domain
-  output logic [Width-1:0] rdata_o     // Fast domain
+    input  logic             clk_slow_i,
+    input  logic             clk_fast_i,
+    input  logic             rst_fast_ni,
+    input  logic [Width-1:0] wdata_i,      // Slow domain
+    output logic [Width-1:0] rdata_o       // Fast domain
 );
 
-  logic             sync_clk_slow, sync_clk_slow_q;
+  logic sync_clk_slow, sync_clk_slow_q;
   logic             wdata_en;
   logic [Width-1:0] wdata_q;
 
   // Synchronize the slow clock to the fast domain
-  prim_flop_2sync #(.Width(1)) sync_slow_clk (
-    .clk_i    (clk_fast_i),
-    .rst_ni   (rst_fast_ni),
-    .d_i      (clk_slow_i),
-    .q_o      (sync_clk_slow));
+  prim_flop_2sync #(
+      .Width(1)
+  ) sync_slow_clk (
+      .clk_i (clk_fast_i),
+      .rst_ni(rst_fast_ni),
+      .d_i   (clk_slow_i),
+      .q_o   (sync_clk_slow)
+  );
 
   // Register the synchronized clk
   always_ff @(posedge clk_fast_i or negedge rst_fast_ni) begin

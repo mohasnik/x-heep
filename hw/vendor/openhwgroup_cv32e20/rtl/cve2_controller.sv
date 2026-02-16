@@ -12,98 +12,106 @@
 `include "dv_fcov_macros.svh"
 
 module cve2_controller #(
- ) (
-  input  logic                  clk_i,
-  input  logic                  rst_ni,
+) (
+    input logic clk_i,
+    input logic rst_ni,
 
-  input  logic                  fetch_enable_i,          // core can fetch instructions leave RESET state
-  output logic                  ctrl_busy_o,             // core is busy processing instrs
+    input  logic fetch_enable_i,  // core can fetch instructions leave RESET state
+    output logic ctrl_busy_o,     // core is busy processing instrs
 
-  // decoder related signals
-  input  logic                  illegal_insn_i,          // decoder has an invalid instr
-  input  logic                  ecall_insn_i,            // decoder has ECALL instr
-  input  logic                  mret_insn_i,             // decoder has MRET instr
-  input  logic                  dret_insn_i,             // decoder has DRET instr
-  input  logic                  wfi_insn_i,              // decoder has WFI instr
-  input  logic                  ebrk_insn_i,             // decoder has EBREAK instr
-  input  logic                  csr_pipe_flush_i,        // do CSR-related pipeline flush
+    // decoder related signals
+    input logic illegal_insn_i,   // decoder has an invalid instr
+    input logic ecall_insn_i,     // decoder has ECALL instr
+    input logic mret_insn_i,      // decoder has MRET instr
+    input logic dret_insn_i,      // decoder has DRET instr
+    input logic wfi_insn_i,       // decoder has WFI instr
+    input logic ebrk_insn_i,      // decoder has EBREAK instr
+    input logic csr_pipe_flush_i, // do CSR-related pipeline flush
 
-  // instr from IF-ID pipeline stage
-  input  logic                  instr_valid_i,           // instr is valid
-  input  logic [31:0]           instr_i,                 // uncompressed instr data for mtval
-  input  logic [15:0]           instr_compressed_i,      // instr compressed data for mtval
-  input  logic                  instr_is_compressed_i,   // instr is compressed
-  input  logic                  instr_fetch_err_i,       // instr has error
-  input  logic                  instr_fetch_err_plus2_i, // instr error is x32
-  input  logic [31:0]           pc_id_i,                 // instr address
+    // instr from IF-ID pipeline stage
+    input logic        instr_valid_i,            // instr is valid
+    input logic [31:0] instr_i,                  // uncompressed instr data for mtval
+    input logic [15:0] instr_compressed_i,       // instr compressed data for mtval
+    input logic        instr_is_compressed_i,    // instr is compressed
+    input logic        instr_fetch_err_i,        // instr has error
+    input logic        instr_fetch_err_plus2_i,  // instr error is x32
+    input logic [31:0] pc_id_i,                  // instr address
 
-  // to IF-ID pipeline stage
-  output logic                  instr_valid_clear_o,     // kill instr in IF-ID reg
-  output logic                  id_in_ready_o,           // ID stage is ready for new instr
-  output logic                  controller_run_o,        // Controller is in standard instruction
-                                                         // run mode
+    // to IF-ID pipeline stage
+    output logic instr_valid_clear_o,  // kill instr in IF-ID reg
+    output logic id_in_ready_o,        // ID stage is ready for new instr
+    output logic controller_run_o,     // Controller is in standard instruction
+                                       // run mode
 
-  // to prefetcher
-  output logic                  instr_req_o,             // start fetching instructions
-  output logic                  pc_set_o,                // jump to address set by pc_mux
-  output cve2_pkg::pc_sel_e     pc_mux_o,                // IF stage fetch address selector
-                                                         // (boot, normal, exception...)
-  output cve2_pkg::exc_pc_sel_e exc_pc_mux_o,            // IF stage selector for exception PC
-  output cve2_pkg::exc_cause_e  exc_cause_o,             // for IF stage, CSRs
+    // to prefetcher
+    output logic                  instr_req_o,   // start fetching instructions
+    output logic                  pc_set_o,      // jump to address set by pc_mux
+    output cve2_pkg::pc_sel_e     pc_mux_o,      // IF stage fetch address selector
+                                                 // (boot, normal, exception...)
+    output cve2_pkg::exc_pc_sel_e exc_pc_mux_o,  // IF stage selector for exception PC
+    output cve2_pkg::exc_cause_e  exc_cause_o,   // for IF stage, CSRs
 
-  // LSU
-  input  logic [31:0]           lsu_addr_last_i,         // for mtval
-  input  logic                  load_err_i,
-  input  logic                  store_err_i,
+    // LSU
+    input logic [31:0] lsu_addr_last_i,  // for mtval
+    input logic        load_err_i,
+    input logic        store_err_i,
 
-  // jump/branch signals
-  input  logic                  branch_set_i,            // branch set signal (branch definitely
-                                                         // taken)
-  input  logic                  jump_set_i,              // jump taken set signal
+    // jump/branch signals
+    input logic branch_set_i,  // branch set signal (branch definitely
+                               // taken)
+    input logic jump_set_i,    // jump taken set signal
 
-  // interrupt signals
-  input  logic                  csr_mstatus_mie_i,       // M-mode interrupt enable bit
-  input  logic                  irq_pending_i,           // interrupt request pending
-  input  cve2_pkg::irqs_t       irqs_i,                  // interrupt requests qualified with
-                                                         // mie CSR
-  input  logic                  irq_nm_i,                // non-maskeable interrupt
-  output logic                  nmi_mode_o,              // core executing NMI handler
+    // interrupt signals
+    input  logic            csr_mstatus_mie_i,  // M-mode interrupt enable bit
+    input  logic            irq_pending_i,      // interrupt request pending
+    input  cve2_pkg::irqs_t irqs_i,             // interrupt requests qualified with
+                                                // mie CSR
+    input  logic            irq_nm_i,           // non-maskeable interrupt
+    output logic            nmi_mode_o,         // core executing NMI handler
 
-  // debug signals
-  input  logic                  debug_req_i,
-  output cve2_pkg::dbg_cause_e  debug_cause_o,
-  output logic                  debug_csr_save_o,
-  output logic                  debug_mode_o,
-  input  logic                  debug_single_step_i,
-  input  logic                  debug_ebreakm_i,
-  input  logic                  debug_ebreaku_i,
-  input  logic                  trigger_match_i,
+    // debug signals
+    input  logic                 debug_req_i,
+    output cve2_pkg::dbg_cause_e debug_cause_o,
+    output logic                 debug_csr_save_o,
+    output logic                 debug_mode_o,
+    input  logic                 debug_single_step_i,
+    input  logic                 debug_ebreakm_i,
+    input  logic                 debug_ebreaku_i,
+    input  logic                 trigger_match_i,
 
-  output logic                  csr_save_if_o,
-  output logic                  csr_save_id_o,
-  output logic                  csr_restore_mret_id_o,
-  output logic                  csr_restore_dret_id_o,
-  output logic                  csr_save_cause_o,
-  output logic [31:0]           csr_mtval_o,
-  input  cve2_pkg::priv_lvl_e   priv_mode_i,
-  input  logic                  csr_mstatus_tw_i,
+    output logic                       csr_save_if_o,
+    output logic                       csr_save_id_o,
+    output logic                       csr_restore_mret_id_o,
+    output logic                       csr_restore_dret_id_o,
+    output logic                       csr_save_cause_o,
+    output logic                [31:0] csr_mtval_o,
+    input  cve2_pkg::priv_lvl_e        priv_mode_i,
+    input  logic                       csr_mstatus_tw_i,
 
-  // stall & flush signals
-  input  logic                  stall_id_i,
-  output logic                  flush_id_o,
+    // stall & flush signals
+    input  logic stall_id_i,
+    output logic flush_id_o,
 
-  // performance monitors
-  output logic                  perf_jump_o,             // we are executing a jump
-                                                         // instruction (j, jr, jal, jalr)
-  output logic                  perf_tbranch_o           // we are executing a taken branch
-                                                         // instruction
+    // performance monitors
+    output logic perf_jump_o,    // we are executing a jump
+                                 // instruction (j, jr, jal, jalr)
+    output logic perf_tbranch_o  // we are executing a taken branch
+                                 // instruction
 );
   import cve2_pkg::*;
 
   // FSM state encoding
   typedef enum logic [3:0] {
-    RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
-    IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID
+    RESET,
+    BOOT_SET,
+    WAIT_SLEEP,
+    SLEEP,
+    FIRST_FETCH,
+    DECODE,
+    FLUSH,
+    IRQ_TAKEN,
+    DBG_TAKEN_IF,
+    DBG_TAKEN_ID
   } ctrl_fsm_e;
 
   ctrl_fsm_e ctrl_fsm_cs, ctrl_fsm_ns;
@@ -117,40 +125,40 @@ module cve2_controller #(
 
   // Of the various exception/fault signals, which one takes priority in FLUSH and hence controls
   // what happens next (setting exc_cause, csr_mtval etc)
-  logic instr_fetch_err_prio;
-  logic illegal_insn_prio;
-  logic ecall_insn_prio;
-  logic ebrk_insn_prio;
-  logic store_err_prio;
-  logic load_err_prio;
+  logic       instr_fetch_err_prio;
+  logic       illegal_insn_prio;
+  logic       ecall_insn_prio;
+  logic       ebrk_insn_prio;
+  logic       store_err_prio;
+  logic       load_err_prio;
 
-  logic stall;
-  logic halt_if;
-  logic retain_id;
-  logic flush_id;
-  logic illegal_dret;
-  logic illegal_umode;
-  logic exc_req_lsu;
-  logic special_req;
-  logic special_req_pc_change;
-  logic special_req_flush_only;
-  logic do_single_step_d;
-  logic do_single_step_q;
-  logic enter_debug_mode_prio_d;
-  logic enter_debug_mode_prio_q;
-  logic enter_debug_mode;
-  logic ebreak_into_debug;
-  logic handle_irq;
+  logic       stall;
+  logic       halt_if;
+  logic       retain_id;
+  logic       flush_id;
+  logic       illegal_dret;
+  logic       illegal_umode;
+  logic       exc_req_lsu;
+  logic       special_req;
+  logic       special_req_pc_change;
+  logic       special_req_flush_only;
+  logic       do_single_step_d;
+  logic       do_single_step_q;
+  logic       enter_debug_mode_prio_d;
+  logic       enter_debug_mode_prio_q;
+  logic       enter_debug_mode;
+  logic       ebreak_into_debug;
+  logic       handle_irq;
   logic [3:0] mfip_id;
   logic       unused_irq_timer;
 
-  logic ecall_insn;
-  logic mret_insn;
-  logic dret_insn;
-  logic wfi_insn;
-  logic ebrk_insn;
-  logic csr_pipe_flush;
-  logic instr_fetch_err;
+  logic       ecall_insn;
+  logic       mret_insn;
+  logic       dret_insn;
+  logic       wfi_insn;
+  logic       ebrk_insn;
+  logic       csr_pipe_flush;
+  logic       instr_fetch_err;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -159,8 +167,8 @@ module cve2_controller #(
   always_ff @(negedge clk_i) begin
     // print warning in case of decoding errors
     if ((ctrl_fsm_cs == DECODE) && instr_valid_i && !instr_fetch_err_i && illegal_insn_d) begin
-     $display("%m @ %t: Illegal instruction (hart %0x) at PC 0x%h: 0x%h", $time, cve2_core.hart_id_i,
-               cve2_id_stage.pc_id_i, cve2_id_stage.instr_rdata_i);
+      $display("%m @ %t: Illegal instruction (hart %0x) at PC 0x%h: 0x%h", $time,
+               cve2_core.hart_id_i, cve2_id_stage.pc_id_i, cve2_id_stage.instr_rdata_i);
     end
   end
   // synopsys translate_on
@@ -170,16 +178,16 @@ module cve2_controller #(
   // Exceptions //
   ////////////////
 
-  assign load_err_d  = load_err_i;
+  assign load_err_d = load_err_i;
   assign store_err_d = store_err_i;
 
   // Decoder doesn't take instr_valid into account, factor it in here.
-  assign ecall_insn      = ecall_insn_i      & instr_valid_i;
-  assign mret_insn       = mret_insn_i       & instr_valid_i;
-  assign dret_insn       = dret_insn_i       & instr_valid_i;
-  assign wfi_insn        = wfi_insn_i        & instr_valid_i;
-  assign ebrk_insn       = ebrk_insn_i       & instr_valid_i;
-  assign csr_pipe_flush  = csr_pipe_flush_i  & instr_valid_i;
+  assign ecall_insn = ecall_insn_i & instr_valid_i;
+  assign mret_insn = mret_insn_i & instr_valid_i;
+  assign dret_insn = dret_insn_i & instr_valid_i;
+  assign wfi_insn = wfi_insn_i & instr_valid_i;
+  assign ebrk_insn = ebrk_insn_i & instr_valid_i;
+  assign csr_pipe_flush = csr_pipe_flush_i & instr_valid_i;
   assign instr_fetch_err = instr_fetch_err_i & instr_valid_i;
 
   // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
@@ -188,8 +196,8 @@ module cve2_controller #(
 
   // Some instructions can only be executed in M-Mode
   assign illegal_umode = (priv_mode_i != PRIV_LVL_M) &
-                         // MRET must be in M-Mode. TW means trap WFI to M-Mode.
-                         (mret_insn | (csr_mstatus_tw_i & wfi_insn));
+      // MRET must be in M-Mode. TW means trap WFI to M-Mode.
+      (mret_insn | (csr_mstatus_tw_i & wfi_insn));
 
   // This is recorded in the illegal_insn_q flop to help timing.  Specifically
   // it is needed to break the path from cve2_cs_registers/illegal_csr_insn_o
@@ -224,37 +232,32 @@ module cve2_controller #(
   assign special_req = special_req_pc_change | special_req_flush_only;
 
   // Exception/fault prioritisation is taken from Table 3.7 of Priviledged Spec v1.11
-    always_comb begin
-      instr_fetch_err_prio = 0;
-      illegal_insn_prio    = 0;
-      ecall_insn_prio      = 0;
-      ebrk_insn_prio       = 0;
-      store_err_prio       = 0;
-      load_err_prio        = 0;
+  always_comb begin
+    instr_fetch_err_prio = 0;
+    illegal_insn_prio    = 0;
+    ecall_insn_prio      = 0;
+    ebrk_insn_prio       = 0;
+    store_err_prio       = 0;
+    load_err_prio        = 0;
 
-      if (instr_fetch_err) begin
-        instr_fetch_err_prio = 1'b1;
-      end else if (illegal_insn_q) begin
-        illegal_insn_prio = 1'b1;
-      end else if (ecall_insn) begin
-        ecall_insn_prio = 1'b1;
-      end else if (ebrk_insn) begin
-        ebrk_insn_prio = 1'b1;
-      end else if (store_err_q) begin
-        store_err_prio = 1'b1;
-      end else if (load_err_q) begin
-        load_err_prio  = 1'b1;
-      end
+    if (instr_fetch_err) begin
+      instr_fetch_err_prio = 1'b1;
+    end else if (illegal_insn_q) begin
+      illegal_insn_prio = 1'b1;
+    end else if (ecall_insn) begin
+      ecall_insn_prio = 1'b1;
+    end else if (ebrk_insn) begin
+      ebrk_insn_prio = 1'b1;
+    end else if (store_err_q) begin
+      store_err_prio = 1'b1;
+    end else if (load_err_q) begin
+      load_err_prio = 1'b1;
     end
+  end
 
-  `ASSERT_IF(CVE2ExceptionPrioOnehot,
-             $onehot({instr_fetch_err_prio,
-                      illegal_insn_prio,
-                      ecall_insn_prio,
-                      ebrk_insn_prio,
-                      store_err_prio,
-                      load_err_prio}),
-             (ctrl_fsm_cs == FLUSH) & exc_req_q)
+  `ASSERT_IF(CVE2ExceptionPrioOnehot, $onehot({instr_fetch_err_prio, illegal_insn_prio,
+                                               ecall_insn_prio, ebrk_insn_prio, store_err_prio,
+                                               load_err_prio}), (ctrl_fsm_cs == FLUSH) & exc_req_q)
 
   ////////////////
   // Interrupts //
@@ -331,63 +334,62 @@ module cve2_controller #(
     // below always set pc_mux and exc_pc_mux but only set pc_set if certain conditions are met.
     // This avoid having to factor those conditions into the pc_mux and exc_pc_mux select signals
     // helping timing.
-    pc_mux_o               = PC_BOOT;
-    pc_set_o               = 1'b0;
+    pc_mux_o              = PC_BOOT;
+    pc_set_o              = 1'b0;
 
-    exc_pc_mux_o           = EXC_PC_IRQ;
-    exc_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
+    exc_pc_mux_o          = EXC_PC_IRQ;
+    exc_cause_o           = EXC_CAUSE_INSN_ADDR_MISA;  // = 6'h00
 
-    ctrl_fsm_ns            = ctrl_fsm_cs;
+    ctrl_fsm_ns           = ctrl_fsm_cs;
 
-    ctrl_busy_o            = 1'b1;
+    ctrl_busy_o           = 1'b1;
 
-    halt_if                = 1'b0;
-    retain_id              = 1'b0;
-    flush_id               = 1'b0;
+    halt_if               = 1'b0;
+    retain_id             = 1'b0;
+    flush_id              = 1'b0;
 
-    debug_csr_save_o       = 1'b0;
-    debug_cause_o          = DBG_CAUSE_EBREAK;
-    debug_mode_d           = debug_mode_q;
-    nmi_mode_d             = nmi_mode_q;
+    debug_csr_save_o      = 1'b0;
+    debug_cause_o         = DBG_CAUSE_EBREAK;
+    debug_mode_d          = debug_mode_q;
+    nmi_mode_d            = nmi_mode_q;
 
-    perf_tbranch_o         = 1'b0;
-    perf_jump_o            = 1'b0;
+    perf_tbranch_o        = 1'b0;
+    perf_jump_o           = 1'b0;
 
-    controller_run_o       = 1'b0;
+    controller_run_o      = 1'b0;
 
     unique case (ctrl_fsm_cs)
       RESET: begin
-        instr_req_o   = 1'b0;
-        pc_mux_o      = PC_BOOT;
-        pc_set_o      = 1'b1;
-        if (fetch_enable_i == 1'b1)
-        begin
+        instr_req_o = 1'b0;
+        pc_mux_o    = PC_BOOT;
+        pc_set_o    = 1'b1;
+        if (fetch_enable_i == 1'b1) begin
           ctrl_fsm_ns = BOOT_SET;
         end
       end
       BOOT_SET: begin
         // copy boot address to instr fetch address
-        instr_req_o   = 1'b1;
-        pc_mux_o      = PC_BOOT;
-        pc_set_o      = 1'b1;
+        instr_req_o = 1'b1;
+        pc_mux_o    = PC_BOOT;
+        pc_set_o    = 1'b1;
 
         ctrl_fsm_ns = FIRST_FETCH;
       end
 
       WAIT_SLEEP: begin
-        ctrl_busy_o   = 1'b0;
-        instr_req_o   = 1'b0;
-        halt_if       = 1'b1;
-        flush_id      = 1'b1;
-        ctrl_fsm_ns   = SLEEP;
+        ctrl_busy_o = 1'b0;
+        instr_req_o = 1'b0;
+        halt_if     = 1'b1;
+        flush_id    = 1'b1;
+        ctrl_fsm_ns = SLEEP;
       end
 
       SLEEP: begin
         // instruction in IF stage is already valid
         // we begin execution when an interrupt has arrived
-        instr_req_o   = 1'b0;
-        halt_if       = 1'b1;
-        flush_id      = 1'b1;
+        instr_req_o = 1'b0;
+        halt_if     = 1'b1;
+        flush_id    = 1'b1;
 
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
@@ -444,7 +446,7 @@ module cve2_controller #(
           // Halt IF but don't flush ID. This leaves a valid instruction in
           // ID so controller can determine appropriate action in the
           // FLUSH state.
-          retain_id = 1'b1;
+          retain_id   = 1'b1;
 
           // The FSM will always go directly to FLUSH.
 
@@ -483,7 +485,7 @@ module cve2_controller #(
           end
         end
 
-      end // DECODE
+      end  // DECODE
 
       IRQ_TAKEN: begin
         pc_mux_o     = PC_EXC;
@@ -498,7 +500,7 @@ module cve2_controller #(
           // interrupt priorities according to Privileged Spec v1.11 p.31
           if (irq_nm_i && !nmi_mode_q) begin
             exc_cause_o = EXC_CAUSE_IRQ_NM;
-            nmi_mode_d  = 1'b1; // enter NMI mode
+            nmi_mode_d  = 1'b1;  // enter NMI mode
           end else if (irqs_i.irq_fast != 16'b0) begin
             // generate exception cause ID from fast interrupt ID:
             // - first bit distinguishes interrupts from exceptions,
@@ -510,7 +512,7 @@ module cve2_controller #(
             exc_cause_o = EXC_CAUSE_IRQ_EXTERNAL_M;
           end else if (irqs_i.irq_software) begin
             exc_cause_o = EXC_CAUSE_IRQ_SOFTWARE_M;
-          end else begin // irqs_i.irq_timer
+          end else begin  // irqs_i.irq_timer
             exc_cause_o = EXC_CAUSE_IRQ_TIMER_M;
           end
         end
@@ -519,8 +521,8 @@ module cve2_controller #(
       end
 
       DBG_TAKEN_IF: begin
-        pc_mux_o     = PC_EXC;
-        exc_pc_mux_o = EXC_PC_DBD;
+        pc_mux_o         = PC_EXC;
+        exc_pc_mux_o     = EXC_PC_DBD;
 
         // enter debug mode and save PC in IF to dpc
         // jump to debug exception handler in debug memory
@@ -532,11 +534,11 @@ module cve2_controller #(
 
         csr_save_cause_o = 1'b1;
         if (trigger_match_i) begin
-          debug_cause_o = DBG_CAUSE_TRIGGER;     // (priority 4)
+          debug_cause_o = DBG_CAUSE_TRIGGER;  // (priority 4)
         end else if (debug_req_i) begin
-          debug_cause_o = DBG_CAUSE_HALTREQ;     // (priority 1)
+          debug_cause_o = DBG_CAUSE_HALTREQ;  // (priority 1)
         end else begin
-          debug_cause_o = DBG_CAUSE_STEP;        // (priority 0, lowest)
+          debug_cause_o = DBG_CAUSE_STEP;  // (priority 0, lowest)
         end
 
         // enter debug mode
@@ -553,13 +555,13 @@ module cve2_controller #(
         //
         // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
         // jump to debug exception handler in debug memory
-        flush_id      = 1'b1;
-        pc_mux_o      = PC_EXC;
-        pc_set_o      = 1'b1;
-        exc_pc_mux_o  = EXC_PC_DBD;
+        flush_id     = 1'b1;
+        pc_mux_o     = PC_EXC;
+        pc_set_o     = 1'b1;
+        exc_pc_mux_o = EXC_PC_DBD;
 
         // update dcsr and dpc
-        if (ebreak_into_debug && !debug_mode_q) begin // ebreak with forced entry
+        if (ebreak_into_debug && !debug_mode_q) begin  // ebreak with forced entry
 
           // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
           csr_save_cause_o = 1'b1;
@@ -588,12 +590,12 @@ module cve2_controller #(
         // exceptions: set exception PC, save PC and exception cause
         // exc_req_lsu is high for one clock cycle only (in DECODE)
         if (exc_req_q || store_err_q || load_err_q) begin
-          pc_set_o         = 1'b1;
-          pc_mux_o         = PC_EXC;
-          exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
+          pc_set_o     = 1'b1;
+          pc_mux_o     = PC_EXC;
+          exc_pc_mux_o = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
 
           begin : g_no_writeback_mepc_save
-            csr_save_id_o  = 1'b0;
+            csr_save_id_o = 1'b0;
           end
 
           csr_save_cause_o = 1'b1;
@@ -642,7 +644,7 @@ module cve2_controller #(
                  * ECALL or EBREAK instruction itself, not the address of the
                  * following instruction." [Privileged Spec v1.11, p.40]
                  */
-                exc_cause_o      = EXC_CAUSE_BREAKPOINT;
+                exc_cause_o = EXC_CAUSE_BREAKPOINT;
               end
             end
             store_err_prio: begin
@@ -662,7 +664,7 @@ module cve2_controller #(
             pc_set_o              = 1'b1;
             csr_restore_mret_id_o = 1'b1;
             if (nmi_mode_q) begin
-              nmi_mode_d          = 1'b0; // exit NMI mode
+              nmi_mode_d = 1'b0;  // exit NMI mode
             end
           end else if (dret_insn) begin
             pc_mux_o              = PC_DRET;
@@ -670,9 +672,9 @@ module cve2_controller #(
             debug_mode_d          = 1'b0;
             csr_restore_dret_id_o = 1'b1;
           end else if (wfi_insn) begin
-            ctrl_fsm_ns           = WAIT_SLEEP;
+            ctrl_fsm_ns = WAIT_SLEEP;
           end
-        end // exc_req_q
+        end  // exc_req_q
 
         // Entering debug mode due to either single step or debug_req. Ensure
         // registers are set for exception but then enter debug handler rather
@@ -691,7 +693,7 @@ module cve2_controller #(
         if (enter_debug_mode_prio_q && !(ebrk_insn_prio && ebreak_into_debug)) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
         end
-      end // FLUSH
+      end  // FLUSH
 
       default: begin
         instr_req_o = 1'b0;
@@ -757,9 +759,9 @@ module cve2_controller #(
 
   `DV_FCOV_SIGNAL(logic, interrupt_taken, (ctrl_fsm_cs != IRQ_TAKEN) & (ctrl_fsm_ns == IRQ_TAKEN))
   `DV_FCOV_SIGNAL(logic, debug_entry_if,
-      (ctrl_fsm_cs != DBG_TAKEN_IF) & (ctrl_fsm_ns == DBG_TAKEN_IF))
+                  (ctrl_fsm_cs != DBG_TAKEN_IF) & (ctrl_fsm_ns == DBG_TAKEN_IF))
   `DV_FCOV_SIGNAL(logic, debug_entry_id,
-      (ctrl_fsm_cs != DBG_TAKEN_ID) & (ctrl_fsm_ns == DBG_TAKEN_ID))
+                  (ctrl_fsm_cs != DBG_TAKEN_ID) & (ctrl_fsm_ns == DBG_TAKEN_ID))
   `DV_FCOV_SIGNAL(logic, pipe_flush, (ctrl_fsm_cs != FLUSH) & (ctrl_fsm_ns == FLUSH))
   `DV_FCOV_SIGNAL(logic, debug_req, debug_req_i & ~debug_mode_q)
 
@@ -768,89 +770,86 @@ module cve2_controller #(
   ////////////////
 
   // Selectors must be known/valid.
-  `ASSERT(CVE2CtrlStateValid, ctrl_fsm_cs inside {
-      RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
-      IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID})
+  `ASSERT(
+      CVE2CtrlStateValid,
+      ctrl_fsm_cs inside {RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH, IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID})
 
-  `ifdef INC_ASSERT
-    // If something that causes a jump into an exception handler is seen that jump must occur before
-    // the next instruction executes. The logic tracks whether a jump into an exception handler is
-    // expected. Assertions check the jump occurs.
+`ifdef INC_ASSERT
+  // If something that causes a jump into an exception handler is seen that jump must occur before
+  // the next instruction executes. The logic tracks whether a jump into an exception handler is
+  // expected. Assertions check the jump occurs.
 
-    logic exception_req, exception_req_pending, exception_req_accepted, exception_req_done;
-    logic exception_pc_set, seen_exception_pc_set, expect_exception_pc_set;
-    logic exception_req_needs_pc_set;
+  logic exception_req, exception_req_pending, exception_req_accepted, exception_req_done;
+  logic exception_pc_set, seen_exception_pc_set, expect_exception_pc_set;
+  logic exception_req_needs_pc_set;
 
-    assign exception_req = (special_req | enter_debug_mode | handle_irq);
-    // Any exception rquest will cause a transition out of DECODE, once the controller transitions
-    // back into DECODE we're done handling the request.
-    assign exception_req_done =
+  assign exception_req = (special_req | enter_debug_mode | handle_irq);
+  // Any exception rquest will cause a transition out of DECODE, once the controller transitions
+  // back into DECODE we're done handling the request.
+  assign exception_req_done =
       exception_req_pending & (ctrl_fsm_cs != DECODE) & (ctrl_fsm_ns == DECODE);
 
-    assign exception_req_needs_pc_set = enter_debug_mode | handle_irq | special_req_pc_change;
+  assign exception_req_needs_pc_set = enter_debug_mode | handle_irq | special_req_pc_change;
 
-    // An exception PC set uses specific PC types
-    assign exception_pc_set =
+  // An exception PC set uses specific PC types
+  assign exception_pc_set =
       exception_req_pending & (pc_set_o & (pc_mux_o inside {PC_EXC, PC_ERET, PC_DRET}));
 
-    always @(posedge clk_i or negedge rst_ni) begin
-      if (!rst_ni) begin
-        exception_req_pending   <= 1'b0;
-        exception_req_accepted  <= 1'b0;
-        expect_exception_pc_set <= 1'b0;
-        seen_exception_pc_set   <= 1'b0;
-      end else begin
-        // Keep `exception_req_pending` asserted once an exception_req is seen until it is done
-        exception_req_pending <= (exception_req_pending | exception_req) & ~exception_req_done;
+  always @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      exception_req_pending   <= 1'b0;
+      exception_req_accepted  <= 1'b0;
+      expect_exception_pc_set <= 1'b0;
+      seen_exception_pc_set   <= 1'b0;
+    end else begin
+      // Keep `exception_req_pending` asserted once an exception_req is seen until it is done
+      exception_req_pending <= (exception_req_pending | exception_req) & ~exception_req_done;
 
-        // The exception req has been accepted once the controller transitions out of decode
-        exception_req_accepted <= (exception_req_accepted & ~exception_req_done) |
+      // The exception req has been accepted once the controller transitions out of decode
+      exception_req_accepted <= (exception_req_accepted & ~exception_req_done) |
           (exception_req & ctrl_fsm_ns != DECODE);
 
-        // Set `expect_exception_pc_set` if exception req needs one and keep it asserted until
-        // exception req is done
-        expect_exception_pc_set <= (expect_exception_pc_set | exception_req_needs_pc_set) &
+      // Set `expect_exception_pc_set` if exception req needs one and keep it asserted until
+      // exception req is done
+      expect_exception_pc_set <= (expect_exception_pc_set | exception_req_needs_pc_set) &
           ~exception_req_done;
 
-        // Keep `seen_exception_pc_set` asserted once an exception PC set is seen until the
-        // exception req is done
-        seen_exception_pc_set <= (seen_exception_pc_set | exception_pc_set) & ~exception_req_done;
-      end
+      // Keep `seen_exception_pc_set` asserted once an exception PC set is seen until the
+      // exception req is done
+      seen_exception_pc_set <= (seen_exception_pc_set | exception_pc_set) & ~exception_req_done;
     end
+  end
 
-    // Once an exception request has been accepted it must be handled before controller goes back to
-    // DECODE
-    `ASSERT(CVE2NoDoubleExceptionReq, exception_req_accepted |-> ctrl_fsm_cs != DECODE)
+  // Once an exception request has been accepted it must be handled before controller goes back to
+  // DECODE
+  `ASSERT(CVE2NoDoubleExceptionReq, exception_req_accepted |-> ctrl_fsm_cs != DECODE)
 
-    // Only signal ready, allowing a new instruction into ID, if there is no exception request
-    // pending or it is done this cycle.
-    `ASSERT(CVE2DontSkipExceptionReq,
-      id_in_ready_o |-> !exception_req_pending || exception_req_done)
+  // Only signal ready, allowing a new instruction into ID, if there is no exception request
+  // pending or it is done this cycle.
+  `ASSERT(CVE2DontSkipExceptionReq, id_in_ready_o |-> !exception_req_pending || exception_req_done)
 
-    // Once a PC set has been performed for an exception request there must not be any other
-    // excepting those to move into debug mode.
-    `ASSERT(CVE2NoDoubleSpecialReqPCSet,
-      seen_exception_pc_set &&
-        !((ctrl_fsm_cs inside {DBG_TAKEN_IF, DBG_TAKEN_ID}) &&
-          (pc_mux_o == PC_EXC) && (exc_pc_mux_o == EXC_PC_DBD))
-      |-> !pc_set_o)
+  // Once a PC set has been performed for an exception request there must not be any other
+  // excepting those to move into debug mode.
+  `ASSERT(
+      CVE2NoDoubleSpecialReqPCSet,
+      seen_exception_pc_set && !((ctrl_fsm_cs inside {DBG_TAKEN_IF, DBG_TAKEN_ID}) && (pc_mux_o == PC_EXC) && (exc_pc_mux_o == EXC_PC_DBD)) |-> !pc_set_o)
 
-    // When an exception request is done there must have been an appropriate PC set (either this
-    // cycle or a previous one).
-    `ASSERT(CVE2SetExceptionPCOnSpecialReqIfExpected,
-      exception_req_pending && expect_exception_pc_set && exception_req_done |->
-      seen_exception_pc_set || exception_pc_set)
+  // When an exception request is done there must have been an appropriate PC set (either this
+  // cycle or a previous one).
+  `ASSERT(
+      CVE2SetExceptionPCOnSpecialReqIfExpected,
+      exception_req_pending && expect_exception_pc_set && exception_req_done |-> seen_exception_pc_set || exception_pc_set)
 
-    // If there's a pending exception req that doesn't need a PC set we must not see one
-    `ASSERT(CVE2NoPCSetOnSpecialReqIfNotExpected,
-      exception_req_pending && !expect_exception_pc_set |-> ~pc_set_o)
-  `endif
+  // If there's a pending exception req that doesn't need a PC set we must not see one
+  `ASSERT(CVE2NoPCSetOnSpecialReqIfNotExpected,
+          exception_req_pending && !expect_exception_pc_set |-> ~pc_set_o)
+`endif
 
-  `ifdef RVFI
-    // Workaround for internal verilator error when using hierarchical refers to calcuate this
-    // directly in cve2_core
-    logic rvfi_flush_next;
+`ifdef RVFI
+  // Workaround for internal verilator error when using hierarchical refers to calcuate this
+  // directly in cve2_core
+  logic rvfi_flush_next;
 
-    assign rvfi_flush_next = ctrl_fsm_ns == FLUSH;
-  `endif
+  assign rvfi_flush_next = ctrl_fsm_ns == FLUSH;
+`endif
 endmodule

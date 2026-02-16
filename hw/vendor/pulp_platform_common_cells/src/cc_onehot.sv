@@ -16,10 +16,10 @@
 // Author: Fabian Schuiki <fschuiki@iis.ee.ethz.ch>
 // Author: Stefan Mach <smach@iis.ee.ethz.ch>
 module cc_onehot #(
-  parameter int unsigned Width = 4
+    parameter int unsigned Width = 4
 ) (
-  input  logic [Width-1:0] d_i,
-  output logic is_onehot_o
+    input logic [Width-1:0] d_i,
+    output logic is_onehot_o
 );
   // trivial base case
   if (Width == 1) begin : gen_degenerated_onehot
@@ -36,9 +36,9 @@ module cc_onehot #(
     // generate half adders for each lvl
     // lvl 0 is the input level
     for (genvar i = 1; i < LVLS; i++) begin : gen_lvl
-      localparam int unsigned LVLWidth = 2**LVLS / 2**i;
-      for (genvar j = 0; j < LVLWidth; j+=2) begin : gen_width
-        assign sum[i][j/2] = sum[i-1][j] ^ sum[i-1][j+1];
+      localparam int unsigned LVLWidth = 2 ** LVLS / 2 ** i;
+      for (genvar j = 0; j < LVLWidth; j += 2) begin : gen_width
+        assign sum[i][j/2]   = sum[i-1][j] ^ sum[i-1][j+1];
         assign carry[i][j/2] = sum[i-1][j] & sum[i-1][j+1];
       end
       // generate carry tree

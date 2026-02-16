@@ -2,35 +2,35 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg),
-                                             .RAL_T               (uart_reg_block),
-                                             .COV_T               (uart_env_cov),
-                                             .VIRTUAL_SEQUENCER_T (uart_virtual_sequencer));
+class uart_base_vseq extends cip_base_vseq #(
+    .CFG_T              (uart_env_cfg),
+    .RAL_T              (uart_reg_block),
+    .COV_T              (uart_env_cov),
+    .VIRTUAL_SEQUENCER_T(uart_virtual_sequencer)
+);
   `uvm_object_utils(uart_base_vseq)
 
   // variables for dut initialization
-  rand baud_rate_e baud_rate; // set baud rate
-  rand bit en_tx;             // enable tx
-  rand bit en_rx;             // enable rx
-  rand bit en_parity;         // enable parity
-  rand bit odd_parity;        // enable odd parity
-  rand bit en_noise_filter;   // enable noise filter
+  rand baud_rate_e                   baud_rate;  // set baud rate
+  rand bit                           en_tx;  // enable tx
+  rand bit                           en_rx;  // enable rx
+  rand bit                           en_parity;  // enable parity
+  rand bit                           odd_parity;  // enable odd parity
+  rand bit                           en_noise_filter;  // enable noise filter
 
   // glitch control
-  rand uint uart_period_glitch_pct;
+  rand uint                          uart_period_glitch_pct;
 
   // enable interrupts
-  rand bit [NumUartIntr-1:0] en_intr;
+  rand bit         [NumUartIntr-1:0] en_intr;
 
   // random delays to access fifo/intr, may be controlled in extended seq
-  rand uint dly_to_access_fifo;
+  rand uint                          dly_to_access_fifo;
 
   // various knobs to enable certain routines
-  bit do_interrupt      = 1'b1;
+  bit                                do_interrupt                             = 1'b1;
 
-  constraint uart_period_glitch_pct_c {
-    uart_period_glitch_pct inside {[0:10]};
-  }
+  constraint uart_period_glitch_pct_c {uart_period_glitch_pct inside {[0 : 10]};}
 
   constraint baud_rate_c {
     // when the uart frequency is very close to core freq, disable noise filter and glitch,
@@ -40,18 +40,18 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
       uart_period_glitch_pct == 0;
     }
     // constrain nco not over nco.get_n_bits
-    `CALC_NCO(baud_rate, p_sequencer.cfg.ral.ctrl.nco.get_n_bits(),
-        p_sequencer.cfg.clk_freq_mhz) < 2 ** p_sequencer.cfg.ral.ctrl.nco.get_n_bits();
+    `CALC_NCO(baud_rate, p_sequencer.cfg.ral.ctrl.nco.get_n_bits(), p_sequencer.cfg.clk_freq_mhz)
+    < 2 ** p_sequencer.cfg.ral.ctrl.nco.get_n_bits();
   }
 
   constraint dly_to_access_fifo_c {
     // uart clk is slow, up to 2 ** 16 (65_536) slower than pclk
     // 1_000_000 is about 1.5 * 65_536
     dly_to_access_fifo dist {
-      0                   :/ 1,
-      [1      :100]       :/ 1,
-      [101    :10_000]    :/ 8,
-      [10_001 :1_000_000] :/ 1
+      0                    :/ 1,
+      [     1 :       100] :/ 1,
+      [   101 :    10_000] :/ 8,
+      [10_001 : 1_000_000] :/ 1
     };
   }
 
@@ -102,8 +102,7 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
       `DV_CHECK_RANDOMIZE_FATAL(ral.timeout_ctrl.en)
       csr_update(ral.timeout_ctrl);
 
-      `DV_CHECK_RANDOMIZE_WITH_FATAL(ral.fifo_ctrl.rxilvl,
-                                     value <= 4;)
+      `DV_CHECK_RANDOMIZE_WITH_FATAL(ral.fifo_ctrl.rxilvl, value <= 4;)
       `DV_CHECK_RANDOMIZE_FATAL(ral.fifo_ctrl.txilvl)
       csr_update(ral.fifo_ctrl);
     end
@@ -167,8 +166,7 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
     `DV_CHECK_RANDOMIZE_WITH_FATAL(send_rx_seq,
                                    data == local::data;
                                    parity_err == local::parity_err;
-                                   frame_err  == local::frame_err;
-                                   )
+                                   frame_err  == local::frame_err;)
     `uvm_send(send_rx_seq)
   endtask : drive_rx_error_byte
 
@@ -187,7 +185,9 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
     bit [TL_DW-1:0] rdata, fifo_status;
 
     csr_rd(.ptr(ral.fifo_status), .value(fifo_status));
-    repeat (get_field_val(ral.fifo_status.rxlvl, fifo_status))  begin
+    repeat (get_field_val(
+        ral.fifo_status.rxlvl, fifo_status
+    )) begin
       wait_ignored_period_and_read_rdata(rdata);
     end
 
@@ -199,24 +199,24 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
   // override this function to control RX fifo level
   virtual task rand_read_rx_byte(uint weight_to_skip);
     bit [TL_DW-1:0] rdata, fifo_status;
-    int             rxlvl;
+    int rxlvl;
 
     randcase
-      1: begin // read & check one byte
+      1: begin  // read & check one byte
         csr_rd(.ptr(ral.fifo_status), .value(fifo_status));
         rxlvl = get_field_val(ral.fifo_status.rxlvl, fifo_status);
-        if(rxlvl > 0) begin
+        if (rxlvl > 0) begin
           wait_ignored_period_and_read_rdata(rdata);
         end
       end
-      1: begin // read & check some bytes
+      1: begin  // read & check some bytes
         csr_rd(.ptr(ral.fifo_status), .value(fifo_status));
         rxlvl = get_field_val(ral.fifo_status.rxlvl, fifo_status);
-        if(rxlvl > 0) begin
+        if (rxlvl > 0) begin
           repeat ($urandom_range(1, rxlvl)) wait_ignored_period_and_read_rdata(rdata);
         end
       end
-      1: begin // read & check all rx bytes
+      1: begin  // read & check all rx bytes
         read_all_rx_bytes();
       end
       weight_to_skip: begin
@@ -240,9 +240,12 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
         `DV_CHECK_MEMBER_RANDOMIZE_FATAL(dly_to_access_fifo)
         cfg.clk_rst_vif.wait_clks(dly_to_access_fifo);
         csr_rd(.ptr(ral.fifo_status), .value(fifo_status));
-        csr_rd(.ptr(ral.status),      .value(status));
-      end while (get_field_val(ral.fifo_status.txlvl, fifo_status) > 0 ||
-                 get_field_val(ral.status.txidle, status) == 0);
+        csr_rd(.ptr(ral.status), .value(status));
+      end while (get_field_val(
+          ral.fifo_status.txlvl, fifo_status
+      ) > 0 || get_field_val(
+          ral.status.txidle, status
+      ) == 0);
     end
 
     `uvm_info(`gfn, "wait_for_all_tx_bytes is done", UVM_HIGH)
@@ -265,9 +268,8 @@ class uart_base_vseq extends cip_base_vseq #(.CFG_T               (uart_env_cfg)
   virtual task wait_for_rx_fifo_not_full();
     if (ral.ctrl.rx.get_mirrored_value()) begin
       `DV_CHECK_MEMBER_RANDOMIZE_FATAL(dly_to_access_fifo)
-      csr_spinwait(.ptr(ral.status.rxfull), .exp_data(1'b0),
-                   .spinwait_delay_ns(dly_to_access_fifo),
-                   .timeout_ns(50_000_000)); // use longer timeout as uart freq is low
+      csr_spinwait(.ptr(ral.status.rxfull), .exp_data(1'b0), .spinwait_delay_ns(dly_to_access_fifo),
+                   .timeout_ns(50_000_000));  // use longer timeout as uart freq is low
     end
     `uvm_info(`gfn, "wait_for_rx_fifo_not_full is done", UVM_HIGH)
   endtask : wait_for_rx_fifo_not_full

@@ -15,11 +15,11 @@
 
 // Auto-generated code
 module debug_rom_one_scratch (
-  input  logic         clk_i,
-  input  logic         rst_ni,
-  input  logic         req_i,
-  input  logic [63:0]  addr_i,
-  output logic [63:0]  rdata_o
+    input  logic        clk_i,
+    input  logic        rst_ni,
+    input  logic        req_i,
+    input  logic [63:0] addr_i,
+    output logic [63:0] rdata_o
 );
 
   localparam int unsigned RomSize = 14;

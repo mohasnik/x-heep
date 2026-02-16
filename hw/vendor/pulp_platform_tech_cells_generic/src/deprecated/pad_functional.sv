@@ -10,21 +10,21 @@
 
 
 module pad_functional_pd (
-  input  logic OEN,
-  input  logic I,
-  output logic O,
-  input  logic PEN,
-  inout  wire  PAD
+    input  logic OEN,
+    input  logic I,
+    output logic O,
+    input  logic PEN,
+    inout  wire  PAD
 );
 
-/*
+  /*
     X Unknown
     Z Hi-Z
     H Pull High
     L Pull Low
 */
 
-/*
+  /*
     OEN I   PAD PEN | PAD O
                     |
     0   0   -   0/1 | 0   0
@@ -35,33 +35,33 @@ module pad_functional_pd (
     1   0/1 Z   1   | -   X
 
 */
-  `ifndef VERILATOR
-  wire   PAD_wi;
+`ifndef VERILATOR
+  wire PAD_wi;
 
   bufif0 (PAD, I, OEN);
-  buf    (O, PAD);
+  buf (O, PAD);
   bufif0 (PAD_wi, 1'b0, PEN);
-  rpmos  (PAD, PAD_wi, 1'b0);
-  `endif
+  rpmos (PAD, PAD_wi, 1'b0);
+`endif
 
 endmodule
 
 module pad_functional_pu (
-  input  logic OEN,
-  input  logic I,
-  output logic O,
-  input  logic PEN,
-  inout  wire  PAD
+    input  logic OEN,
+    input  logic I,
+    output logic O,
+    input  logic PEN,
+    inout  wire  PAD
 );
 
-/*
+  /*
     X Unknown
     Z Hi-Z
     H Pull High
     L Pull Low
 */
 
-/*
+  /*
     OEN I   PAD PEN | PAD O
                     |
     0   0   -   0/1 | 0   0
@@ -72,13 +72,13 @@ module pad_functional_pu (
     1   0/1 Z   1   | -   X
 
 */
-  `ifndef VERILATOR
-  wire   PAD_wi;
+`ifndef VERILATOR
+  wire PAD_wi;
 
   bufif0 (PAD, I, OEN);
-  buf    (O, PAD);
+  buf (O, PAD);
   bufif0 (PAD_wi, 1'b1, PEN);
-  rpmos  (PAD, PAD_wi, 1'b0);
-  `endif
+  rpmos (PAD, PAD_wi, 1'b0);
+`endif
 
 endmodule

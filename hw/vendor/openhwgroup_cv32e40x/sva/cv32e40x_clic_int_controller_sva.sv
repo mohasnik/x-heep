@@ -32,64 +32,76 @@
 module cv32e40x_clic_int_controller_sva
   import uvm_pkg::*;
   import cv32e40x_pkg::*;
-  (
-   input logic        clk,
-   input logic        rst_n,
+(
+    input logic clk,
+    input logic rst_n,
 
-   input logic        irq_req_ctrl_o,
-   input logic        clic_irq_q,
-   input logic [7:0]  clic_irq_level_q,
+    input logic       irq_req_ctrl_o,
+    input logic       clic_irq_q,
+    input logic [7:0] clic_irq_level_q,
 
-   input logic        ctrl_pending_interrupt,
-   input logic        ctrl_interrupt_allowed,
-   input logic        ctrl_pending_nmi,
-   input logic        ctrl_pending_async_debug,
-   input ctrl_state_e ctrl_fsm_cs,
+    input logic        ctrl_pending_interrupt,
+    input logic        ctrl_interrupt_allowed,
+    input logic        ctrl_pending_nmi,
+    input logic        ctrl_pending_async_debug,
+    input ctrl_state_e ctrl_fsm_cs,
 
-   input ctrl_fsm_t   ctrl_fsm,
-   input dcsr_t       dcsr
+    input ctrl_fsm_t ctrl_fsm,
+    input dcsr_t     dcsr
 
-   );
+);
 
 
   // Check that a pending interrupt is taken as soon as possible after being enabled
-   property p_clic_enable;
-    @(posedge clk) disable iff (!rst_n)
-    ( !irq_req_ctrl_o
-       ##1
-       irq_req_ctrl_o && $stable(clic_irq_q) && $stable(clic_irq_level_q) && !(ctrl_fsm.debug_mode || (dcsr.step && !dcsr.stepie))
-       |-> (ctrl_pending_interrupt && ctrl_interrupt_allowed));
-  endproperty;
+  property p_clic_enable;
+    @(posedge clk) disable iff (!rst_n) (!irq_req_ctrl_o ##1 irq_req_ctrl_o && $stable(
+        clic_irq_q
+    ) && $stable(
+        clic_irq_level_q
+    ) && !(ctrl_fsm.debug_mode || (dcsr.step && !dcsr.stepie)) |->
+        (ctrl_pending_interrupt && ctrl_interrupt_allowed));
+  endproperty
+  ;
 
-  a_clic_enable: assert property(p_clic_enable)
-    else `uvm_error("core", "Interrupt not taken soon enough after enabling");
+  a_clic_enable :
+  assert property (p_clic_enable)
+  else `uvm_error("core", "Interrupt not taken soon enough after enabling");
 
   // Check that only NMI and external debug take presedence over interrupts after being enabled by mret or CSR writes
   property p_irq_pri;
-    @(posedge clk) disable iff (!rst_n)
-    ( !irq_req_ctrl_o            // No interrupt pending
-      ##1                        // Next cycle
-      irq_req_ctrl_o && $stable(clic_irq_q) && $stable(clic_irq_level_q) && !(ctrl_fsm.debug_mode || (dcsr.step && !dcsr.stepie)) && // Interrupt pending but irq inputs are unchanged
-      (ctrl_fsm_cs != DEBUG_TAKEN) &&  // Make sure we are not handling a debug entry already (could be a single stepped mret enabling interrupts for instance)
-      !(ctrl_pending_nmi || ctrl_pending_async_debug)   // No pending events with higher priority than interrupts are taking place
-      |->
+    @(posedge clk) disable iff (!rst_n) (!irq_req_ctrl_o  // No interrupt pending
+    ##1  // Next cycle
+    irq_req_ctrl_o && $stable(
+        clic_irq_q
+    ) && $stable(
+        clic_irq_level_q
+    ) && !(ctrl_fsm.debug_mode ||
+           (dcsr.step && !dcsr.stepie)) &&  // Interrupt pending but irq inputs are unchanged
+    (ctrl_fsm_cs != DEBUG_TAKEN) &&  // Make sure we are not handling a debug entry already (could be a single stepped mret enabling interrupts for instance)
+    !(ctrl_pending_nmi || ctrl_pending_async_debug)   // No pending events with higher priority than interrupts are taking place
+    |->
       ctrl_fsm.irq_ack  // We must take the interrupt if enabled (mret or CSR write) and no NMI or external debug is pending
     );
-  endproperty;
+  endproperty
+  ;
 
-  a_irq_pri: assert property(p_irq_pri)
-    else `uvm_error("core", "Interrupt not taken soon enough after enabling")
+  a_irq_pri :
+  assert property (p_irq_pri)
+  else `uvm_error("core", "Interrupt not taken soon enough after enabling")
 
   // Check a pending interrupt that is disabled is actually not taken
   property p_clic_disable;
-    @(posedge clk) disable iff (!rst_n)
-    (  irq_req_ctrl_o
-        ##1
-        !irq_req_ctrl_o && $stable(clic_irq_q) && $stable(clic_irq_level_q)
-        |-> !(ctrl_pending_interrupt && ctrl_interrupt_allowed));
-  endproperty;
+    @(posedge clk) disable iff (!rst_n) (irq_req_ctrl_o ##1
+        !irq_req_ctrl_o && $stable(
+        clic_irq_q
+    ) && $stable(
+        clic_irq_level_q
+    ) |-> !(ctrl_pending_interrupt && ctrl_interrupt_allowed));
+  endproperty
+  ;
 
-  a_clic_disable: assert property(p_clic_disable)
-    else `uvm_error("core", "Interrupt taken after disabling");
-endmodule // cv32e40x_cs_registers_sva
+  a_clic_disable :
+  assert property (p_clic_disable)
+  else `uvm_error("core", "Interrupt taken after disabling");
+endmodule  // cv32e40x_cs_registers_sva
 

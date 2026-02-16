@@ -36,7 +36,7 @@ module fpu_ss_csr (
   assign csr_wb_addr_o = instr_q[11:7];
 
   always_ff @(posedge clk_i, negedge rst_ni) begin : proc_instr_q
-    if(~rst_ni) begin
+    if (~rst_ni) begin
       instr_q <= '0;
       csr_wb_id_o <= '0;
     end else begin
@@ -116,4 +116,4 @@ module fpu_ss_csr (
     end
   end
 
-endmodule // fpu_ss_csr
+endmodule  // fpu_ss_csr

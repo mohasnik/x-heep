@@ -12,35 +12,36 @@
 /// handshaking.
 
 module stream_mux #(
-  parameter type DATA_T = logic,  // Vivado requires a default value for type parameters.
-  parameter integer N_INP = 0,    // Synopsys DC requires a default value for value parameters.
-  /// Dependent parameters, DO NOT OVERRIDE!
-  parameter integer LOG_N_INP = $clog2(N_INP)
+    parameter type DATA_T = logic,  // Vivado requires a default value for type parameters.
+    parameter integer N_INP = 0,  // Synopsys DC requires a default value for value parameters.
+    /// Dependent parameters, DO NOT OVERRIDE!
+    parameter integer LOG_N_INP = $clog2(N_INP)
 ) (
-  input  DATA_T [N_INP-1:0]     inp_data_i,
-  input  logic  [N_INP-1:0]     inp_valid_i,
-  output logic  [N_INP-1:0]     inp_ready_o,
+    input  DATA_T [N_INP-1:0] inp_data_i,
+    input  logic  [N_INP-1:0] inp_valid_i,
+    output logic  [N_INP-1:0] inp_ready_o,
 
-  input  logic  [LOG_N_INP-1:0] inp_sel_i,
+    input logic [LOG_N_INP-1:0] inp_sel_i,
 
-  output DATA_T                 oup_data_o,
-  output logic                  oup_valid_o,
-  input  logic                  oup_ready_i
+    output DATA_T oup_data_o,
+    output logic  oup_valid_o,
+    input  logic  oup_ready_i
 );
 
   always_comb begin
     inp_ready_o = '0;
     inp_ready_o[inp_sel_i] = oup_ready_i;
   end
-  assign oup_data_o   = inp_data_i[inp_sel_i];
-  assign oup_valid_o  = inp_valid_i[inp_sel_i];
+  assign oup_data_o  = inp_data_i[inp_sel_i];
+  assign oup_valid_o = inp_valid_i[inp_sel_i];
 
-// pragma translate_off
+  // pragma translate_off
 `ifndef VERILATOR
-  initial begin: p_assertions
-    assert (N_INP >= 1) else $fatal (1, "The number of inputs must be at least 1!");
+  initial begin : p_assertions
+    assert (N_INP >= 1)
+    else $fatal(1, "The number of inputs must be at least 1!");
   end
 `endif
-// pragma translate_on
+  // pragma translate_on
 
 endmodule

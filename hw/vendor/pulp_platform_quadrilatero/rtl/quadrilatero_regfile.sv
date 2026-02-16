@@ -16,8 +16,10 @@ module quadrilatero_regfile #(
     input logic rst_ni,
 
     // read port
-    input  logic [READ_PORTS-1:0][$clog2(N_REGS)-1:0] raddr_i,  // register and port address
-    input  logic [READ_PORTS-1:0][$clog2(N_ROWS)-1:0] rrowaddr_i,  // we can ask for a single row of a register
+    input logic [READ_PORTS-1:0][$clog2(N_REGS)-1:0] raddr_i,  // register and port address
+    input logic [READ_PORTS-1:0][$clog2(
+N_ROWS
+)-1:0] rrowaddr_i,  // we can ask for a single row of a register
     output logic [READ_PORTS-1:0][RLEN-1:0] rdata_o,  // row out
 
     // write port
@@ -37,7 +39,7 @@ module quadrilatero_regfile #(
 
   logic [N_REGS-1:0][N_ROWS-1:0][RLEN-1:0] mem_q;
   logic [N_REGS-1:0][N_ROWS-1:0][RLEN-1:0] mem_d;
-  
+
   always_comb begin : write_mem
     mem_d = mem_q;
     for (int j = 0; j < WRITE_PORTS; j++) begin
@@ -49,12 +51,12 @@ module quadrilatero_regfile #(
 
   always_comb begin : read_mem
     for (int j = 0; j < READ_PORTS; j++) begin
-      rdata_o[j] = mem_q[raddr_i[j]][rrowaddr_i[j]];    
+      rdata_o[j] = mem_q[raddr_i[j]][rrowaddr_i[j]];
     end
   end
 
   // Sequential block: memory
-  always_ff @(posedge clk_i, negedge rst_ni) begin: seq_block
+  always_ff @(posedge clk_i, negedge rst_ni) begin : seq_block
     if (~rst_ni) begin
       mem_q <= '0;
     end else begin

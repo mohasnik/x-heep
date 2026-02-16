@@ -11,15 +11,13 @@ class rv_timer_stress_all_vseq extends rv_timer_base_vseq;
   `uvm_object_new
 
   // avoid simulation running for too long
-  constraint num_trans_c {
-    num_trans inside {[1:10]};
-  }
+  constraint num_trans_c {num_trans inside {[1 : 10]};}
 
 
   task body();
     string seq_names[] = {"rv_timer_random_vseq",
                           "rv_timer_disabled_vseq",
-                          "rv_timer_common_vseq"}; // for intr_test
+                          "rv_timer_common_vseq"};  // for intr_test
     for (int i = 1; i <= num_trans; i++) begin
       uvm_sequence       seq;
       rv_timer_base_vseq rv_timer_vseq;

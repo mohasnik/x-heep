@@ -29,7 +29,7 @@ set_property -dict {PACKAGE_PIN M20 IOSTANDARD LVCMOS33} [get_ports boot_select_
 # Q0 / MOSI
 # Q1 / MISO
 # Q2 / nWP
-# Q3 / nHLD
+# Q3 / nHLDp
 set_property -dict {PACKAGE_PIN U18 IOSTANDARD LVCMOS33} [get_ports spi_flash_csb_o] ; # Pmoda[4]
 set_property -dict {PACKAGE_PIN Y18 IOSTANDARD LVCMOS33} [get_ports spi_flash_sck_o] ; # Pmoda[0]
 set_property -dict {PACKAGE_PIN U19 IOSTANDARD LVCMOS33} [get_ports {spi_flash_sd_io[0]}] ; # Pmoda[5]

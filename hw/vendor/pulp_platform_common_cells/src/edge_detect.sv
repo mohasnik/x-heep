@@ -19,14 +19,14 @@ module edge_detect (
     output logic fe_o     // falling edge detected
 );
 
-    sync_wedge i_sync_wedge (
-        .clk_i    ( clk_i  ),
-        .rst_ni   ( rst_ni ),
-        .en_i     ( 1'b1   ),
-        .serial_i ( d_i    ),
-        .r_edge_o ( re_o   ),
-        .f_edge_o ( fe_o   ),
-        .serial_o (        )
-    );
+  sync_wedge i_sync_wedge (
+      .clk_i   (clk_i),
+      .rst_ni  (rst_ni),
+      .en_i    (1'b1),
+      .serial_i(d_i),
+      .r_edge_o(re_o),
+      .f_edge_o(fe_o),
+      .serial_o()
+  );
 
 endmodule

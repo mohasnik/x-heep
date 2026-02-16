@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 class rv_timer_base_vseq extends cip_base_vseq #(
-        .CFG_T               (rv_timer_env_cfg),
-        .RAL_T               (rv_timer_reg_block),
-        .COV_T               (rv_timer_env_cov),
-        .VIRTUAL_SEQUENCER_T (rv_timer_virtual_sequencer)
-    );
+    .CFG_T              (rv_timer_env_cfg),
+    .RAL_T              (rv_timer_reg_block),
+    .COV_T              (rv_timer_env_cov),
+    .VIRTUAL_SEQUENCER_T(rv_timer_virtual_sequencer)
+);
   `uvm_object_utils(rv_timer_base_vseq)
 
   // random delay between consecutive transactions
@@ -15,10 +15,10 @@ class rv_timer_base_vseq extends cip_base_vseq #(
 
   constraint delay_c {
     delay dist {
-      0                   :/ 1,
-      [1      :100]       :/ 1,
-      [101    :10_000]    :/ 8,
-      [10_001 :1_000_000] :/ 1
+      0                    :/ 1,
+      [     1 :       100] :/ 1,
+      [   101 :    10_000] :/ 8,
+      [10_001 : 1_000_000] :/ 1
     };
   }
 
@@ -136,10 +136,10 @@ class rv_timer_base_vseq extends cip_base_vseq #(
 
   // task to write 1 to clear and read the interrupt status register
   virtual task clear_intr_state(int hart = 0, int timer = 0);
-    uvm_reg         intr_state_rg;
-    uvm_reg_field   is_fld;
-    bit [TL_DW-1:0] status;
-    bit [TL_DW-1:0] wr_value;
+    uvm_reg                   intr_state_rg;
+    uvm_reg_field             is_fld;
+    bit           [TL_DW-1:0] status;
+    bit           [TL_DW-1:0] wr_value;
     `DV_CHECK_LT_FATAL(hart, NUM_HARTS)
     `DV_CHECK_LT_FATAL(timer, NUM_TIMERS)
     // randomly clear the intr by writing intr_state or mtimecmp
@@ -159,10 +159,9 @@ class rv_timer_base_vseq extends cip_base_vseq #(
   endtask
 
   // poll a intr_status continuously until it reads the expected value.
-  virtual task intr_state_spinwait(input int  hart              = 0,
-                                   input uint exp_data          = 0,
+  virtual task intr_state_spinwait(input int hart = 0, input uint exp_data = 0,
                                    input uint spinwait_delay_ns = 0,
-                                   input uint timeout_ns        = 10_000_000); // 10ms
+                                   input uint timeout_ns = 10_000_000);  // 10ms
     bit [TL_DW-1:0] read_data;
     bit reset_asserted;
     uvm_reg intr_state_rg;
@@ -172,7 +171,7 @@ class rv_timer_base_vseq extends cip_base_vseq #(
       begin : isolation_fork
         fork
           begin
-            wait(cfg.clk_rst_vif.rst_n == 0);
+            wait (cfg.clk_rst_vif.rst_n == 0);
             reset_asserted = 1'b1;
           end
         join_none
@@ -183,9 +182,12 @@ class rv_timer_base_vseq extends cip_base_vseq #(
             if ((read_data == exp_data) | (reset_asserted == 1)) break;
           end
           begin
-            wait_timeout(timeout_ns, "intr_state_spinwait",
-                         $sformatf("timeout %0s (addr=0x%0h) == 0x%0h",
-                         intr_state_rg.get_full_name(), intr_state_rg.get_address(), exp_data));
+            wait_timeout(timeout_ns, "intr_state_spinwait", $sformatf(
+                         "timeout %0s (addr=0x%0h) == 0x%0h",
+                         intr_state_rg.get_full_name(),
+                         intr_state_rg.get_address(),
+                         exp_data
+                         ));
           end
         join_any
         disable fork;
@@ -194,8 +196,7 @@ class rv_timer_base_vseq extends cip_base_vseq #(
   endtask
 
   // task to read interrup status reg for given Hart
-  virtual task read_intr_status_reg(input  int  hart = 0,
-                                    output uint status_val);
+  virtual task read_intr_status_reg(input int hart = 0, output uint status_val);
     uvm_reg intr_state_rg;
     intr_state_rg = ral.get_reg_by_name($sformatf("intr_state%0d", hart));
     `DV_CHECK_NE_FATAL(intr_state_rg, null)
@@ -203,8 +204,7 @@ class rv_timer_base_vseq extends cip_base_vseq #(
   endtask : read_intr_status_reg
 
   // task to read timer value reg for given Hart
-  virtual task read_timer_val_reg(input  int    hart = 0,
-                                  output uint64 mtime_val);
+  virtual task read_timer_val_reg(input int hart = 0, output uint64 mtime_val);
     bit [TL_DW-1:0] read_data;
     uvm_reg timer_val_l_rg;
     uvm_reg timer_val_u_rg;
@@ -238,7 +238,7 @@ class rv_timer_base_vseq extends cip_base_vseq #(
                   delay = $urandom_range(1, 10000);
                   #(delay * 1ns);
                 end
-                wait(stop_reading == 1);
+                wait (stop_reading == 1);
               join_any
               disable fork;
             end : isolation_fork

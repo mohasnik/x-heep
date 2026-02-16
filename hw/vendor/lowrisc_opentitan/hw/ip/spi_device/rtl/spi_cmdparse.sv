@@ -12,46 +12,46 @@
 module spi_cmdparse
   import spi_device_pkg::*;
 (
-  input clk_i,
-  input rst_ni,
+    input clk_i,
+    input rst_ni,
 
-  // Data from spi_s2p
-  input                     data_valid_i,
-  input spi_byte_t          data_i,
+    // Data from spi_s2p
+    input            data_valid_i,
+    input spi_byte_t data_i,
 
-  // Configurations
-  input spi_mode_e spi_mode_i,
+    // Configurations
+    input spi_mode_e spi_mode_i,
 
-  // 256b indicator determines which commands to be uploaded
-  // If 1 and the command does not fall into other modules
-  // (SFDP/JEDEC/Read/etc), Command Processor triggers upload module.
-  // Other upload related configurations (Address/ Payload) are used
-  // in upload module.
-  //
-  // If Command Config (from DPSRAM) is implemented, this signal shall be
-  // changed to 8bit width.
-  input logic [255:0] upload_mask_i,
+    // 256b indicator determines which commands to be uploaded
+    // If 1 and the command does not fall into other modules
+    // (SFDP/JEDEC/Read/etc), Command Processor triggers upload module.
+    // Other upload related configurations (Address/ Payload) are used
+    // in upload module.
+    //
+    // If Command Config (from DPSRAM) is implemented, this signal shall be
+    // changed to 8bit width.
+    input logic [255:0] upload_mask_i,
 
-  // control to spi_s2p
-  output io_mode_e io_mode_o,
+    // control to spi_s2p
+    output io_mode_e io_mode_o,
 
-  // Activate downstream modules
-  output sel_datapath_e sel_dp_o,
-  output spi_byte_t     opcode_o,
+    // Activate downstream modules
+    output sel_datapath_e sel_dp_o,
+    output spi_byte_t     opcode_o,
 
-  // Command Config is not implemented yet.
-  // Indicator of command config. The pulse is generated at 3rd bit position
-  // of Opcode. The upper 5 bits are used as address to fetch command configs
-  // from DPSRAM.
-  output logic       cmd_config_req_o,
-  output logic [4:0] cmd_config_idx_o
+    // Command Config is not implemented yet.
+    // Indicator of command config. The pulse is generated at 3rd bit position
+    // of Opcode. The upper 5 bits are used as address to fetch command configs
+    // from DPSRAM.
+    output logic       cmd_config_req_o,
+    output logic [4:0] cmd_config_idx_o
 );
 
   ///////////////
   // Temporary //
   ///////////////
   assign io_mode_o = SingleIO;
-  assign cmd_config_req_o = 1'b 0;
+  assign cmd_config_req_o = 1'b0;
   assign cmd_config_idx_o = data_i[4:0];
 
   ////////////////
@@ -110,7 +110,7 @@ module spi_cmdparse
     if (!rst_ni) begin
       opcode_o <= spi_byte_t'(0);
     end else if (st == StIdle && data_valid_i) begin
-      opcode_o <=  data_i;
+      opcode_o <= data_i;
     end
   end
 
@@ -118,9 +118,9 @@ module spi_cmdparse
   // State Machine //
   ///////////////////
 
-  assign in_flashmode   = spi_mode_i == FlashMode ;
-  assign in_passthrough = spi_mode_i == PassThrough ;
-  assign module_active  = in_flashmode || in_passthrough ;
+  assign in_flashmode   = spi_mode_i == FlashMode;
+  assign in_passthrough = spi_mode_i == PassThrough;
+  assign module_active  = in_flashmode || in_passthrough;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -132,7 +132,7 @@ module spi_cmdparse
   end
 
   always_comb begin
-    st_d = st;
+    st_d   = st;
 
     sel_dp = DpNone;
 
@@ -183,7 +183,7 @@ module spi_cmdparse
               // If Command Config in DPSRAM, need to change as below
               // if (upload_mask_i[data_i[2:0]]) begin
               if (upload_mask_i[data_i]) begin
-                st_d = StUpload;
+                st_d   = StUpload;
 
                 // Reason to select dp here is for Opcode-only commands such as
                 // ChipErase. As no further SCK is given after 8th bit, need to
@@ -210,20 +210,20 @@ module spi_cmdparse
       end
 
       // dead-end states below. Reset (CSb de-assertion) let SM back to Idle
-      StStatus:  sel_dp = DpReadStatus;
+      StStatus: sel_dp = DpReadStatus;
 
-      StJedec:   sel_dp = DpReadJEDEC;
+      StJedec: sel_dp = DpReadJEDEC;
 
-      StSfdp:    sel_dp = DpReadSFDP;
+      StSfdp: sel_dp = DpReadSFDP;
 
       StReadCmd: sel_dp = DpReadCmd;
 
-      StUpload:  sel_dp = DpUpload;
+      StUpload: sel_dp = DpUpload;
 
       default: begin
         sel_dp = DpNone;
 
-        st_d = StIdle;
+        st_d   = StIdle;
       end
     endcase
 

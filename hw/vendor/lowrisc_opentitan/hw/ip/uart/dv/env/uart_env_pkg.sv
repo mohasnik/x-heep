@@ -35,29 +35,29 @@ package uart_env_pkg;
 
   // get the number of bytes that triggers watermark interrupt
   function automatic int get_watermark_bytes_by_level(int lvl, uart_dir_e dir);
-    case(lvl)
+    case (lvl)
       0: return dir == UartTx ? 2 : 1;
       1: return 4;
       2: return 8;
       3: return 16;
       4: return 30;
       default: begin
-        `uvm_fatal("uart_env_pkg::get_watermark_bytes_by_level",
-                   $sformatf("invalid watermark level value - %0d", lvl))
+        `uvm_fatal("uart_env_pkg::get_watermark_bytes_by_level", $sformatf(
+                   "invalid watermark level value - %0d", lvl))
       end
     endcase
   endfunction
 
   // get the number of bytes that triggers break interrupt
   function automatic int get_break_bytes_by_level(int lvl);
-    case(lvl)
+    case (lvl)
       0: return 2;
       1: return 4;
       2: return 8;
       3: return 16;
       default: begin
-        `uvm_fatal("uart_env_pkg::get_break_bytes_by_level",
-                   $sformatf("invalid break level value - %0d", lvl))
+        `uvm_fatal("uart_env_pkg::get_break_bytes_by_level", $sformatf(
+                   "invalid break level value - %0d", lvl))
       end
     endcase
   endfunction
@@ -74,10 +74,10 @@ package uart_env_pkg;
     int nco;
     nco = `CALC_NCO(baud_rate, nco_width, clk_freq_mhz);
     if (nco >= (2 ** nco_width)) begin
-      `uvm_fatal("uart_agent_pkg::get_nco", $sformatf(
-                 {"nco (%0d) can't bigger than (2 ** %0d) - 1, it's only %0d bits ",
-                  "baud_rate = %0d, clk_freq_mhz = %0d"},
-                 nco, nco_width, nco_width, baud_rate, clk_freq_mhz))
+      `uvm_fatal("uart_agent_pkg::get_nco",
+                 $sformatf({"nco (%0d) can't bigger than (2 ** %0d) - 1, it's only %0d bits ",
+                            "baud_rate = %0d, clk_freq_mhz = %0d"}, nco, nco_width, nco_width,
+                             baud_rate, clk_freq_mhz))
     end
     return nco;
   endfunction

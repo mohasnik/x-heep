@@ -11,22 +11,22 @@
 // TODO(zarubaf): This is not really a tech cell - move it to common cells
 
 module pulp_clock_gating_async #(
-  parameter int unsigned STAGES = 2
+    parameter int unsigned STAGES = 2
 ) (
-  input  logic clk_i,
-  input  logic rstn_i,
-  input  logic en_async_i,
-  output logic en_ack_o,
-  input  logic test_en_i,
-  output logic clk_o
+    input  logic clk_i,
+    input  logic rstn_i,
+    input  logic en_async_i,
+    output logic en_ack_o,
+    input  logic test_en_i,
+    output logic clk_o
 );
 
   logic [STAGES-1:0] r_reg;
 
-  assign en_ack_o =  r_reg[STAGES-1];
+  assign en_ack_o = r_reg[STAGES-1];
 
   // synchronize enable signal
-  always_ff @ (posedge clk_i or negedge rstn_i) begin
+  always_ff @(posedge clk_i or negedge rstn_i) begin
     if (!rstn_i) begin
       r_reg <= '0;
     end else begin
@@ -35,10 +35,10 @@ module pulp_clock_gating_async #(
   end
 
   pulp_clock_gating i_clk_gate (
-    .clk_i,
-    .en_i ( r_reg[STAGES-1] ),
-    .test_en_i,
-    .clk_o
+      .clk_i,
+      .en_i(r_reg[STAGES-1]),
+      .test_en_i,
+      .clk_o
   );
 
 endmodule

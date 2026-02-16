@@ -29,111 +29,111 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_controller_fsm import cv32e40x_pkg::*;
+module cv32e40x_controller_fsm
+  import cv32e40x_pkg::*;
 #(
-  parameter bit          X_EXT         = 0,
-  parameter bit          DEBUG         = 1,
-  parameter bit          CLIC          = 0,
-  parameter int unsigned CLIC_ID_WIDTH = 5
-)
-(
-  // Clocks and reset
-  input  logic        clk,                        // Gated clock
-  input  logic        rst_n,
+    parameter bit          X_EXT         = 0,
+    parameter bit          DEBUG         = 1,
+    parameter bit          CLIC          = 0,
+    parameter int unsigned CLIC_ID_WIDTH = 5
+) (
+    // Clocks and reset
+    input logic clk,   // Gated clock
+    input logic rst_n,
 
-  input  logic        fetch_enable_i,             // Start executing
+    input logic fetch_enable_i,  // Start executing
 
-  // From bypass logic
-  input  ctrl_byp_t   ctrl_byp_i,
+    // From bypass logic
+    input ctrl_byp_t ctrl_byp_i,
 
-  // From IF stage
-  input  logic [31:0] pc_if_i,
-  input  logic        last_op_if_i,               // IF stage is handling the last operation of a sequence.
-  input  logic        abort_op_if_i,              // IF stage contains an operation that will be aborted (bus error or MPU exception)
+    // From IF stage
+    input logic [31:0] pc_if_i,
+    input logic last_op_if_i,  // IF stage is handling the last operation of a sequence.
+    input  logic        abort_op_if_i,              // IF stage contains an operation that will be aborted (bus error or MPU exception)
 
-  // From ID stage
-  input  if_id_pipe_t if_id_pipe_i,
-  input  logic        alu_jmp_id_i,               // Jump in ID
-  input  logic        sys_mret_id_i,              // mret in ID
-  input  logic        alu_en_id_i,                // alu_en qualifier for jumps
-  input  logic        sys_en_id_i,                // sys_en qualifier for mret
-  input  logic        first_op_id_i,              // ID stage is handling the first operation of a sequence
-  input  logic        last_op_id_i,               // ID stage is handling the last operation of a sequence
-  input  logic        abort_op_id_i,              // ID stage contains an (to be) aborted instruction or sequence
+    // From ID stage
+    input if_id_pipe_t if_id_pipe_i,
+    input logic alu_jmp_id_i,  // Jump in ID
+    input logic sys_mret_id_i,  // mret in ID
+    input logic alu_en_id_i,  // alu_en qualifier for jumps
+    input logic sys_en_id_i,  // sys_en qualifier for mret
+    input logic first_op_id_i,  // ID stage is handling the first operation of a sequence
+    input logic last_op_id_i,  // ID stage is handling the last operation of a sequence
+    input logic abort_op_id_i,  // ID stage contains an (to be) aborted instruction or sequence
 
-  // From EX stage
-  input  id_ex_pipe_t id_ex_pipe_i,
-  input  logic        branch_decision_ex_i,       // branch decision signal from EX ALU
-  input  logic        last_op_ex_i,               // EX stage contains the last operation of an instruction
+    // From EX stage
+    input id_ex_pipe_t id_ex_pipe_i,
+    input logic branch_decision_ex_i,  // branch decision signal from EX ALU
+    input logic last_op_ex_i,  // EX stage contains the last operation of an instruction
 
-  // From WB stage
-  input  ex_wb_pipe_t   ex_wb_pipe_i,
-  input  logic [1:0]    lsu_err_wb_i,               // LSU caused bus_error in WB stage, gated with data_rvalid_i inside load_store_unit
-  input  logic          last_op_wb_i,               // WB stage contains the last operation of an instruction
-  input  logic          abort_op_wb_i,              // WB stage contains an (to be) aborted instruction or sequence
-  input  mpu_status_e   mpu_status_wb_i,            // MPU status (WB timing)
-  input  align_status_e align_status_wb_i,          // Aligned status (atomics) in WB
-  input  logic          wpt_match_wb_i,             // LSU watchpoint trigger (WB)
+    // From WB stage
+    input ex_wb_pipe_t ex_wb_pipe_i,
+    input  logic [1:0]    lsu_err_wb_i,               // LSU caused bus_error in WB stage, gated with data_rvalid_i inside load_store_unit
+    input logic last_op_wb_i,  // WB stage contains the last operation of an instruction
+    input logic abort_op_wb_i,  // WB stage contains an (to be) aborted instruction or sequence
+    input mpu_status_e mpu_status_wb_i,  // MPU status (WB timing)
+    input align_status_e align_status_wb_i,  // Aligned status (atomics) in WB
+    input logic wpt_match_wb_i,  // LSU watchpoint trigger (WB)
 
 
-  // From LSU (WB)
-  input  logic        data_stall_wb_i,            // WB stalled by LSU
-  input  logic        lsu_valid_wb_i,             // LSU instruction in WB is valid
+    // From LSU (WB)
+    input logic data_stall_wb_i,  // WB stalled by LSU
+    input logic lsu_valid_wb_i,   // LSU instruction in WB is valid
 
-  input  logic        lsu_busy_i,                 // LSU is busy with outstanding transfers
-  input  logic        lsu_interruptible_i,        // LSU can be interrupted
+    input logic lsu_busy_i,          // LSU is busy with outstanding transfers
+    input logic lsu_interruptible_i, // LSU can be interrupted
 
-  // Interrupt Controller Signals
-  input  logic        irq_wu_ctrl_i,              // Irq wakeup control
-  input  logic        irq_req_ctrl_i,             // Irq request
-  input  logic [9:0]  irq_id_ctrl_i,              // Irq id
-  input  logic        irq_clic_shv_i,             // CLIC mode selective hardware vectoring
-  input  logic [7:0]  irq_clic_level_i,           // CLIC mode current interrupt level
-  input  logic [1:0]  irq_clic_priv_i,            // CLIC mode current interrupt privilege
+    // Interrupt Controller Signals
+    input logic       irq_wu_ctrl_i,     // Irq wakeup control
+    input logic       irq_req_ctrl_i,    // Irq request
+    input logic [9:0] irq_id_ctrl_i,     // Irq id
+    input logic       irq_clic_shv_i,    // CLIC mode selective hardware vectoring
+    input logic [7:0] irq_clic_level_i,  // CLIC mode current interrupt level
+    input logic [1:0] irq_clic_priv_i,   // CLIC mode current interrupt privilege
 
-  // Wakeup signal for WFE (from toplevel input)
-  input  logic        wu_wfe_i,
+    // Wakeup signal for WFE (from toplevel input)
+    input logic wu_wfe_i,
 
-  // From cs_registers
-  input  logic  [1:0] mtvec_mode_i,
-  input  dcsr_t       dcsr_i,
-  input  mcause_t     mcause_i,
-  input  mintstatus_t mintstatus_i,
+    // From cs_registers
+    input logic        [1:0] mtvec_mode_i,
+    input dcsr_t             dcsr_i,
+    input mcause_t           mcause_i,
+    input mintstatus_t       mintstatus_i,
 
-  // Trigger module
-  input  logic        etrigger_wb_i,              // Trigger module detected match in WB (etrigger)
+    // Trigger module
+    input logic etrigger_wb_i,  // Trigger module detected match in WB (etrigger)
 
-  // Toplevel input
-  input  logic        debug_req_i,                // External debug request
+    // Toplevel input
+    input logic debug_req_i,  // External debug request
 
-  // All controller FSM outputs
-  output ctrl_fsm_t   ctrl_fsm_o,
+    // All controller FSM outputs
+    output ctrl_fsm_t ctrl_fsm_o,
 
-  // CSR write strobes
-  input  logic        csr_wr_in_wb_flush_i,
+    // CSR write strobes
+    input logic csr_wr_in_wb_flush_i,
 
-  // Stage valid/ready signals
-  input  logic        if_valid_i,       // IF stage has valid (non-bubble) data for next stage
-  input  logic        id_ready_i,       // ID stage is ready for new data
-  input  logic        id_valid_i,       // ID stage has valid (non-bubble) data for next stage
-  input  logic        ex_ready_i,       // EX stage is ready for new data
-  input  logic        ex_valid_i,       // EX stage has valid (non-bubble) data for next stage
-  input  logic        wb_ready_i,       // WB stage is ready for new data,
-  input  logic        wb_valid_i,       // WB stage ha valid (non-bubble) data
+    // Stage valid/ready signals
+    input logic if_valid_i,  // IF stage has valid (non-bubble) data for next stage
+    input logic id_ready_i,  // ID stage is ready for new data
+    input logic id_valid_i,  // ID stage has valid (non-bubble) data for next stage
+    input logic ex_ready_i,  // EX stage is ready for new data
+    input logic ex_valid_i,  // EX stage has valid (non-bubble) data for next stage
+    input logic wb_ready_i,  // WB stage is ready for new data,
+    input logic wb_valid_i,  // WB stage ha valid (non-bubble) data
 
-  // Fencei flush handshake
-  output logic        fencei_flush_req_o,
-  input logic         fencei_flush_ack_i,
+    // Fencei flush handshake
+    output logic fencei_flush_req_o,
+    input  logic fencei_flush_ack_i,
 
-  // Data OBI interface monitor
-  if_c_obi.monitor     m_c_obi_data_if,
+    // Data OBI interface monitor
+    if_c_obi.monitor m_c_obi_data_if,
 
-  // eXtension interface
-  if_xif.cpu_commit    xif_commit_if,
-  input                xif_csr_error_i
+    // eXtension interface
+          if_xif.cpu_commit xif_commit_if,
+    input                   xif_csr_error_i
 );
 
-   // FSM state encoding
+  // FSM state encoding
   ctrl_state_e ctrl_fsm_cs, ctrl_fsm_ns;
 
   // Debug state
@@ -141,7 +141,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
   // Sticky version of lsu_err_wb_i
   logic nmi_pending_q;
-  logic nmi_is_store_q; // 1 for store, 0 for load
+  logic nmi_is_store_q;  // 1 for store, 0 for load
 
   // Debug mode
   logic debug_mode_n;
@@ -150,15 +150,15 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   // Signals used for halting IF after first instruction
   // during single step
   logic single_step_halt_if_n;
-  logic single_step_halt_if_q; // Halting IF after issuing one insn in single step mode
+  logic single_step_halt_if_q;  // Halting IF after issuing one insn in single step mode
 
   // ID signals
-  logic sys_mret_id;             // MRET in ID
-  logic jmp_id;                  // JAL, JALR in ID
+  logic sys_mret_id;  // MRET in ID
+  logic jmp_id;  // JAL, JALR in ID
   logic jump_in_id;
   logic jump_taken_id;
-  logic clic_ptr_in_id; // CLIC pointer in ID
-  logic mret_ptr_in_id; // mret pointer in ID
+  logic clic_ptr_in_id;  // CLIC pointer in ID
+  logic mret_ptr_in_id;  // mret pointer in ID
 
   // EX signals
   logic branch_in_ex;
@@ -175,13 +175,13 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   logic fencei_in_wb;
   logic fence_in_wb;
   logic mret_in_wb;
-  logic mret_ptr_in_wb; // CLIC pointer caused by mret is in WB
+  logic mret_ptr_in_wb;  // CLIC pointer caused by mret is in WB
   logic dret_in_wb;
   logic ebreak_in_wb;
-  logic trigger_match_in_wb;   // mcontrol6 trigger in WB
-  logic etrigger_in_wb;        // exception trigger in WB
+  logic trigger_match_in_wb;  // mcontrol6 trigger in WB
+  logic etrigger_in_wb;  // exception trigger in WB
   logic xif_in_wb;
-  logic clic_ptr_in_wb;   // CLIC pointer caused by directly acking an SHV is in WB (no mret)
+  logic clic_ptr_in_wb;  // CLIC pointer caused by directly acking an SHV is in WB (no mret)
 
   logic pending_nmi;
   logic pending_nmi_early;
@@ -218,16 +218,16 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   logic [2:0] sync_debug_cause;
 
   // Flop for remembering causes of wakeup
-  logic       woke_to_debug_q;
-  logic       woke_to_interrupt_q;
+  logic woke_to_debug_q;
+  logic woke_to_interrupt_q;
 
-  logic [10:0] exc_cause; // id of taken interrupt. Max width, unused bits are tied off.
+  logic [10:0] exc_cause;  // id of taken interrupt. Max width, unused bits are tied off.
 
-  logic       fence_req_set;
-  logic       fence_req_clr;
-  logic       fence_req_q;
-  logic       fencei_req_and_ack_q;
-  logic       fencei_ongoing;
+  logic fence_req_set;
+  logic fence_req_clr;
+  logic fence_req_q;
+  logic fencei_req_and_ack_q;
+  logic fencei_ongoing;
 
   // Pipeline PC mux control
   pipe_pc_mux_e pipe_pc_mux_ctrl;
@@ -235,32 +235,32 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   // Flag for signalling that a new instruction arrived in WB.
   // Used for performance counters. High for one cycle, unless WB is halted
   // (for fence.i for example), then it will remain high until un-halted.
-  logic       wb_counter_event;
+  logic wb_counter_event;
 
   // Gated version of wb_counter_event
   // Do not count if halted or killed
-  logic       wb_counter_event_gated;
+  logic wb_counter_event_gated;
 
   // Flop for acking flush requests due to CSR writes
-  logic       csr_flush_ack_n;
-  logic       csr_flush_ack_q;
+  logic csr_flush_ack_n;
+  logic csr_flush_ack_q;
 
   // Flag for checking if multi op instructions are in an interruptible state
-  logic       sequence_in_progress_wb;
-  logic       sequence_interruptible;
+  logic sequence_in_progress_wb;
+  logic sequence_interruptible;
 
   // Flag for checking if ID stage can be halted
   // Used to not halt sequences in the middle, potentially causing deadlocks
-  logic       sequence_in_progress_id;
-  logic       id_stage_haltable;
+  logic sequence_in_progress_id;
+  logic id_stage_haltable;
 
   // Flag that is high during the cycle after an LSU instruction finishes in WB
-  logic       interrupt_blanking_q;
+  logic interrupt_blanking_q;
 
   // Flop for tracking when a pointer fetch is in progress
-  logic       clic_ptr_in_progress_id;
-  logic       clic_ptr_in_progress_id_set;
-  logic       clic_ptr_in_progress_id_clear;
+  logic clic_ptr_in_progress_id;
+  logic clic_ptr_in_progress_id_set;
+  logic clic_ptr_in_progress_id_clear;
 
   assign sequence_interruptible = !sequence_in_progress_wb;
 
@@ -294,7 +294,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
 
   assign sys_mret_id = sys_en_id_i && sys_mret_id_i && if_id_pipe_i.instr_valid;
-  assign jmp_id      = alu_en_id_i && alu_jmp_id_i  && if_id_pipe_i.instr_valid;
+  assign jmp_id = alu_en_id_i && alu_jmp_id_i && if_id_pipe_i.instr_valid;
 
   // Detect that a jump is in the ID stage.
   // This will also be true for table jumps, as they are encoded as JAL instructions.
@@ -421,7 +421,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   // This ensures that any instruction in the ID stage that may depend on the result of the faulted load
   // will not propagate to the EX stage. For cycles after lsu_err_wb_i[0] is
   // high, ID stage will be halted due to pending_nmi and !nmi_allowed.
-  assign pending_nmi_early =  lsu_err_wb_i[0];
+  assign pending_nmi_early = lsu_err_wb_i[0];
 
   // dcsr.nmip will always see a pending nmi if nmi_pending_q is set.
   // This CSR bit shall not be gated by debug mode or step without stepie
@@ -508,7 +508,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   // Exception triggers do not set pending_sync_debug, as they need to take the single step path through the FSM.
   assign pending_sync_debug = (trigger_match_in_wb) ||
                               (ebreak_in_wb && dcsr_i.ebreakm && (ex_wb_pipe_i.priv_lvl == PRIV_LVL_M) && !debug_mode_q) || // Ebreak with dcsr.ebreakm==1  during machine mode
-                              (ebreak_in_wb && debug_mode_q); // Ebreak during debug_mode restarts execution from dm_halt_addr, as a regular debug entry without CSR updates.
+      (ebreak_in_wb && debug_mode_q); // Ebreak during debug_mode restarts execution from dm_halt_addr, as a regular debug entry without CSR updates.
 
   // Debug pending for external debug request, only if not already in debug mode
   // Ideally the !debug_mode_q below should be factored into async_debug_allowed, but
@@ -533,9 +533,9 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
   // The synchronous causes are determined here, while the priority between haltreq, sync_debug_cause and single step is determined within the FSM.
   assign sync_debug_cause = (trigger_match_in_wb)                                                                      ? DBG_CAUSE_TRIGGER :    // Etrigger will enter DEBUG_TAKEN as a single step (no halting), but kill pipeline as non-stepping entries.
-                            (ebreak_in_wb && dcsr_i.ebreakm && (ex_wb_pipe_i.priv_lvl == PRIV_LVL_M) && !debug_mode_q) ? DBG_CAUSE_EBREAK  :    // Ebreak during machine mode
-                            (ebreak_in_wb && debug_mode_q)                                                             ? DBG_CAUSE_EBREAK  :    // Ebreak during debug mode
-                                                                                                                         DBG_CAUSE_NONE;
+      (ebreak_in_wb && dcsr_i.ebreakm && (ex_wb_pipe_i.priv_lvl == PRIV_LVL_M) && !debug_mode_q) ? DBG_CAUSE_EBREAK  :    // Ebreak during machine mode
+      (ebreak_in_wb && debug_mode_q) ? DBG_CAUSE_EBREAK :  // Ebreak during debug mode
+      DBG_CAUSE_NONE;
 
   // Debug cause to CSR from flopped version (valid during DEBUG_TAKEN)
   assign ctrl_fsm_o.debug_cause = debug_cause_q;
@@ -577,20 +577,20 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
                                   !ctrl_fsm_o.kill_wb && !ctrl_fsm_o.halt_wb && !ctrl_fsm_o.halt_limited_wb;
 
   // Performance counter events
-  assign ctrl_fsm_o.mhpmevent.minstret      = wb_counter_event_gated;
+  assign ctrl_fsm_o.mhpmevent.minstret = wb_counter_event_gated;
   assign ctrl_fsm_o.mhpmevent.compressed    = wb_counter_event_gated && ex_wb_pipe_i.instr_meta.compressed;
-  assign ctrl_fsm_o.mhpmevent.jump          = wb_counter_event_gated && ex_wb_pipe_i.alu_jmp_qual;
-  assign ctrl_fsm_o.mhpmevent.branch        = wb_counter_event_gated && ex_wb_pipe_i.alu_bch_qual;
+  assign ctrl_fsm_o.mhpmevent.jump = wb_counter_event_gated && ex_wb_pipe_i.alu_jmp_qual;
+  assign ctrl_fsm_o.mhpmevent.branch = wb_counter_event_gated && ex_wb_pipe_i.alu_bch_qual;
   assign ctrl_fsm_o.mhpmevent.branch_taken  = wb_counter_event_gated && ex_wb_pipe_i.alu_bch_taken_qual;
-  assign ctrl_fsm_o.mhpmevent.intr_taken    = ctrl_fsm_o.irq_ack;
+  assign ctrl_fsm_o.mhpmevent.intr_taken = ctrl_fsm_o.irq_ack;
   assign ctrl_fsm_o.mhpmevent.data_read     = m_c_obi_data_if.s_req.req && m_c_obi_data_if.s_gnt.gnt && !m_c_obi_data_if.req_payload.we;
   assign ctrl_fsm_o.mhpmevent.data_write    = m_c_obi_data_if.s_req.req && m_c_obi_data_if.s_gnt.gnt && m_c_obi_data_if.req_payload.we;
-  assign ctrl_fsm_o.mhpmevent.if_invalid    = !if_valid_i && id_ready_i;
-  assign ctrl_fsm_o.mhpmevent.id_invalid    = !id_valid_i && ex_ready_i;
-  assign ctrl_fsm_o.mhpmevent.ex_invalid    = !ex_valid_i && wb_ready_i;
-  assign ctrl_fsm_o.mhpmevent.wb_invalid    = !wb_valid_i;
+  assign ctrl_fsm_o.mhpmevent.if_invalid = !if_valid_i && id_ready_i;
+  assign ctrl_fsm_o.mhpmevent.id_invalid = !id_valid_i && ex_ready_i;
+  assign ctrl_fsm_o.mhpmevent.ex_invalid = !ex_valid_i && wb_ready_i;
+  assign ctrl_fsm_o.mhpmevent.wb_invalid = !wb_valid_i;
   assign ctrl_fsm_o.mhpmevent.id_jalr_stall = ctrl_byp_i.jalr_stall && !id_valid_i && ex_ready_i;
-  assign ctrl_fsm_o.mhpmevent.id_ld_stall   = ctrl_byp_i.load_stall && !id_valid_i && ex_ready_i;
+  assign ctrl_fsm_o.mhpmevent.id_ld_stall = ctrl_byp_i.load_stall && !id_valid_i && ex_ready_i;
   assign ctrl_fsm_o.mhpmevent.wb_data_stall = data_stall_wb_i;
 
 
@@ -601,11 +601,11 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
     ctrl_fsm_o.pipe_pc = PC_WB;
 
     unique case (pipe_pc_mux_ctrl)
-      PC_WB: ctrl_fsm_o.pipe_pc = ex_wb_pipe_i.pc;
-      PC_EX: ctrl_fsm_o.pipe_pc = id_ex_pipe_i.pc;
-      PC_ID: ctrl_fsm_o.pipe_pc = if_id_pipe_i.pc;
-      PC_IF: ctrl_fsm_o.pipe_pc = pc_if_i;
-      default:;
+      PC_WB:   ctrl_fsm_o.pipe_pc = ex_wb_pipe_i.pc;
+      PC_EX:   ctrl_fsm_o.pipe_pc = id_ex_pipe_i.pc;
+      PC_ID:   ctrl_fsm_o.pipe_pc = if_id_pipe_i.pc;
+      PC_IF:   ctrl_fsm_o.pipe_pc = pc_if_i;
+      default: ;
     endcase
   end
 
@@ -614,24 +614,24 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   //////////////
   always_comb begin
     // Default values
-    ctrl_fsm_ns                 = ctrl_fsm_cs;
-    ctrl_fsm_o.ctrl_busy        = 1'b1;
-    ctrl_fsm_o.instr_req        = 1'b1;
+    ctrl_fsm_ns = ctrl_fsm_cs;
+    ctrl_fsm_o.ctrl_busy = 1'b1;
+    ctrl_fsm_o.instr_req = 1'b1;
 
-    ctrl_fsm_o.pc_mux           = PC_BOOT;
-    ctrl_fsm_o.pc_set           = 1'b0;
+    ctrl_fsm_o.pc_mux = PC_BOOT;
+    ctrl_fsm_o.pc_set = 1'b0;
 
-    ctrl_fsm_o.irq_ack          = 1'b0;
-    ctrl_fsm_o.irq_id           = '0;
-    ctrl_fsm_o.irq_priv         = '0;
-    ctrl_fsm_o.irq_shv          = '0;
-    ctrl_fsm_o.irq_level        = 8'h00;
+    ctrl_fsm_o.irq_ack = 1'b0;
+    ctrl_fsm_o.irq_id = '0;
+    ctrl_fsm_o.irq_priv = '0;
+    ctrl_fsm_o.irq_shv = '0;
+    ctrl_fsm_o.irq_level = 8'h00;
 
-    ctrl_fsm_o.dbg_ack          = 1'b0;
+    ctrl_fsm_o.dbg_ack = 1'b0;
 
     // IF stage is halted if an instruction has been issued during single step
     // to avoid more than one instructions passing down the pipe.
-    ctrl_fsm_o.halt_if          = single_step_halt_if_q;
+    ctrl_fsm_o.halt_if = single_step_halt_if_q;
 
     // ID stage is halted when hazards are present (i.e. stalls for which the instruction currently in ID is not ready to be issued yet).
     //
@@ -664,48 +664,48 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
     //   - An atomic is in EX while there is an LSU instruction in WB (including atomics)
     //   - Any LSU instruction is in EX while there is an outstanding atomic in WB
     ctrl_fsm_o.halt_ex          = ctrl_byp_i.minstret_stall || ctrl_byp_i.xif_exception_stall || ctrl_byp_i.irq_enable_stall || ctrl_byp_i.mnxti_ex_stall || ctrl_byp_i.atomic_stall;
-    ctrl_fsm_o.halt_wb          = 1'b0;
-    ctrl_fsm_o.halt_limited_wb  = 1'b0;
+    ctrl_fsm_o.halt_wb = 1'b0;
+    ctrl_fsm_o.halt_limited_wb = 1'b0;
 
     // By default no stages are killed
-    ctrl_fsm_o.kill_if          = 1'b0;
-    ctrl_fsm_o.kill_id          = 1'b0;
-    ctrl_fsm_o.kill_ex          = 1'b0;
-    ctrl_fsm_o.kill_wb          = 1'b0;
+    ctrl_fsm_o.kill_if = 1'b0;
+    ctrl_fsm_o.kill_id = 1'b0;
+    ctrl_fsm_o.kill_ex = 1'b0;
+    ctrl_fsm_o.kill_wb = 1'b0;
 
     ctrl_fsm_o.csr_restore_mret = 1'b0;
     ctrl_fsm_o.csr_restore_mret_ptr = 1'b0;
     ctrl_fsm_o.csr_restore_dret = 1'b0;
 
-    ctrl_fsm_o.csr_save_cause   = 1'b0;
-    ctrl_fsm_o.csr_cause        = 32'h0;
+    ctrl_fsm_o.csr_save_cause = 1'b0;
+    ctrl_fsm_o.csr_cause = 32'h0;
 
-    ctrl_fsm_o.csr_clear_minhv  = 1'b0;
+    ctrl_fsm_o.csr_clear_minhv = 1'b0;
 
-    pipe_pc_mux_ctrl            = PC_WB;
+    pipe_pc_mux_ctrl = PC_WB;
 
-    exc_cause                   = 11'b0;
+    exc_cause = 11'b0;
 
-    debug_cause_n               = DBG_CAUSE_NONE;
-    debug_mode_n                = debug_mode_q;
-    ctrl_fsm_o.debug_csr_save   = 1'b0;
-    ctrl_fsm_o.block_data_addr  = 1'b0;
+    debug_cause_n = DBG_CAUSE_NONE;
+    debug_mode_n = debug_mode_q;
+    ctrl_fsm_o.debug_csr_save = 1'b0;
+    ctrl_fsm_o.block_data_addr = 1'b0;
 
     // Single step halting of IF
-    single_step_halt_if_n       = single_step_halt_if_q;
+    single_step_halt_if_n = single_step_halt_if_q;
 
     // Ensure jumps and branches are taken only once
-    branch_taken_n              = branch_taken_q;
+    branch_taken_n = branch_taken_q;
 
-    fence_req_set               = 1'b0;
-    fence_req_clr               = 1'b1;
+    fence_req_set = 1'b0;
+    fence_req_clr = 1'b1;
 
-    ctrl_fsm_o.pc_set_clicv     = 1'b0;
-    ctrl_fsm_o.pc_set_tbljmp    = 1'b0;
+    ctrl_fsm_o.pc_set_clicv = 1'b0;
+    ctrl_fsm_o.pc_set_tbljmp = 1'b0;
 
-    csr_flush_ack_n             = 1'b0;
+    csr_flush_ack_n = 1'b0;
 
-    clic_ptr_in_progress_id_set   = 1'b0;
+    clic_ptr_in_progress_id_set = 1'b0;
     clic_ptr_in_progress_id_clear = 1'b0;
 
     unique case (ctrl_fsm_cs)
@@ -715,10 +715,10 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
           if (debug_req_i) begin
             // Not raising instr_req to prevent fetching until we are in debug mode
             ctrl_fsm_o.instr_req = 1'b0;
-            ctrl_fsm_o.pc_mux    = PC_BOOT;
+            ctrl_fsm_o.pc_mux = PC_BOOT;
             ctrl_fsm_o.pc_set    = 1'b1; // pc_set is required for propagating boot address to dpc (from IF stage)
-            ctrl_fsm_ns          = DEBUG_TAKEN;
-            debug_cause_n        = DBG_CAUSE_HALTREQ;
+            ctrl_fsm_ns = DEBUG_TAKEN;
+            debug_cause_n = DBG_CAUSE_HALTREQ;
           end else begin
             ctrl_fsm_o.instr_req = 1'b1;
             ctrl_fsm_o.pc_mux    = PC_BOOT;
@@ -738,12 +738,12 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
           ctrl_fsm_o.pc_set = 1'b1;
           ctrl_fsm_o.pc_mux = PC_TRAP_NMI;
 
-          ctrl_fsm_o.csr_save_cause  = 1'b1;
+          ctrl_fsm_o.csr_save_cause = 1'b1;
           ctrl_fsm_o.csr_cause.irq = 1'b1;
           ctrl_fsm_o.csr_cause.exception_code = nmi_is_store_q ? INT_CAUSE_LSU_STORE_FAULT : INT_CAUSE_LSU_LOAD_FAULT;
 
           // Keep mcause.minhv when taking exceptions and interrupts, only cleared on successful pointer fetches or CSR writes.
-          ctrl_fsm_o.csr_cause.minhv  = mcause_i.minhv;
+          ctrl_fsm_o.csr_cause.minhv = mcause_i.minhv;
 
           if (CLIC) begin
             // Keep current interrupt level when taking NMIs
@@ -764,7 +764,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             pipe_pc_mux_ctrl = PC_IF;
           end
 
-        // External debug entry (async)
+          // External debug entry (async)
         end else if (pending_async_debug && async_debug_allowed) begin
           // Halt the whole pipeline
           // Halting makes sure instructions stay in the pipeline stage without propagating to the next.
@@ -776,7 +776,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
           ctrl_fsm_ns = DEBUG_TAKEN;
           debug_cause_n = DBG_CAUSE_HALTREQ;
-        // IRQ
+          // IRQ
         end else if (pending_interrupt && interrupt_allowed) begin
           ctrl_fsm_o.kill_if = 1'b1;
           ctrl_fsm_o.kill_id = 1'b1;
@@ -788,14 +788,14 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
           exc_cause = {1'b0, irq_id_ctrl_i};
 
           ctrl_fsm_o.irq_ack = 1'b1;
-          ctrl_fsm_o.irq_id  = irq_id_ctrl_i;
+          ctrl_fsm_o.irq_id = irq_id_ctrl_i;
 
-          ctrl_fsm_o.csr_save_cause  = 1'b1;
+          ctrl_fsm_o.csr_save_cause = 1'b1;
           ctrl_fsm_o.csr_cause.irq = 1'b1;
 
           // Default to keeping mcause.minhv. It will only be set to 1 when taking a CLIC SHV interrupt (or by a CSR write).
           // For all other cases it keeps its value.
-          ctrl_fsm_o.csr_cause.minhv  = mcause_i.minhv;
+          ctrl_fsm_o.csr_cause.minhv = mcause_i.minhv;
 
 
           if (CLIC) begin
@@ -830,7 +830,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             // instruction to be issued from IF to ID.
             pipe_pc_mux_ctrl = PC_IF;
           end
-        // Synchronous debug entry (ebreak, trigger match)
+          // Synchronous debug entry (ebreak, trigger match)
         end else if (pending_sync_debug && sync_debug_allowed) begin
           // Halt the whole pipeline
           // Halting makes sure instructions stay in the pipeline stage without propagating to the next.
@@ -848,7 +848,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             ctrl_fsm_o.kill_if = 1'b1;
             ctrl_fsm_o.kill_id = 1'b1;
             ctrl_fsm_o.kill_ex = 1'b1;
-            ctrl_fsm_o.kill_wb = 1'b0; // All write enables are suppressed, no need to kill WB.
+            ctrl_fsm_o.kill_wb = 1'b0;  // All write enables are suppressed, no need to kill WB.
 
             // Set pc to exception handler
             ctrl_fsm_o.pc_set = 1'b1;
@@ -856,13 +856,13 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
             // Save CSR from WB
             pipe_pc_mux_ctrl = PC_WB;
-            ctrl_fsm_o.csr_save_cause = !debug_mode_q; // Do not update CSRs if in debug mode
+            ctrl_fsm_o.csr_save_cause = !debug_mode_q;  // Do not update CSRs if in debug mode
             ctrl_fsm_o.csr_cause.exception_code = exception_cause_wb;
 
             // Keep mcause.minhv when taking exceptions and interrupts, only cleared on successful pointer fetches or CSR writes.
-            ctrl_fsm_o.csr_cause.minhv  = mcause_i.minhv;
+            ctrl_fsm_o.csr_cause.minhv = mcause_i.minhv;
 
-          // Special insn
+            // Special insn
           end else if (wfi_in_wb || wfe_in_wb) begin
             // Halt the entire pipeline
             // WFI/WFE will stay in WB until we exit sleep mode
@@ -901,10 +901,10 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             if (fencei_in_wb ? fencei_req_and_ack_q : fence_req_q) begin
 
               // Unhalt wb, kill if,id,ex
-              ctrl_fsm_o.kill_if   = 1'b1;
-              ctrl_fsm_o.kill_id   = 1'b1;
-              ctrl_fsm_o.kill_ex   = 1'b1;
-              ctrl_fsm_o.halt_wb   = 1'b0;
+              ctrl_fsm_o.kill_if = 1'b1;
+              ctrl_fsm_o.kill_id = 1'b1;
+              ctrl_fsm_o.kill_ex = 1'b1;
+              ctrl_fsm_o.halt_wb = 1'b0;
 
               // Jump to PC from oldest valid instruction, excluding WB stage
               if (id_ex_pipe_i.instr_valid) begin
@@ -929,13 +929,13 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             ctrl_fsm_o.kill_id = 1'b1;
             ctrl_fsm_o.kill_ex = 1'b1;
 
-            ctrl_fsm_o.pc_mux  = PC_DRET;
-            ctrl_fsm_o.pc_set  = 1'b1;
+            ctrl_fsm_o.pc_mux = PC_DRET;
+            ctrl_fsm_o.pc_set = 1'b1;
 
-            ctrl_fsm_o.csr_restore_dret  = 1'b1;
+            ctrl_fsm_o.csr_restore_dret = 1'b1;
 
             single_step_halt_if_n = 1'b0;
-            debug_mode_n  = 1'b0;
+            debug_mode_n = 1'b0;
           end else if (csr_wr_in_wb_flush_i) begin
             // CSR write in WB requires pipeline flush, halt all stages except WB
             // EX could contain a load/store, need to avoid its address phase going onto the bus
@@ -947,9 +947,9 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             csr_flush_ack_n    = 1'b1;
           end else if (csr_flush_ack_q) begin
             // Flush pipeline because of CSR update in the previous cycle
-            ctrl_fsm_o.kill_if   = 1'b1;
-            ctrl_fsm_o.kill_id   = 1'b1;
-            ctrl_fsm_o.kill_ex   = 1'b1;
+            ctrl_fsm_o.kill_if = 1'b1;
+            ctrl_fsm_o.kill_id = 1'b1;
+            ctrl_fsm_o.kill_ex = 1'b1;
 
             // Jump to PC from oldest valid instruction, excluding WB stage
             if (id_ex_pipe_i.instr_valid) begin
@@ -960,8 +960,8 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
               pipe_pc_mux_ctrl = PC_IF;
             end
 
-            ctrl_fsm_o.pc_set    = 1'b1;
-            ctrl_fsm_o.pc_mux    = PC_WB_PLUS4;
+            ctrl_fsm_o.pc_set = 1'b1;
+            ctrl_fsm_o.pc_mux = PC_WB_PLUS4;
 
 
           end else if (branch_taken_ex) begin
@@ -993,7 +993,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
                 // mcause.minhv set, exception occured during last pointer fetch (or SW wrote it)
                 // Do another pointer fetch from the address stored in mepc.
                 ctrl_fsm_o.pc_set = 1'b1;
-                ctrl_fsm_o.pc_set_clicv = 1'b1; // Treat mepc as a pointer fetch
+                ctrl_fsm_o.pc_set_clicv = 1'b1;  // Treat mepc as a pointer fetch
                 ctrl_fsm_o.pc_mux = PC_MRET;
 
                 // Set flag to avoid further jumps to the same target
@@ -1021,7 +1021,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
               // Regular jumps use the regular jump to the target calculated in the ID stage.
               ctrl_fsm_o.pc_mux        = if_id_pipe_i.instr_meta.tbljmp && !if_id_pipe_i.last_op ? PC_TBLJUMP :
                                          if_id_pipe_i.instr_meta.tbljmp && if_id_pipe_i.last_op  ? PC_POINTER : PC_JUMP;
-              ctrl_fsm_o.pc_set        = 1'b1;
+              ctrl_fsm_o.pc_set = 1'b1;
               ctrl_fsm_o.pc_set_tbljmp = if_id_pipe_i.instr_meta.tbljmp && !if_id_pipe_i.last_op;
 
               // Set flag to avoid further jumps to the same target
@@ -1049,13 +1049,13 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
           // Regular mret in WB restores CSR regs
           if (mret_in_wb && !ctrl_fsm_o.kill_wb && !ctrl_fsm_o.halt_wb) begin
-            ctrl_fsm_o.csr_restore_mret  = !debug_mode_q;
+            ctrl_fsm_o.csr_restore_mret = !debug_mode_q;
           end
 
           // For mret that caused a CLIC pointer fetch, CSR updates will happen once the pointer reaches WB.
           // If the pointer has associated exceptions, the csr_restore_mret_ptr will not happen
           if (mret_ptr_in_wb && !ctrl_fsm_o.kill_wb && !ctrl_fsm_o.halt_wb && !exception_in_wb) begin
-            ctrl_fsm_o.csr_restore_mret_ptr  = !debug_mode_q;
+            ctrl_fsm_o.csr_restore_mret_ptr = !debug_mode_q;
           end
 
           // CLIC pointer in WB
@@ -1063,7 +1063,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
             // Clear minhv if no exceptions are associated with the pointer
             ctrl_fsm_o.csr_clear_minhv = 1'b1;
           end
-        end // !debug or interrupts
+        end  // !debug or interrupts
 
         // Single step debug entry or etrigger debug entry
         // Need to be after (in parallell with) exception/interrupt handling
@@ -1093,12 +1093,12 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
       SLEEP: begin
         // There should be a bubble in EX in this state (checked by assertion)
         // We are avoiding that a load/store starts its bus transaction
-        ctrl_fsm_o.ctrl_busy         = 1'b0;
-        ctrl_fsm_o.instr_req         = 1'b0;
+        ctrl_fsm_o.ctrl_busy       = 1'b0;
+        ctrl_fsm_o.instr_req       = 1'b0;
         // Put backpressure on pipeline to avoid retiring WFI until we wake up.
         // Using limited version of halt_wb to avoid timing paths through cs_registers and bypass onto the data OBI bus.
         // Assertions exist to check that no CSR instruction can be in WB at this time.
-        ctrl_fsm_o.halt_limited_wb   = 1'b1;
+        ctrl_fsm_o.halt_limited_wb = 1'b1;
 
         // Wake up from SLEEP
         if (ctrl_fsm_o.wake_from_sleep) begin
@@ -1166,12 +1166,12 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
           ctrl_fsm_o.kill_wb = 1'b0;
 
           // Should use pc from IF (next insn, as IF is halted after first issue)
-          pipe_pc_mux_ctrl = PC_IF;
+          pipe_pc_mux_ctrl   = PC_IF;
         end
 
         // Enter debug mode next cycle
         debug_mode_n = 1'b1;
-        ctrl_fsm_ns = FUNCTIONAL;
+        ctrl_fsm_ns  = FUNCTIONAL;
       end
 
       default: begin
@@ -1203,10 +1203,10 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   ////////////////////
 
   // FSM state and debug_mode
-  always_ff @(posedge clk , negedge rst_n) begin
+  always_ff @(posedge clk, negedge rst_n) begin
     if (rst_n == 1'b0) begin
-      ctrl_fsm_cs <= RESET;
-      debug_mode_q <= 1'b0;
+      ctrl_fsm_cs   <= RESET;
+      debug_mode_q  <= 1'b0;
       debug_cause_q <= DBG_CAUSE_NONE;
     end else begin
       ctrl_fsm_cs   <= ctrl_fsm_ns;
@@ -1226,16 +1226,16 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   // Sticky version of lsu_err_wb_i
   always_ff @(posedge clk, negedge rst_n) begin
     if (rst_n == 1'b0) begin
-      nmi_pending_q <= 1'b0;
+      nmi_pending_q  <= 1'b0;
       nmi_is_store_q <= 1'b0;
     end else begin
       if (lsu_err_wb_i[0] && !nmi_pending_q) begin
         // Set whenever an error occurs in WB for the LSU, unless we already have an NMI pending.
         // Later errors could overwrite the bit for load/store type, and with mtval the address would be overwritten.
         // todo: if mtval is implemented, address must be sticky as well
-        nmi_pending_q <= 1'b1;
+        nmi_pending_q  <= 1'b1;
         nmi_is_store_q <= lsu_err_wb_i[1];
-      // Clear when the controller takes the NMI
+        // Clear when the controller takes the NMI
       end else if (ctrl_fsm_o.pc_set && (ctrl_fsm_o.pc_mux == PC_TRAP_NMI)) begin
         nmi_pending_q <= 1'b0;
       end
@@ -1282,8 +1282,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
       // Set and clear fence_req_q based on FSM output. Also clear when fence.i handshake is completed
       if (fence_req_clr || (fencei_flush_req_o && fencei_flush_ack_i)) begin
         fence_req_q <= 1'b0;
-      end
-      else if (fence_req_set) begin
+      end else if (fence_req_set) begin
         fence_req_q <= 1'b1;
       end
     end
@@ -1306,7 +1305,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
       // other conditions prevent counting.
       // CLIC: Exluding pointer fetches as they are not instructions.
       //       mret pointers will finish the mret->ptr sequence and will update wb_counter_event (instr_meta.mret_ptr is 1)
-      if (ex_valid_i && wb_ready_i && last_op_ex_i && !id_ex_pipe_i.instr_meta.clic_ptr)  begin
+      if (ex_valid_i && wb_ready_i && last_op_ex_i && !id_ex_pipe_i.instr_meta.clic_ptr) begin
         wb_counter_event <= 1'b1;
       end else begin
         // Keep event flag high while WB is halted, as we don't know if it will retire yet
@@ -1402,7 +1401,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
       woke_to_interrupt_q <= 1'b0;
     end else begin
       // Woke up to debug if no nmi was pending
-      woke_to_debug_q     <= (ctrl_fsm_cs == SLEEP) && debug_req_i && !(pending_nmi);
+      woke_to_debug_q <= (ctrl_fsm_cs == SLEEP) && debug_req_i && !(pending_nmi);
       // Woke up to interrupts if no NMI or debug was pending
       woke_to_interrupt_q <= (ctrl_fsm_cs == SLEEP) && irq_wu_ctrl_i && !(pending_nmi || debug_req_i);
     end
@@ -1411,7 +1410,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
   /////////////////////
   // Debug state FSM //
   /////////////////////
-  always_ff @(posedge clk , negedge rst_n) begin
+  always_ff @(posedge clk, negedge rst_n) begin
     if (rst_n == 1'b0) begin
       debug_fsm_cs <= HAVERESET;
     end else begin
@@ -1462,7 +1461,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
 
   generate
     if (X_EXT) begin : x_ext
-      logic commit_valid_q; // Sticky bit for commit_valid
+      logic commit_valid_q;  // Sticky bit for commit_valid
       logic commit_kill_q;  // Sticky bit for commit_kill
       logic kill_rejected;  // Signal used to kill rejected xif instructions
 
@@ -1480,7 +1479,7 @@ module cv32e40x_controller_fsm import cv32e40x_pkg::*;
                                                  (id_ex_pipe_i.xif_en && id_ex_pipe_i.instr_valid) &&
                                                  !commit_valid_q; // Make sure we signal only once per instruction
 
-      assign xif_commit_if.commit.id          = id_ex_pipe_i.xif_meta.id;
+      assign xif_commit_if.commit.id = id_ex_pipe_i.xif_meta.id;
       assign xif_commit_if.commit.commit_kill = xif_csr_error_i || ctrl_fsm_o.kill_ex || kill_rejected;
 
       // Signal commit_kill=1 to all instructions rejected by the eXtension interface

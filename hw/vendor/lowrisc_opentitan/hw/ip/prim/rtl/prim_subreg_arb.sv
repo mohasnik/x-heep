@@ -5,29 +5,29 @@
 // Write enable and data arbitration logic for register slice conforming to Comportibility guide.
 
 module prim_subreg_arb #(
-  parameter int DW       = 32  ,
-  parameter     SWACCESS = "RW"  // {RW, RO, WO, W1C, W1S, W0C, RC}
+    parameter int DW       = 32,
+    parameter     SWACCESS = "RW"  // {RW, RO, WO, W1C, W1S, W0C, RC}
 ) (
-  // From SW: valid for RW, WO, W1C, W1S, W0C, RC.
-  // In case of RC, top connects read pulse to we.
-  input          we,
-  input [DW-1:0] wd,
+    // From SW: valid for RW, WO, W1C, W1S, W0C, RC.
+    // In case of RC, top connects read pulse to we.
+    input          we,
+    input [DW-1:0] wd,
 
-  // From HW: valid for HRW, HWO.
-  input          de,
-  input [DW-1:0] d,
+    // From HW: valid for HRW, HWO.
+    input          de,
+    input [DW-1:0] d,
 
-  // From register: actual reg value.
-  input [DW-1:0] q,
+    // From register: actual reg value.
+    input [DW-1:0] q,
 
-  // To register: actual write enable and write data.
-  output logic          wr_en,
-  output logic [DW-1:0] wr_data
+    // To register: actual write enable and write data.
+    output logic          wr_en,
+    output logic [DW-1:0] wr_data
 );
 
   if ((SWACCESS == "RW") || (SWACCESS == "WO")) begin : gen_w
     assign wr_en   = we | de;
-    assign wr_data = (we == 1'b1) ? wd : d; // SW higher priority
+    assign wr_data = (we == 1'b1) ? wd : d;  // SW higher priority
     // Unused q - Prevent lint errors.
     logic [DW-1:0] unused_q;
     assign unused_q = q;
@@ -59,7 +59,7 @@ module prim_subreg_arb #(
   end else if (SWACCESS == "RC") begin : gen_rc
     // This swtype is not recommended but exists for compatibility.
     // WARN: we signal is actually read signal not write enable.
-    assign wr_en  = we | de;
+    assign wr_en   = we | de;
     assign wr_data = (de ? d : q) & (we ? '0 : '1);
     // Unused wd - Prevent lint errors.
     logic [DW-1:0] unused_wd;

@@ -30,65 +30,65 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_controller_bypass import cv32e40x_pkg::*;
+module cv32e40x_controller_bypass
+  import cv32e40x_pkg::*;
 #(
-  parameter int unsigned REGFILE_NUM_READ_PORTS = 2,
-  parameter a_ext_e      A_EXT                  = A_NONE
-)
-(
-  // From decoder
-  input  logic [REGFILE_NUM_READ_PORTS-1:0]     rf_re_id_i, // Read enables from decoder
-  input rf_addr_t     rf_raddr_id_i[REGFILE_NUM_READ_PORTS],// Read addresses from decoder
+    parameter int unsigned REGFILE_NUM_READ_PORTS = 2,
+    parameter a_ext_e      A_EXT                  = A_NONE
+) (
+    // From decoder
+    input logic [REGFILE_NUM_READ_PORTS-1:0] rf_re_id_i,  // Read enables from decoder
+    input rf_addr_t rf_raddr_id_i[REGFILE_NUM_READ_PORTS],  // Read addresses from decoder
 
-  // Pipeline registers
-  input if_id_pipe_t  if_id_pipe_i,
-  input id_ex_pipe_t  id_ex_pipe_i,
-  input ex_wb_pipe_t  ex_wb_pipe_i,
+    // Pipeline registers
+    input if_id_pipe_t if_id_pipe_i,
+    input id_ex_pipe_t id_ex_pipe_i,
+    input ex_wb_pipe_t ex_wb_pipe_i,
 
-  // From ID
-  input  logic        alu_jmpr_id_i,              // ALU jump register (JALR)
-  input  logic        sys_mret_id_i,              // mret in ID
-  input  logic        csr_en_raw_id_i,            // CSR in ID (not gated with deassert)
-  input  csr_opcode_e csr_op_id_i,                // CSR opcode (ID) // todo: Not used (is this on purpose or should it be used here?)
+    // From ID
+    input logic alu_jmpr_id_i,  // ALU jump register (JALR)
+    input logic sys_mret_id_i,  // mret in ID
+    input logic csr_en_raw_id_i,  // CSR in ID (not gated with deassert)
+    input  csr_opcode_e csr_op_id_i,                // CSR opcode (ID) // todo: Not used (is this on purpose or should it be used here?)
 
-  // From EX
-  input  logic        csr_counter_read_i,         // CSR is reading a counter (EX).
-  input  logic        csr_mnxti_read_i,           // CSR is reading mnxti (EX)
+    // From EX
+    input logic csr_counter_read_i,  // CSR is reading a counter (EX).
+    input logic csr_mnxti_read_i,    // CSR is reading mnxti (EX)
 
-  // From WB
-  input  logic        wb_ready_i,                 // WB stage is ready
-  input  logic        csr_irq_enable_write_i,     // WB is writing to a CSR that may enable an interrupt.
+    // From WB
+    input logic wb_ready_i,             // WB stage is ready
+    input logic csr_irq_enable_write_i, // WB is writing to a CSR that may enable an interrupt.
 
-  // From LSU
-  input  lsu_atomic_e lsu_atomic_ex_i,
-  input  lsu_atomic_e lsu_atomic_wb_i,
-  input  logic        lsu_bus_busy_i,
+    // From LSU
+    input lsu_atomic_e lsu_atomic_ex_i,
+    input lsu_atomic_e lsu_atomic_wb_i,
+    input logic        lsu_bus_busy_i,
 
-  // Controller Bypass outputs
-  output ctrl_byp_t   ctrl_byp_o
+    // Controller Bypass outputs
+    output ctrl_byp_t ctrl_byp_o
 );
 
   logic [REGFILE_NUM_READ_PORTS-1:0] rf_rd_ex_match;            // Register file address match (ID vs. EX). Not qualified with rf_we_ex yet.
-  logic                              rf_rd_ex_jalr_match;
+  logic rf_rd_ex_jalr_match;
   logic [REGFILE_NUM_READ_PORTS-1:0] rf_rd_wb_match;            // Register file address match (ID vs. WB). Not qualified with rf_we_wb yet.
-  logic                              rf_rd_wb_jalr_match;
+  logic rf_rd_wb_jalr_match;
   logic [REGFILE_NUM_READ_PORTS-1:0] rf_rd_ex_hz;
   logic [REGFILE_NUM_READ_PORTS-1:0] rf_rd_wb_hz;
 
-  logic                              csr_write_in_ex_wb;        // Detect CSR write in EX or WB (implicit and explicit)
+  logic csr_write_in_ex_wb;  // Detect CSR write in EX or WB (implicit and explicit)
 
-  logic                              rf_we_ex;                  // EX register file write enable
-  logic                              rf_we_wb;                  // WB register file write enable
-  logic                              lsu_en_wb;                 // WB lsu_en
+  logic rf_we_ex;  // EX register file write enable
+  logic rf_we_wb;  // WB register file write enable
+  logic lsu_en_wb;  // WB lsu_en
 
-  rf_addr_t                          rf_waddr_ex;               // EX rf_waddr
-  rf_addr_t                          rf_waddr_wb;               // WB rf_waddr
+  rf_addr_t rf_waddr_ex;  // EX rf_waddr
+  rf_addr_t rf_waddr_wb;  // WB rf_waddr
 
-  logic                              sys_mret_unqual_id;        // MRET in ID (not qualified with sys_en)
-  logic                              csr_exp_unqual_id;         // Explicit CSR in ID (not qualified with csr_en)
-  logic                              csr_unqual_id;             // Explicit or implicit CSR in ID (not qualified)
-  logic                              jmpr_unqual_id;            // JALR in ID (not qualified with alu_en)
-  logic                              tbljmp_unqual_id;          // Table jump in ID (not qualified with alu_en)
+  logic sys_mret_unqual_id;  // MRET in ID (not qualified with sys_en)
+  logic csr_exp_unqual_id;  // Explicit CSR in ID (not qualified with csr_en)
+  logic csr_unqual_id;  // Explicit or implicit CSR in ID (not qualified)
+  logic jmpr_unqual_id;  // JALR in ID (not qualified with alu_en)
+  logic tbljmp_unqual_id;  // Table jump in ID (not qualified with alu_en)
 
   // todo: make all qualifiers here, and use those signals later in the file
 
@@ -164,7 +164,7 @@ module cv32e40x_controller_bypass import cv32e40x_pkg::*;
 
   genvar i;
   generate
-    for(i=0; i<REGFILE_NUM_READ_PORTS; i++) begin : gen_forward_signals
+    for (i = 0; i < REGFILE_NUM_READ_PORTS; i++) begin : gen_forward_signals
       // Does register file read address match write address in EX (excluding R0)?
       assign rf_rd_ex_match[i] = (rf_waddr_ex == rf_raddr_id_i[i]) && |rf_raddr_id_i[i] && rf_re_id_i[i];
 
@@ -182,13 +182,12 @@ module cv32e40x_controller_bypass import cv32e40x_pkg::*;
   assign rf_rd_ex_jalr_match = (rf_waddr_ex == rf_raddr_id_i[0]) && |rf_raddr_id_i[0];
   assign rf_rd_wb_jalr_match = (rf_waddr_wb == rf_raddr_id_i[0]) && |rf_raddr_id_i[0];
 
-  always_comb
-  begin
-    ctrl_byp_o.load_stall          = 1'b0;
-    ctrl_byp_o.deassert_we         = 1'b0;
-    ctrl_byp_o.csr_stall           = 1'b0;
-    ctrl_byp_o.minstret_stall      = 1'b0;
-    ctrl_byp_o.irq_enable_stall    = 1'b0;
+  always_comb begin
+    ctrl_byp_o.load_stall       = 1'b0;
+    ctrl_byp_o.deassert_we      = 1'b0;
+    ctrl_byp_o.csr_stall        = 1'b0;
+    ctrl_byp_o.minstret_stall   = 1'b0;
+    ctrl_byp_o.irq_enable_stall = 1'b0;
 
     // deassert WE when the core has an exception in ID (ins converted to nop and propagated to WB)
     // Also deassert for trigger match, as with dcsr.timing==0 we do not execute before entering debug mode
@@ -201,10 +200,9 @@ module cv32e40x_controller_bypass import cv32e40x_pkg::*;
     // Stall because of load or XIF operation
     if (
         ((id_ex_pipe_i.lsu_en || id_ex_pipe_i.xif_en) && rf_we_ex && |rf_rd_ex_hz) || // load-use hazard (EX)
-        (!wb_ready_i                                  && rf_we_wb && |rf_rd_wb_hz)    // load-use hazard (WB during wait-state)
-       )
-    begin
-      ctrl_byp_o.load_stall  = 1'b1;
+        (!wb_ready_i && rf_we_wb && |rf_rd_wb_hz)  // load-use hazard (WB during wait-state)
+        ) begin
+      ctrl_byp_o.load_stall = 1'b1;
     end
 
     // Stall because of jalr path. Stall if a result is to be forwarded to the PC except if result from WB is an ALU result.
@@ -248,7 +246,7 @@ module cv32e40x_controller_bypass import cv32e40x_pkg::*;
         // 2: There is any LSU instruction in EX while there is an outstanding atomic transfer in progress
         if ((id_ex_pipe_i.lsu_en && (lsu_atomic_ex_i != AT_NONE) && id_ex_pipe_i.instr_valid) ||
             (id_ex_pipe_i.lsu_en && id_ex_pipe_i.instr_valid && ex_wb_pipe_i.lsu_en && (lsu_atomic_wb_i != AT_NONE) && ex_wb_pipe_i.instr_valid)) begin
-            ctrl_byp_o.atomic_stall = lsu_bus_busy_i;
+          ctrl_byp_o.atomic_stall = lsu_bus_busy_i;
         end
       end
     end else begin : no_atomic_stall
@@ -259,8 +257,7 @@ module cv32e40x_controller_bypass import cv32e40x_pkg::*;
   assign ctrl_byp_o.id_stage_abort = ctrl_byp_o.deassert_we;
 
   // Forwarding control unit
-  always_comb
-  begin
+  always_comb begin
     // default assignements
     ctrl_byp_o.operand_a_fw_mux_sel = SEL_REGFILE;
     ctrl_byp_o.operand_b_fw_mux_sel = SEL_REGFILE;

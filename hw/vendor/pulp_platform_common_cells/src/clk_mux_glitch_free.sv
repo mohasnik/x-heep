@@ -46,22 +46,21 @@
 
 
 module clk_mux_glitch_free #(
-  parameter int unsigned  NUM_INPUTS = 2,
-  parameter int unsigned NUM_SYNC_STAGES = 2,
-  localparam int unsigned SelWidth = $clog2(NUM_INPUTS)
+    parameter int unsigned NUM_INPUTS = 2,
+    parameter int unsigned NUM_SYNC_STAGES = 2,
+    localparam int unsigned SelWidth = $clog2(NUM_INPUTS)
 ) (
-   input logic [NUM_INPUTS-1:0] clks_i,
-   input logic                  test_clk_i,
-   input logic                  test_en_i,
-   input logic                  async_rstn_i,
-   input logic [SelWidth-1:0]   async_sel_i,
-   output logic                 clk_o
+    input  logic [NUM_INPUTS-1:0] clks_i,
+    input  logic                  test_clk_i,
+    input  logic                  test_en_i,
+    input  logic                  async_rstn_i,
+    input  logic [  SelWidth-1:0] async_sel_i,
+    output logic                  clk_o
 );
 
 
 
-  if (NUM_INPUTS<2)
-    $error("Num inputs must be parametrized to a value >= 2.");
+  if (NUM_INPUTS < 2) $error("Num inputs must be parametrized to a value >= 2.");
 
   // For each input, we generate an enable signal that enables the clock
   // propagation through an N-input clock OR gate. The crucial and most critical
@@ -89,15 +88,14 @@ module clk_mux_glitch_free #(
   // signal as a gating signal for the other clock input's onehot signal.
 
   // Internal signals
-  logic [NUM_INPUTS-1:0]        s_sel_onehot;
-  (*dont_touch*)
-  (*async_reg*)
-  logic [NUM_INPUTS-1:0][1:0]   glitch_filter_d, glitch_filter_q;
-  logic [NUM_INPUTS-1:0]        s_glitch_filter_output;
-  logic [NUM_INPUTS-1:0]        s_gate_enable;
-  logic [NUM_INPUTS-1:0]        clock_has_been_disabled_q;
-  logic [NUM_INPUTS-1:0]        s_gated_clock;
-  logic                         s_output_clock;
+  logic [NUM_INPUTS-1:0] s_sel_onehot;
+  (*dont_touch*) (*async_reg*)
+  logic [NUM_INPUTS-1:0][1:0] glitch_filter_d, glitch_filter_q;
+  logic [NUM_INPUTS-1:0] s_glitch_filter_output;
+  logic [NUM_INPUTS-1:0] s_gate_enable;
+  logic [NUM_INPUTS-1:0] clock_has_been_disabled_q;
+  logic [NUM_INPUTS-1:0] s_gated_clock;
+  logic                  s_output_clock;
 
 
   // Onehot decoder
@@ -112,7 +110,7 @@ module clk_mux_glitch_free #(
     always_comb begin
       glitch_filter_d[i][0] = 1'b1;
       for (int j = 0; j < NUM_INPUTS; j++) begin
-        if (i==j) begin
+        if (i == j) begin
           glitch_filter_d[i][0] &= s_sel_onehot[j];
         end else begin
           glitch_filter_d[i][0] &= clock_has_been_disabled_q[j];
@@ -134,21 +132,23 @@ module clk_mux_glitch_free #(
                                        glitch_filter_d[i][0];
 
     // Synchronize to current clock
-    sync #(.STAGES(NUM_SYNC_STAGES)) i_sync_en(
-      .clk_i    ( clks_i[i]                 ),
-      .rst_ni   ( async_rstn_i              ),
-      .serial_i ( s_glitch_filter_output[i] ),
-      .serial_o ( s_gate_enable[i]          )
+    sync #(
+        .STAGES(NUM_SYNC_STAGES)
+    ) i_sync_en (
+        .clk_i   (clks_i[i]),
+        .rst_ni  (async_rstn_i),
+        .serial_i(s_glitch_filter_output[i]),
+        .serial_o(s_gate_enable[i])
     );
 
     // Gate the input clock with the synced enable signal
     tc_clk_gating #(
-      .IS_FUNCTIONAL(1'b1)
+        .IS_FUNCTIONAL(1'b1)
     ) i_clk_gate (
-      .clk_i     ( clks_i[i]        ),
-      .en_i      ( s_gate_enable[i] ),
-      .test_en_i ( 1'b0             ),
-      .clk_o     ( s_gated_clock[i] )
+        .clk_i    (clks_i[i]),
+        .en_i     (s_gate_enable[i]),
+        .test_en_i(1'b0),
+        .clk_o    (s_gated_clock[i])
     );
 
     // Latch the enable signal with the next rising edge of the input clock and
@@ -175,54 +175,54 @@ module clk_mux_glitch_free #(
   // escaping.
 
   clk_or_tree #(NUM_INPUTS) i_clk_or_tree (
-    .clks_i(s_gated_clock),
-    .clk_o(s_output_clock)
+      .clks_i(s_gated_clock),
+      .clk_o (s_output_clock)
   );
 
   // Mux between the regular muxed clock and the test_clk_i used for DFT.
-  tc_clk_mux2 i_test_clk_mux(
-    .clk0_i(s_output_clock),
-    .clk1_i(test_clk_i),
-    .clk_sel_i(test_en_i),
-    .clk_o
+  tc_clk_mux2 i_test_clk_mux (
+      .clk0_i(s_output_clock),
+      .clk1_i(test_clk_i),
+      .clk_sel_i(test_en_i),
+      .clk_o
   );
 
 endmodule
 
 // Helper Module to generate an N-input clock OR-gate from a tree of tc_clk_or2 cells.
 module clk_or_tree #(
-  parameter int unsigned NUM_INPUTS = 1
+    parameter int unsigned NUM_INPUTS = 1
 ) (
-  input logic [NUM_INPUTS-1:0] clks_i,
-  output logic clk_o
+    input logic [NUM_INPUTS-1:0] clks_i,
+    output logic clk_o
 );
 
   if (NUM_INPUTS < 1) begin : gen_error
     $error("Cannot parametrize clk_or with less then 1 input but was %0d", NUM_INPUTS);
   end else if (NUM_INPUTS == 1) begin : gen_leaf
-    assign clk_o          = clks_i[0];
+    assign clk_o = clks_i[0];
   end else if (NUM_INPUTS == 2) begin : gen_leaf
     tc_clk_or2 i_clk_or2 (
-      .clk0_i(clks_i[0]),
-      .clk1_i(clks_i[1]),
-      .clk_o
+        .clk0_i(clks_i[0]),
+        .clk1_i(clks_i[1]),
+        .clk_o
     );
-  end else begin  : gen_recursive
+  end else begin : gen_recursive
     logic branch_a, branch_b;
-    clk_or_tree #(NUM_INPUTS/2) i_or_branch_a (
-      .clks_i(clks_i[0+:NUM_INPUTS/2]),
-      .clk_o(branch_a)
+    clk_or_tree #(NUM_INPUTS / 2) i_or_branch_a (
+        .clks_i(clks_i[0+:NUM_INPUTS/2]),
+        .clk_o (branch_a)
     );
 
-    clk_or_tree #(NUM_INPUTS/2 + NUM_INPUTS%2) i_or_branch_b (
-      .clks_i(clks_i[NUM_INPUTS-1:NUM_INPUTS/2]),
-      .clk_o(branch_b)
+    clk_or_tree #(NUM_INPUTS / 2 + NUM_INPUTS % 2) i_or_branch_b (
+        .clks_i(clks_i[NUM_INPUTS-1:NUM_INPUTS/2]),
+        .clk_o (branch_b)
     );
 
     tc_clk_or2 i_clk_or2 (
-      .clk0_i(branch_a),
-      .clk1_i(branch_b),
-      .clk_o
+        .clk0_i(branch_a),
+        .clk1_i(branch_b),
+        .clk_o
     );
   end
 

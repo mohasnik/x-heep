@@ -20,32 +20,30 @@ class rv_timer_random_vseq extends rv_timer_base_vseq;
 
   uint64 max_clks_until_expiry = 5_000_000;
 
-  constraint assert_reset_c {
-    (assert_reset == 1'b0);
-  }
+  constraint assert_reset_c {(assert_reset == 1'b0);}
 
   constraint num_trans_c {
-    if (cfg.smoke_test) num_trans == 1;
-    else                num_trans inside {[1:6]};
+    if (cfg.smoke_test)
+    num_trans == 1;
+    else
+    num_trans inside {[1 : 6]};
   }
 
   // Enable at least 1 timer.
-  constraint en_timers_c {
-    (|en_timers == 1'b1);
-  }
+  constraint en_timers_c {(|en_timers == 1'b1);}
 
   // Enable at least 1 hart.
-  constraint en_harts_c {
-    (|en_harts == 1'b1);
-  }
+  constraint en_harts_c {(|en_harts == 1'b1);}
 
   // Prescaler must be less than max prescale for the enabled hart.
   constraint prescale_c {
     solve en_harts before prescale;
     foreach (prescale[i]) {
       if (en_harts[i]) {
-        if (cfg.smoke_test) prescale[i] == 1;
-        else                prescale[i] inside {[0:max_prescale]};
+        if (cfg.smoke_test)
+        prescale[i] == 1;
+        else
+        prescale[i] inside {[0 : max_prescale]};
       } else {
         prescale[i] == 0;
       }
@@ -57,8 +55,10 @@ class rv_timer_random_vseq extends rv_timer_base_vseq;
     solve en_harts before step;
     foreach (step[i]) {
       if (en_harts[i]) {
-        if (cfg.smoke_test) step[i] == 1;
-        else                step[i] inside {[1:max_step]};
+        if (cfg.smoke_test)
+        step[i] == 1;
+        else
+        step[i] inside {[1 : max_step]};
       } else {
         step[i] == 0;
       }
@@ -71,8 +71,10 @@ class rv_timer_random_vseq extends rv_timer_base_vseq;
     foreach (ticks[i]) {
       if (en_harts[i]) {
         // For smoke test, timeout between 50 and 200 ticks.
-        if (cfg.smoke_test) ticks[i] inside {[50:200]};
-        else                (ticks[i] * (prescale[i] + 1)) <= max_clks_until_expiry;
+        if (cfg.smoke_test)
+        ticks[i] inside {[50 : 200]};
+        else
+        (ticks[i] * (prescale[i] + 1)) <= max_clks_until_expiry;
       }
     }
   }
@@ -86,9 +88,7 @@ class rv_timer_random_vseq extends rv_timer_base_vseq;
     solve ticks before compare_val;
     foreach (en_harts[i]) {
       foreach (en_timers[j]) {
-        if (en_harts[i] && en_timers[j]) {
-          compare_val[i][j] == timer_val[i] + step[i] * ticks[i];
-        }
+        if (en_harts[i] && en_timers[j]) {compare_val[i][j] == timer_val[i] + step[i] * ticks[i];}
       }
     }
   }

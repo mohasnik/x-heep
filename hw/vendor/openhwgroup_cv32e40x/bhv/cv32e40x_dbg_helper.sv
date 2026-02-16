@@ -25,27 +25,28 @@
 
 module cv32e40x_dbg_helper
   import cv32e40x_pkg::*;
-  #(
+#(
     parameter int unsigned REGFILE_NUM_READ_PORTS = 2
-  )
-  ( input logic [31:0]                       instr,
-    input logic                              is_compressed,
-    input logic [REGFILE_NUM_READ_PORTS-1:0] rf_re,
-    input                                    rf_addr_t rf_raddr[REGFILE_NUM_READ_PORTS],
-    input logic                              rf_we,
-    input                                    rf_addr_t rf_waddr,
-    input logic                              illegal_insn);
+) (
+    input logic     [                      31:0] instr,
+    input logic                                  is_compressed,
+    input logic     [REGFILE_NUM_READ_PORTS-1:0] rf_re,
+    input rf_addr_t                              rf_raddr     [REGFILE_NUM_READ_PORTS],
+    input logic                                  rf_we,
+    input rf_addr_t                              rf_waddr,
+    input logic                                  illegal_insn
+);
 
 
   typedef struct {
-    logic [31:0] instr;
-    logic        is_compressed;
-    opcode_e     opcode;
-    logic     [REGFILE_NUM_READ_PORTS-1:0] rf_re;
+    logic [31:0]                           instr;
+    logic                                  is_compressed;
+    opcode_e                               opcode;
+    logic [REGFILE_NUM_READ_PORTS-1:0]     rf_re;
     rf_addr_t [REGFILE_NUM_READ_PORTS-1:0] rf_raddr;
-    logic        rf_we;
-    rf_addr_t    rf_waddr;
-    logic        illegal_insn;
+    logic                                  rf_we;
+    rf_addr_t                              rf_waddr;
+    logic                                  illegal_insn;
   } dbg_help_t;
 
   dbg_help_t dbg_help;
@@ -60,8 +61,8 @@ module cv32e40x_dbg_helper
 
   // Convert from unpacked to packed array (for verilator support)
   genvar i;
-  generate for (i=0; i<REGFILE_NUM_READ_PORTS; i++)
-    begin: gen_dbg_rf_raddr
+  generate
+    for (i = 0; i < REGFILE_NUM_READ_PORTS; i++) begin : gen_dbg_rf_raddr
       assign dbg_help.rf_raddr[i] = rf_raddr[i];
     end
   endgenerate

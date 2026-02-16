@@ -17,42 +17,42 @@
 `include "prim_assert.sv"
 
 module prim_sync_reqack_data #(
-  parameter int unsigned Width       = 1,
-  parameter bit          DataSrc2Dst = 1'b1, // Direction of data flow: 1'b1 = SRC to DST,
-                                             //                         1'b0 = DST to SRC
-  parameter bit          DataReg     = 1'b0, // Enable optional register stage for data,
-                                             // only usable with DataSrc2Dst == 1'b0.
-  parameter bit EnReqStabA = 1               // Used in submodule `prim_sync_reqack`.
+    parameter int unsigned Width       = 1,
+    parameter bit          DataSrc2Dst = 1'b1,  // Direction of data flow: 1'b1 = SRC to DST,
+                                                //                         1'b0 = DST to SRC
+    parameter bit          DataReg     = 1'b0,  // Enable optional register stage for data,
+                                                // only usable with DataSrc2Dst == 1'b0.
+    parameter bit          EnReqStabA  = 1      // Used in submodule `prim_sync_reqack`.
 ) (
-  input  clk_src_i,       // REQ side, SRC domain
-  input  rst_src_ni,      // REQ side, SRC domain
-  input  clk_dst_i,       // ACK side, DST domain
-  input  rst_dst_ni,      // ACK side, DST domain
+    input clk_src_i,   // REQ side, SRC domain
+    input rst_src_ni,  // REQ side, SRC domain
+    input clk_dst_i,   // ACK side, DST domain
+    input rst_dst_ni,  // ACK side, DST domain
 
-  input  logic src_req_i, // REQ side, SRC domain
-  output logic src_ack_o, // REQ side, SRC domain
-  output logic dst_req_o, // ACK side, DST domain
-  input  logic dst_ack_i, // ACK side, DST domain
+    input  logic src_req_i,  // REQ side, SRC domain
+    output logic src_ack_o,  // REQ side, SRC domain
+    output logic dst_req_o,  // ACK side, DST domain
+    input  logic dst_ack_i,  // ACK side, DST domain
 
-  input  logic [Width-1:0] data_i,
-  output logic [Width-1:0] data_o
+    input  logic [Width-1:0] data_i,
+    output logic [Width-1:0] data_o
 );
 
   ////////////////////////////////////
   // REQ/ACK synchronizer primitive //
   ////////////////////////////////////
   prim_sync_reqack #(
-    .EnReqStabA(EnReqStabA)
+      .EnReqStabA(EnReqStabA)
   ) u_prim_sync_reqack (
-    .clk_src_i,
-    .rst_src_ni,
-    .clk_dst_i,
-    .rst_dst_ni,
+      .clk_src_i,
+      .rst_src_ni,
+      .clk_dst_i,
+      .rst_dst_ni,
 
-    .src_req_i,
-    .src_ack_o,
-    .dst_req_o,
-    .dst_ack_i
+      .src_req_i,
+      .src_ack_o,
+      .dst_req_o,
+      .dst_ack_i
   );
 
   /////////////////////////
@@ -64,7 +64,7 @@ module prim_sync_reqack_data #(
   // Note that for larger data widths, it is recommended to adjust the data sender to hold the data
   // stable until the next REQ in order to save the cost of this register stage.
   if (DataSrc2Dst == 1'b0 && DataReg == 1'b1) begin : gen_data_reg
-    logic             data_we;
+    logic data_we;
     logic [Width-1:0] data_d, data_q;
 
     // Sample the data when seing the REQ/ACK handshake in the DST domain.
@@ -89,9 +89,8 @@ module prim_sync_reqack_data #(
   ////////////////
   if (DataSrc2Dst == 1'b1) begin : gen_assert_data_src2dst
     // SRC domain cannot change data while waiting for ACK.
-    `ASSERT(SyncReqAckDataHoldSrc2Dst, !$stable(data_i) |->
-        (!src_req_i || (src_req_i && src_ack_o)),
-        clk_src_i, !rst_src_ni)
+    `ASSERT(SyncReqAckDataHoldSrc2Dst,
+            !$stable(data_i) |-> (!src_req_i || (src_req_i && src_ack_o)), clk_src_i, !rst_src_ni)
 
     // Register stage cannot be used.
     `ASSERT_INIT(SyncReqAckDataReg, DataSrc2Dst && !DataReg)
@@ -102,8 +101,8 @@ module prim_sync_reqack_data #(
     // for the next REQ to cross over from SRC to DST. Assert that the data is stable during that
     // window, i.e. [-2,+1] SRC cycles around the SRC handshake.
     `ASSERT(SyncReqAckDataHoldDst2Src,
-        src_req_i && src_ack_o |-> $past(data_o,2) == data_o && $stable(data_o) [*2],
-        clk_src_i, !rst_src_ni)
+            src_req_i && src_ack_o |-> $past(data_o, 2) == data_o && $stable(data_o) [* 2],
+            clk_src_i, !rst_src_ni)
   end
 
 endmodule

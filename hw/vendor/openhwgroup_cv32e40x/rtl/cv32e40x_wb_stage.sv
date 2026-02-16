@@ -34,78 +34,78 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_wb_stage import cv32e40x_pkg::*;
+module cv32e40x_wb_stage
+  import cv32e40x_pkg::*;
 #(
     parameter bit DEBUG = 1
-)
-(
-  input  logic          clk,            // Not used in RTL; only used by assertions
-  input  logic          rst_n,          // Not used in RTL; only used by assertions
+) (
+    input logic clk,   // Not used in RTL; only used by assertions
+    input logic rst_n, // Not used in RTL; only used by assertions
 
-  // EX/WB pipeline
-  input  ex_wb_pipe_t   ex_wb_pipe_i,
+    // EX/WB pipeline
+    input ex_wb_pipe_t ex_wb_pipe_i,
 
-  // Controller
-  input  ctrl_fsm_t     ctrl_fsm_i,
+    // Controller
+    input ctrl_fsm_t ctrl_fsm_i,
 
-  // LSU
-  input  logic [31:0]   lsu_rdata_i,
-  input  mpu_status_e   lsu_mpu_status_i,
-  input  logic          lsu_wpt_match_i,
-  input  align_status_e lsu_align_status_i,
+    // LSU
+    input logic          [31:0] lsu_rdata_i,
+    input mpu_status_e          lsu_mpu_status_i,
+    input logic                 lsu_wpt_match_i,
+    input align_status_e        lsu_align_status_i,
 
-  // Register file interface
-  output logic          rf_we_wb_o,     // Register file write enable
-  output rf_addr_t      rf_waddr_wb_o,  // Register file write address
-  output logic [31:0]   rf_wdata_wb_o,  // Register file write data
+    // Register file interface
+    output logic            rf_we_wb_o,     // Register file write enable
+    output rf_addr_t        rf_waddr_wb_o,  // Register file write address
+    output logic     [31:0] rf_wdata_wb_o,  // Register file write data
 
-  // LSU handshake interface
-  input  logic          lsu_valid_i,
-  output logic          lsu_ready_o,
-  output logic          lsu_valid_o,
-  input  logic          lsu_ready_i,
+    // LSU handshake interface
+    input  logic lsu_valid_i,
+    output logic lsu_ready_o,
+    output logic lsu_valid_o,
+    input  logic lsu_ready_i,
 
-  // WB stalled by LSU
-  output logic          data_stall_o,
+    // WB stalled by LSU
+    output logic data_stall_o,
 
-  // Stage ready/valid
-  output logic          wb_ready_o,
-  output logic          wb_valid_o,
+    // Stage ready/valid
+    output logic wb_ready_o,
+    output logic wb_valid_o,
 
-  // eXtension interface
-  if_xif.cpu_result     xif_result_if,
+    // eXtension interface
+    if_xif.cpu_result xif_result_if,
 
-  // Sticky WB outputs
-  output logic          wpt_match_wb_o,
-  output mpu_status_e   mpu_status_wb_o,
-  output align_status_e align_status_wb_o,
+    // Sticky WB outputs
+    output logic          wpt_match_wb_o,
+    output mpu_status_e   mpu_status_wb_o,
+    output align_status_e align_status_wb_o,
 
-  // From cs_registers
-  input logic [31:0]    clic_pa_i,
-  input logic           clic_pa_valid_i,
+    // From cs_registers
+    input logic [31:0] clic_pa_i,
+    input logic        clic_pa_valid_i,
 
-  output logic          last_op_o,
-  output logic          abort_op_o
+    output logic last_op_o,
+    output logic abort_op_o
 );
 
-  logic                 instr_valid;
-  logic                 wb_valid;
-  logic                 lsu_exception;
+  logic          instr_valid;
+  logic          wb_valid;
+  logic          lsu_exception;
 
   // eXtension interface signals
-  logic                 xif_waiting;
-  logic                 xif_exception;
+  logic          xif_waiting;
+  logic          xif_exception;
 
   // Flops for making volatile LSU outputs sticky until wb_valid
-  mpu_status_e          lsu_mpu_status_q;
-  logic                 lsu_wpt_match_q;
-  align_status_e        lsu_align_status_q;
-  logic                 lsu_valid_q;
+  mpu_status_e   lsu_mpu_status_q;
+  logic          lsu_wpt_match_q;
+  align_status_e lsu_align_status_q;
+  logic          lsu_valid_q;
 
-  mpu_status_e          lsu_mpu_status;
-  logic                 lsu_wpt_match;
-  align_status_e        lsu_align_status;
-  logic                 lsu_valid;
+  mpu_status_e   lsu_mpu_status;
+  logic          lsu_wpt_match;
+  align_status_e lsu_align_status;
+  logic          lsu_valid;
   // WB stage has two halt sources, ctrl_fsm_i.halt_wb and ctrl_fsm_i.halt_limited_wb. The limited halt is only set during
   // the SLEEP state, and is used to prevent timing paths from interrupt inputs to obi outputs when waking up from SLEEP.
   assign instr_valid = ex_wb_pipe_i.instr_valid && !ctrl_fsm_i.kill_wb && !ctrl_fsm_i.halt_wb && !ctrl_fsm_i.halt_limited_wb;
@@ -132,7 +132,7 @@ module cv32e40x_wb_stage import cv32e40x_pkg::*;
   // TODO: Could use result interface.we into account if out of order completion is allowed.
   assign rf_we_wb_o     = ex_wb_pipe_i.rf_we && !lsu_exception && !xif_waiting && !xif_exception && !lsu_wpt_match && instr_valid;
   // TODO: Could use result interface.rd into account if out of order completion is allowed.
-  assign rf_waddr_wb_o  = ex_wb_pipe_i.rf_waddr;
+  assign rf_waddr_wb_o = ex_wb_pipe_i.rf_waddr;
   // TODO: Could use result interface.rd into account if out of order completion is allowed.
   // Not using any flopped/sticky version of lsu_rdata_i. The sticky bits are only needed for MPU errors and watchpoint triggers.
   // Any true load that succeeds will write the RF and will never be halted or killed by the controller. (wb_valid during the same cycle as lsu_valid_i).
@@ -148,7 +148,7 @@ module cv32e40x_wb_stage import cv32e40x_pkg::*;
   // Ok, as controller will never kill ongoing LSU instructions, and thus
   // the lsu valid_1_o which lsu_valid_o factors into should not be affected.
   assign lsu_valid_o = ex_wb_pipe_i.lsu_en && ex_wb_pipe_i.instr_valid;
-  assign lsu_ready_o = 1'b1; // Always ready (there is no downstream stage)
+  assign lsu_ready_o = 1'b1;  // Always ready (there is no downstream stage)
 
   //////////////////////////////////////////////////////////////////////////////
   // Stage ready/valid
@@ -165,10 +165,10 @@ module cv32e40x_wb_stage import cv32e40x_pkg::*;
   //   If an MPU error occurs, wb_valid will be 1 due to lsu_exception (for any phase where the error occurs)
   // - Will be 0 for CLIC pointer fetches todo: Do we need wb_valid=1 for faulted pointer fetches for RVFI?
   assign wb_valid = ((!ex_wb_pipe_i.lsu_en && !xif_waiting) ||    // Non-LSU instructions have valid result in WB, also for exceptions, unless we are waiting for a coprocessor
-                     ( ex_wb_pipe_i.lsu_en && lsu_valid   )       // LSU instructions have valid result based on data_rvalid_i or the flopped version in case of watchpoint triggers.
-                                                                  // todo: ideally a similar line is added here that delays signaling wb_valid until a WFI really retires.
-                                                                  // This should be checked for bad timing paths. Currently RVFI contains a wb_valid_adjusted signal/hack to achieve the same
-                    ) && instr_valid;
+      ( ex_wb_pipe_i.lsu_en && lsu_valid   )       // LSU instructions have valid result based on data_rvalid_i or the flopped version in case of watchpoint triggers.
+                                                   // todo: ideally a similar line is added here that delays signaling wb_valid until a WFI really retires.
+                                                   // This should be checked for bad timing paths. Currently RVFI contains a wb_valid_adjusted signal/hack to achieve the same
+      ) && instr_valid;
 
   // Letting all suboperations signal wb_valid
   assign wb_valid_o = wb_valid;
@@ -208,9 +208,9 @@ module cv32e40x_wb_stage import cv32e40x_pkg::*;
     end
   end
 
-  assign lsu_valid        = lsu_valid_q ? lsu_valid_q        : lsu_valid_i;
-  assign lsu_wpt_match    = lsu_valid_q ? lsu_wpt_match_q    : lsu_wpt_match_i;
-  assign lsu_mpu_status   = lsu_valid_q ? lsu_mpu_status_q   : lsu_mpu_status_i;
+  assign lsu_valid = lsu_valid_q ? lsu_valid_q : lsu_valid_i;
+  assign lsu_wpt_match = lsu_valid_q ? lsu_wpt_match_q : lsu_wpt_match_i;
+  assign lsu_mpu_status = lsu_valid_q ? lsu_mpu_status_q : lsu_mpu_status_i;
   assign lsu_align_status = lsu_valid_q ? lsu_align_status_q : lsu_align_status_i;
 
   assign wpt_match_wb_o = lsu_wpt_match;

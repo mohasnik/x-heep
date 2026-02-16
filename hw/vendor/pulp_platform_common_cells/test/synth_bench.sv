@@ -9,8 +9,8 @@
 // specific language governing permissions and limitations under the License.
 
 module synth_bench (
-    input  logic        clk_i,
-    input  logic        rst_ni,
+    input logic clk_i,
+    input logic rst_ni,
 
     input  logic        src_rst_ni,
     input  logic        src_clk_i,
@@ -25,30 +25,30 @@ module synth_bench (
     input  logic        dst_ready_i
 );
 
-    cdc_2phase_synth i_cdc_2phase (
-        .src_rst_ni     (src_rst_ni),
-        .src_clk_i      (src_clk_i),
-        .src_data_i     (src_data_i),
-        .src_valid_i    (src_valid_i),
-        .src_ready_o    (src_ready_o),
+  cdc_2phase_synth i_cdc_2phase (
+      .src_rst_ni (src_rst_ni),
+      .src_clk_i  (src_clk_i),
+      .src_data_i (src_data_i),
+      .src_valid_i(src_valid_i),
+      .src_ready_o(src_ready_o),
 
-        .dst_rst_ni     (dst_rst_ni),
-        .dst_clk_i      (dst_clk_i),
-        .dst_data_o     (dst_data_o),
-        .dst_valid_o    (dst_valid_o),
-        .dst_ready_i    (dst_ready_i)
-    );
+      .dst_rst_ni (dst_rst_ni),
+      .dst_clk_i  (dst_clk_i),
+      .dst_data_o (dst_data_o),
+      .dst_valid_o(dst_valid_o),
+      .dst_ready_i(dst_ready_i)
+  );
 
-    id_queue_synth i_id_queue (
-        .clk_i  (clk_i),
-        .rst_ni (rst_ni)
-    );
+  id_queue_synth i_id_queue (
+      .clk_i (clk_i),
+      .rst_ni(rst_ni)
+  );
 
-    stream_arbiter_synth i_stream_arbiter (
-        .clk_i,
-        .rst_ni
-    );
+  stream_arbiter_synth i_stream_arbiter (
+      .clk_i,
+      .rst_ni
+  );
 
-    ecc_synth i_ecc ();
+  ecc_synth i_ecc ();
 
 endmodule

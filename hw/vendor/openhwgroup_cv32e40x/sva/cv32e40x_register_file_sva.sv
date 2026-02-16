@@ -27,22 +27,20 @@ module cv32e40x_register_file_sva
   import uvm_pkg::*;
   import cv32e40x_pkg::*;
 #(
-  parameter rv32_e RV32   = RV32I
-)
-(
-  input logic     clk,
-  input logic     rst_n,
-  input rf_addr_t waddr_i [REGFILE_NUM_WRITE_PORTS],
-  input logic     we_i    [REGFILE_NUM_WRITE_PORTS]
+    parameter rv32_e RV32 = RV32I
+) (
+    input logic     clk,
+    input logic     rst_n,
+    input rf_addr_t waddr_i[REGFILE_NUM_WRITE_PORTS],
+    input logic     we_i   [REGFILE_NUM_WRITE_PORTS]
 );
 
   generate
-    if(RV32 == RV32E) begin: a_rv32e
+    if (RV32 == RV32E) begin : a_rv32e
 
       a_rf_we_illegal :
-        assert property (@(posedge clk) disable iff (!rst_n)
-                         we_i[0] |-> waddr_i[0] <= 15)
-          else `uvm_error("regiter_file", "Write to GPR > 15 with RV32E")
+      assert property (@(posedge clk) disable iff (!rst_n) we_i[0] |-> waddr_i[0] <= 15)
+      else `uvm_error("regiter_file", "Write to GPR > 15 with RV32E")
 
     end
   endgenerate

@@ -21,19 +21,19 @@
 //
 
 module exp_backoff #(
-  /// Seed for 16bit LFSR
-  parameter int unsigned Seed   = 'hffff,
-  /// 2**MaxExp-1 determines the maximum range from which random wait counts are drawn
-  parameter int unsigned MaxExp = 16
+    /// Seed for 16bit LFSR
+    parameter int unsigned Seed   = 'hffff,
+    /// 2**MaxExp-1 determines the maximum range from which random wait counts are drawn
+    parameter int unsigned MaxExp = 16
 ) (
-  input  logic clk_i,
-  input  logic rst_ni,
-  /// Sets the backoff counter (pulse) -> use when trial did not succeed
-  input  logic set_i,
-  /// Clears the backoff counter (pulse) -> use when trial succeeded
-  input  logic clr_i,
-  /// Indicates whether the backoff counter is equal to zero and a new trial can be launched
-  output logic is_zero_o
+    input  logic clk_i,
+    input  logic rst_ni,
+    /// Sets the backoff counter (pulse) -> use when trial did not succeed
+    input  logic set_i,
+    /// Clears the backoff counter (pulse) -> use when trial succeeded
+    input  logic clr_i,
+    /// Indicates whether the backoff counter is equal to zero and a new trial can be launched
+    output logic is_zero_o
 );
 
   // leave this constant
@@ -46,24 +46,18 @@ module exp_backoff #(
   // note: we use a flipped lfsr here to
   // avoid strange correlation effects between
   // the (left-shifted) mask and the lfsr
-  assign lfsr = lfsr_q[15-15] ^
-                lfsr_q[15-13] ^
-                lfsr_q[15-12] ^
-                lfsr_q[15-10];
+  assign lfsr = lfsr_q[15-15] ^ lfsr_q[15-13] ^ lfsr_q[15-12] ^ lfsr_q[15-10];
 
-  assign lfsr_d = (set_i) ? {lfsr, lfsr_q[$high(lfsr_q):1]} :
-                            lfsr_q;
+  assign lfsr_d = (set_i) ? {lfsr, lfsr_q[$high(lfsr_q):1]} : lfsr_q;
 
   // mask the wait counts with exponentially increasing mask (shift reg)
   assign mask_d = (clr_i) ? '0                                :
                   (set_i) ? {{(WIDTH-MaxExp){1'b0}},mask_q[MaxExp-2:0], 1'b1} :
                             mask_q;
 
-  assign cnt_d =  (clr_i)      ? '0                :
-                  (set_i)      ? (mask_q & lfsr_q) :
-                  (!is_zero_o) ? cnt_q - 1'b1      : '0;
+  assign cnt_d = (clr_i) ? '0 : (set_i) ? (mask_q & lfsr_q) : (!is_zero_o) ? cnt_q - 1'b1 : '0;
 
-  assign is_zero_o = (cnt_q=='0);
+  assign is_zero_o = (cnt_q == '0);
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_regs
     if (!rst_ni) begin
@@ -77,22 +71,22 @@ module exp_backoff #(
     end
   end
 
-///////////////////////////////////////////////////////
-// assertions
-///////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////
+  // assertions
+  ///////////////////////////////////////////////////////
 
-//pragma translate_off
+  //pragma translate_off
 `ifndef VERILATOR
   initial begin
     // assert wrong parameterizations
-    assert (MaxExp>0)
-      else $fatal(1,"MaxExp must be greater than 0");
-    assert (MaxExp<=16)
-      else $fatal(1,"MaxExp cannot be greater than 16");
-    assert (Seed>0)
-      else $fatal(1,"Zero seed is not allowed for LFSR");
+    assert (MaxExp > 0)
+    else $fatal(1, "MaxExp must be greater than 0");
+    assert (MaxExp <= 16)
+    else $fatal(1, "MaxExp cannot be greater than 16");
+    assert (Seed > 0)
+    else $fatal(1, "Zero seed is not allowed for LFSR");
   end
 `endif
-//pragma translate_on
+  //pragma translate_on
 
-endmodule // exp_backoff
+endmodule  // exp_backoff

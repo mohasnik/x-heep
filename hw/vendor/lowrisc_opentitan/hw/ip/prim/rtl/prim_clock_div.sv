@@ -5,15 +5,15 @@
 `include "prim_assert.sv"
 
 module prim_clock_div #(
-  parameter int Divisor = 2,
-  parameter logic ResetValue = 0
+    parameter int Divisor = 2,
+    parameter logic ResetValue = 0
 ) (
-  input clk_i,
-  input rst_ni,
-  input step_down_req_i, // step down divisor by 2x
-  output logic step_down_ack_o, // step down acknowledge
-  input test_en_i,
-  output logic clk_o
+    input clk_i,
+    input rst_ni,
+    input step_down_req_i,  // step down divisor by 2x
+    output logic step_down_ack_o,  // step down acknowledge
+    input test_en_i,
+    output logic clk_o
 );
 
 
@@ -31,22 +31,22 @@ module prim_clock_div #(
   if (Divisor == 2) begin : gen_div2
     logic q_p, q_n;
 
-    prim_flop # (
-      .Width(1),
-      .ResetValue(ResetValue)
+    prim_flop #(
+        .Width(1),
+        .ResetValue(ResetValue)
     ) u_div2 (
-      .clk_i,
-      .rst_ni,
-      .d_i(q_n),
-      .q_o(q_p)
+        .clk_i,
+        .rst_ni,
+        .d_i(q_n),
+        .q_o(q_p)
     );
 
-    prim_clock_inv # (
-      .HasScanMode(1'b0)
+    prim_clock_inv #(
+        .HasScanMode(1'b0)
     ) u_inv (
-      .clk_i(q_p),
-      .scanmode_i('0),
-      .clk_no(q_n)
+        .clk_i(q_p),
+        .scanmode_i('0),
+        .clk_no(q_n)
     );
 
     logic step_down_nq;
@@ -60,15 +60,15 @@ module prim_clock_div #(
 
     // make sure selection point is away from both edges
     prim_clock_mux2 #(
-      .NoFpgaBufG(1'b1)
+        .NoFpgaBufG(1'b1)
     ) u_step_down_mux (
-      .clk0_i(q_p),
-      .clk1_i(clk_i),
-      .sel_i(step_down_nq),
-      .clk_o(clk_int)
+        .clk0_i(q_p),
+        .clk1_i(clk_i),
+        .sel_i (step_down_nq),
+        .clk_o (clk_int)
     );
 
-  assign step_down_ack_o = step_down_nq;
+    assign step_down_ack_o = step_down_nq;
 
   end else begin : gen_div
 
@@ -77,8 +77,7 @@ module prim_clock_div #(
     logic [CntWidth-1:0] cnt;
     logic [CntWidth-1:0] limit;
 
-    assign limit = !step_down_req       ? ToggleCnt - 1 :
-                   (ToggleCnt / 2) == 2 ? '0 : (ToggleCnt / 2) - 1;
+    assign limit = !step_down_req ? ToggleCnt - 1 : (ToggleCnt / 2) == 2 ? '0 : (ToggleCnt / 2) - 1;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -104,17 +103,17 @@ module prim_clock_div #(
   // anchor points for constraints
   logic clk_muxed;
   prim_clock_mux2 #(
-    .NoFpgaBufG(1'b1)
+      .NoFpgaBufG(1'b1)
   ) u_clk_mux (
-    .clk0_i(clk_int),
-    .clk1_i(clk_i),
-    .sel_i('0),
-    .clk_o(clk_muxed)
+      .clk0_i(clk_int),
+      .clk1_i(clk_i),
+      .sel_i ('0),
+      .clk_o (clk_muxed)
   );
 
   prim_clock_buf u_clk_div_buf (
-    .clk_i(clk_muxed),
-    .clk_o
+      .clk_i(clk_muxed),
+      .clk_o
   );
 
 endmodule

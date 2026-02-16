@@ -31,60 +31,60 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_sequencer import cv32e40x_pkg::*;
- #(
-   parameter rv32_e    RV32 = RV32I
- )
- (
-    input  logic       clk,
-    input  logic       rst_n,
+module cv32e40x_sequencer
+  import cv32e40x_pkg::*;
+#(
+    parameter rv32_e RV32 = RV32I
+) (
+    input logic clk,
+    input logic rst_n,
 
-    input  logic [5:0] jvt_mode_i,
-    input  inst_resp_t instr_i,               // Instruction from prefetch unit
-    input  logic       instr_is_clic_ptr_i,   // CLIC pointer flag, instr_i does not contain an instruction
-    input  logic       instr_is_mret_ptr_i,   // mret pointer flag, instr_i does not contain an instruction
+    input logic [5:0] jvt_mode_i,
+    input inst_resp_t instr_i,  // Instruction from prefetch unit
+    input logic instr_is_clic_ptr_i,  // CLIC pointer flag, instr_i does not contain an instruction
+    input logic instr_is_mret_ptr_i,  // mret pointer flag, instr_i does not contain an instruction
     input  logic       instr_is_tbljmp_ptr_i, // Tablejump pointer flag, instr_i does not contain an instruction
 
-    input  logic       valid_i,               // valid input from if stage
-    input  logic       ready_i,               // Downstream is ready (ID stage)
-    input  logic       halt_i,                // Halt, not ready for new input, no output valid. Keep state
-    input  logic       kill_i,                // Kill. Ready for inputs, no output valid. Reset state
+    input logic valid_i,  // valid input from if stage
+    input logic ready_i,  // Downstream is ready (ID stage)
+    input logic halt_i,   // Halt, not ready for new input, no output valid. Keep state
+    input logic kill_i,   // Kill. Ready for inputs, no output valid. Reset state
 
-    output inst_resp_t instr_o,               // Output sequenced (32-bit) instruction
-    output logic       valid_o,               // Output is valid - input is valid AND we decode a valid seq instruction
-    output logic       ready_o,               // Sequencer is ready for new inputs
-    output logic       seq_first_o,           // First operation is being output
-    output logic       seq_last_o,            // Last operation is being output,
-    output logic       seq_tbljmp_o,          // Instruction is a table jump (jt/jalt)
-    output logic       seq_pushpop_o          // Instruction is a PUSH or POP
-  );
+    output inst_resp_t instr_o,  // Output sequenced (32-bit) instruction
+    output logic valid_o,  // Output is valid - input is valid AND we decode a valid seq instruction
+    output logic ready_o,  // Sequencer is ready for new inputs
+    output logic seq_first_o,  // First operation is being output
+    output logic seq_last_o,  // Last operation is being output,
+    output logic seq_tbljmp_o,  // Instruction is a table jump (jt/jalt)
+    output logic seq_pushpop_o  // Instruction is a PUSH or POP
+);
 
-  seq_t                instr_cnt_q;        // Count number of emitted uncompressed instructions
-  pushpop_decode_s     decode;             // Struct holding metatdata for current decoded instruction
-  seq_instr_e          seq_instr;          // Type of current decoded instruction
+  seq_t                   instr_cnt_q;  // Count number of emitted uncompressed instructions
+  pushpop_decode_s        decode;  // Struct holding metatdata for current decoded instruction
+  seq_instr_e             seq_instr;  // Type of current decoded instruction
 
-  logic [31:0]         instr;              // Instruction word from prefetcher
-  logic [3:0]          rlist;              // rlist for push/pop*
+  logic            [31:0] instr;  // Instruction word from prefetcher
+  logic            [ 3:0] rlist;  // rlist for push/pop*
 
   // Helper signals to indicate type of instruction
-  logic                seq_load;
-  logic                seq_store;
-  logic                seq_move_a2s;
-  logic                seq_move_s2a;
+  logic                   seq_load;
+  logic                   seq_store;
+  logic                   seq_move_a2s;
+  logic                   seq_move_s2a;
 
   // FSM state
-  seq_state_e          seq_state_n;
-  seq_state_e          seq_state_q;
+  seq_state_e             seq_state_n;
+  seq_state_e             seq_state_q;
 
-  logic                seq_first_fsm;
-  logic                seq_last_fsm;
+  logic                   seq_first_fsm;
+  logic                   seq_last_fsm;
 
-  logic                instr_is_pointer;
+  logic                   instr_is_pointer;
 
-  logic                ready_fsm;
+  logic                   ready_fsm;
 
-  logic                dmove_legal_dest;
-  logic                pushpop_legal_rlist;
+  logic                   dmove_legal_dest;
+  logic                   pushpop_legal_rlist;
 
   assign instr = instr_i.bus_resp.rdata;
   assign rlist = instr[7:4];
@@ -120,7 +120,7 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         seq_state_q <= seq_state_n;
       end
     end
-  end // always_ff
+  end  // always_ff
 
   ///////////////////////////////////
   // Decode sequenced instructions //
@@ -128,16 +128,14 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
 
   // rlist values 0 to 3 are reserved for a future EABI variant called cm.popret.e
   // For RV32E, S2-S11 are not present (i.e. rlist must be < 7)
-  assign pushpop_legal_rlist = (RV32 == RV32I) ? (rlist > 4'h3) :
-                               (rlist < 4'h7) && (rlist > 4'h3);
+  assign pushpop_legal_rlist = (RV32 == RV32I) ? (rlist > 4'h3) : (rlist < 4'h7) && (rlist > 4'h3);
 
   // rs1 must be different from rs2
   // For RV32E, S2-S11 are not present
   assign dmove_legal_dest = (RV32 == RV32I) ? (instr[9:7] != instr[4:2]) :
                             (instr[9:7] != instr[4:2]) && (instr[9:7] < 3'h2) && (instr[4:2] < 3'h2);
 
-  always_comb
-  begin
+  always_comb begin
     seq_instr     = INVALID_INST;
     seq_load      = 1'b0;
     seq_store     = 1'b0;
@@ -209,10 +207,10 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
               seq_instr = INVALID_INST;
             end
           endcase
-        end // instr[15:13]
-      end // C2
-    end // instr_is_pointer
-  end // always_comb
+        end  // instr[15:13]
+      end  // C2
+    end  // instr_is_pointer
+  end  // always_comb
 
   // Local valid
   // In principle this is the same as "seq_en && valid_i"
@@ -237,15 +235,14 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
     case (seq_instr)
       PUSH: begin
         // Start pushing to -4(SP)
-        decode.current_stack_adj = -{{instr_cnt_q+12'b1}<<2};
+        decode.current_stack_adj = -{{instr_cnt_q + 12'b1} << 2};
       end
-      POP,POPRET, POPRETZ: begin
+      POP, POPRET, POPRETZ: begin
         // Need to account for any extra allocated stack space during cm.push
         // Rewind with decode.total_stack_adj and then start by popping from -4
-        decode.current_stack_adj = decode.total_stack_adj-12'({instr_cnt_q+5'b1}<<2);
+        decode.current_stack_adj = decode.total_stack_adj - 12'({instr_cnt_q + 5'b1} << 2);
       end
-      default:
-        decode.current_stack_adj = '0;
+      default: decode.current_stack_adj = '0;
     endcase
   end
 
@@ -268,19 +265,25 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
           if (decode.registers_saved == 'd1) begin
             // Exactly one S register popped
             // lw rd, decode.current_stack_adj(SP)
-            instr_o.bus_resp.rdata = {decode.current_stack_adj,REG_SP,3'b010,sn_to_regnum(decode.sreg),OPCODE_LOAD};
+            instr_o.bus_resp.rdata = {
+              decode.current_stack_adj, REG_SP, 3'b010, sn_to_regnum(decode.sreg), OPCODE_LOAD
+            };
             // Finished loading the single Sreg, ra next
             seq_state_n = S_RA;
           end else if (decode.registers_saved > 'd1) begin
             // More than one S register popped
             // lw rd, decode.current_stack_adj(SP)
-            instr_o.bus_resp.rdata = {decode.current_stack_adj,REG_SP,3'b010,sn_to_regnum(decode.sreg),OPCODE_LOAD};
+            instr_o.bus_resp.rdata = {
+              decode.current_stack_adj, REG_SP, 3'b010, sn_to_regnum(decode.sreg), OPCODE_LOAD
+            };
             // Continue popping Sregs
             seq_state_n = S_POP;
           end else begin
             // No S register popped, pop ra
             // lw ra, decode.current_stack_adj(SP)
-            instr_o.bus_resp.rdata = {decode.current_stack_adj,REG_SP,3'b010,REG_RA,OPCODE_LOAD};
+            instr_o.bus_resp.rdata = {
+              decode.current_stack_adj, REG_SP, 3'b010, REG_RA, OPCODE_LOAD
+            };
             // Finished popping, stack pointer next
             seq_state_n = S_SP;
           end
@@ -289,25 +292,31 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
           if (decode.registers_saved == 'd1) begin
             // Exactly one S register pushed
             // sw, rs2, -4(sp)
-            instr_o.bus_resp.rdata = {7'b1111111,sn_to_regnum(decode.sreg),5'd2,3'b010,5'b11100,OPCODE_STORE};
+            instr_o.bus_resp.rdata = {
+              7'b1111111, sn_to_regnum(decode.sreg), 5'd2, 3'b010, 5'b11100, OPCODE_STORE
+            };
             // Finished pushing, ra next
             seq_state_n = S_RA;
           end else if (decode.registers_saved > 'd1) begin
             // More than one S register pushed
             // sw, rs2, -4(sp)
-            instr_o.bus_resp.rdata = {7'b1111111,sn_to_regnum(decode.sreg),5'd2,3'b010,5'b11100,OPCODE_STORE};
+            instr_o.bus_resp.rdata = {
+              7'b1111111, sn_to_regnum(decode.sreg), 5'd2, 3'b010, 5'b11100, OPCODE_STORE
+            };
             // Continue pushing
             seq_state_n = S_PUSH;
           end else begin
             // No S register pushed
             // sw, ra, -4(sp)
-            instr_o.bus_resp.rdata = {7'b1111111,REG_RA,5'd2,3'b010,5'b11100,OPCODE_STORE};
+            instr_o.bus_resp.rdata = {7'b1111111, REG_RA, 5'd2, 3'b010, 5'b11100, OPCODE_STORE};
             // Finished pushing, stack pointer next
             seq_state_n = S_SP;
           end
         end else if (seq_move_a2s) begin
           // addi s*, a0, 0
-          instr_o.bus_resp.rdata = {12'h000, 5'd10, 3'b000, sn_to_regnum(5'(instr[9:7])), OPCODE_OPIMM};
+          instr_o.bus_resp.rdata = {
+            12'h000, 5'd10, 3'b000, sn_to_regnum(5'(instr[9:7])), OPCODE_OPIMM
+          };
           seq_state_n = S_DMOVE;
         end else if (seq_tbljmp_o) begin
           if (instr[9:7] == 3'b000) begin
@@ -323,7 +332,9 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         end else if (seq_move_s2a) begin
           // move s to a
           // addi a0, s*, 0
-          instr_o.bus_resp.rdata = {12'h000, sn_to_regnum(5'(instr[9:7])), 3'b000, 5'd10, OPCODE_OPIMM};
+          instr_o.bus_resp.rdata = {
+            12'h000, sn_to_regnum(5'(instr[9:7])), 3'b000, 5'd10, OPCODE_OPIMM
+          };
           seq_state_n = S_DMOVE;
         end
 
@@ -332,7 +343,14 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
       S_PUSH: begin
         seq_first_fsm = 1'b0;
         // sw rs2, current_stack_adj(sp)
-        instr_o.bus_resp.rdata = {decode.current_stack_adj[11:5],sn_to_regnum(decode.sreg),REG_SP,3'b010,decode.current_stack_adj[4:0],OPCODE_STORE};
+        instr_o.bus_resp.rdata = {
+          decode.current_stack_adj[11:5],
+          sn_to_regnum(decode.sreg),
+          REG_SP,
+          3'b010,
+          decode.current_stack_adj[4:0],
+          OPCODE_STORE
+        };
         // Advance FSM when we have saved all s* registers
         if (instr_cnt_q == decode.registers_saved - 1) begin
           seq_state_n = S_RA;
@@ -341,7 +359,9 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
       S_POP: begin
         seq_first_fsm = 1'b0;
         // lw rd, current_stack_adj(sp)
-        instr_o.bus_resp.rdata = {decode.current_stack_adj,REG_SP,3'b010,sn_to_regnum(decode.sreg),OPCODE_LOAD};
+        instr_o.bus_resp.rdata = {
+          decode.current_stack_adj, REG_SP, 3'b010, sn_to_regnum(decode.sreg), OPCODE_LOAD
+        };
         // Advance FSM when we have loaded all s* registers
         if (instr_cnt_q == decode.registers_saved - 1) begin
           seq_state_n = S_RA;
@@ -352,10 +372,14 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         // Second half of double moves
         if (seq_move_a2s) begin
           // addi s*, a1, 0
-          instr_o.bus_resp.rdata = {12'h000, 5'd11, 3'b000, sn_to_regnum(5'(instr[4:2])), OPCODE_OPIMM};
+          instr_o.bus_resp.rdata = {
+            12'h000, 5'd11, 3'b000, sn_to_regnum(5'(instr[4:2])), OPCODE_OPIMM
+          };
         end else begin
           // addi a1, s*, 0
-          instr_o.bus_resp.rdata = {12'h000, sn_to_regnum(5'(instr[4:2])), 3'b000, 5'd11, OPCODE_OPIMM};
+          instr_o.bus_resp.rdata = {
+            12'h000, sn_to_regnum(5'(instr[4:2])), 3'b000, 5'd11, OPCODE_OPIMM
+          };
         end
 
         seq_state_n = S_IDLE;
@@ -367,10 +391,17 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         // push pop ra register
         if (seq_load) begin
           // lw ra, current_stack_adj(sp)
-          instr_o.bus_resp.rdata = {decode.current_stack_adj,REG_SP,3'b010,REG_RA,OPCODE_LOAD};
+          instr_o.bus_resp.rdata = {decode.current_stack_adj, REG_SP, 3'b010, REG_RA, OPCODE_LOAD};
         end else begin
           // sw ra, current_stack_adj(sp)
-          instr_o.bus_resp.rdata = {decode.current_stack_adj[11:5],REG_RA,REG_SP,3'b010,decode.current_stack_adj[4:0],OPCODE_STORE};
+          instr_o.bus_resp.rdata = {
+            decode.current_stack_adj[11:5],
+            REG_RA,
+            REG_SP,
+            3'b010,
+            decode.current_stack_adj[4:0],
+            OPCODE_STORE
+          };
         end
 
         seq_state_n = S_SP;
@@ -380,10 +411,10 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         // Adjust stack pointer
         if (seq_load) begin
           // addi sp, sp, total_stack_adj
-          instr_o.bus_resp.rdata = {decode.total_stack_adj,REG_SP,3'b0,REG_SP,OPCODE_OPIMM};
+          instr_o.bus_resp.rdata = {decode.total_stack_adj, REG_SP, 3'b0, REG_SP, OPCODE_OPIMM};
         end else begin
           // addi sp, sp, -total_stack_adj
-          instr_o.bus_resp.rdata = {-decode.total_stack_adj,REG_SP,3'b0,REG_SP,OPCODE_OPIMM};
+          instr_o.bus_resp.rdata = {-decode.total_stack_adj, REG_SP, 3'b0, REG_SP, OPCODE_OPIMM};
         end
 
 
@@ -401,7 +432,7 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         seq_first_fsm = 1'b0;
         // Clear a0 for popretz
         // addi ra, x0, 0
-        instr_o.bus_resp.rdata = {12'h000,5'd0,3'b0,5'd10,OPCODE_OPIMM};
+        instr_o.bus_resp.rdata = {12'h000, 5'd0, 3'b0, 5'd10, OPCODE_OPIMM};
 
         seq_state_n = S_RET;
       end
@@ -409,7 +440,7 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
         seq_first_fsm = 1'b0;
         // return for popret/popretz
         // jalr x0, 0(ra)
-        instr_o.bus_resp.rdata = {12'b0,REG_RA,3'b0,5'b0,OPCODE_JALR};
+        instr_o.bus_resp.rdata = {12'b0, REG_RA, 3'b0, 5'b0, OPCODE_JALR};
 
         seq_state_n = S_IDLE;
         ready_fsm = ready_i && !halt_i;
@@ -418,7 +449,7 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
 
       default: begin
         // Should not happen
-        ready_fsm = 1'b1;
+        ready_fsm   = 1'b1;
         seq_state_n = S_IDLE;
       end
     endcase
@@ -426,7 +457,7 @@ module cv32e40x_sequencer import cv32e40x_pkg::*;
     // If there is no valid output or we are killed: default to ready_fsm and set state to IDLE.
     // No reset if !valid while halted, as we may need to continue the sequence after being unhalted.
     if ((!valid_o && !halt_i) || kill_i) begin
-      ready_fsm = 1'b1;
+      ready_fsm   = 1'b1;
       seq_state_n = S_IDLE;
     end
   end

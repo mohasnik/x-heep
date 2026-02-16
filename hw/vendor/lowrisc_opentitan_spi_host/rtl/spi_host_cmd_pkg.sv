@@ -12,19 +12,19 @@ package spi_host_cmd_pkg;
 
   // For decoding the direction register
   typedef enum logic [1:0] {
-     Dummy  = 2'b00,
-     RdOnly = 2'b01,
-     WrOnly = 2'b10,
-     Bidir  = 2'b11
-   } reg_direction_t;
+    Dummy  = 2'b00,
+    RdOnly = 2'b01,
+    WrOnly = 2'b10,
+    Bidir  = 2'b11
+  } reg_direction_t;
 
   // For decoding the direction register
   typedef enum logic [1:0] {
-     Standard = 2'b00,
-     Dual     = 2'b01,
-     Quad     = 2'b10,
-     RsvdSpd  = 2'b11
-   } speed_t;
+    Standard = 2'b00,
+    Dual     = 2'b01,
+    Quad     = 2'b10,
+    RsvdSpd  = 2'b11
+  } speed_t;
 
   typedef struct packed {
     logic [15:0] clkdiv;
@@ -37,11 +37,11 @@ package spi_host_cmd_pkg;
   } configopts_t;
 
   typedef struct packed {
-    logic [1:0] speed;
-    logic       cmd_wr_en;
-    logic       cmd_rd_en;
+    logic [1:0]  speed;
+    logic        cmd_wr_en;
+    logic        cmd_rd_en;
     logic [23:0] len;
-    logic       csaat;
+    logic        csaat;
   } segment_t;
 
   typedef struct packed {

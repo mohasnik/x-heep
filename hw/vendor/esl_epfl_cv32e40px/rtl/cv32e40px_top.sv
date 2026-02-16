@@ -99,7 +99,7 @@ module cv32e40px_top
     input x_result_t x_result_i,
 
     // Interrupt inputs
-    input  logic [31:0] irq_i,  // CLINT interrupts + CLINT extension interrupts
+    input  logic [31:0] irq_i,      // CLINT interrupts + CLINT extension interrupts
     output logic        irq_ack_o,
     output logic [ 4:0] irq_id_o,
 

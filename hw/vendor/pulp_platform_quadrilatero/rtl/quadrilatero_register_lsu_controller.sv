@@ -22,12 +22,12 @@ module quadrilatero_register_lsu_controller #(
     output quadrilatero_pkg::lsu_conf_t issued_instr_conf_o  // issued instruction configuration
 );
 
-  localparam int unsigned USAGE = N_SLOTS > 1 ? $clog2(N_SLOTS)-1 : 0;
+  localparam int unsigned USAGE = N_SLOTS > 1 ? $clog2(N_SLOTS) - 1 : 0;
   logic issue_queue_empty;
   logic start_load;
   logic issue_queue_almost_full;
   logic issue_queue_full;
-  logic[USAGE:0] issue_queue_usage;
+  logic [USAGE:0] issue_queue_usage;
 
   quadrilatero_pkg::lsu_instr_t issued_instr_ff;  // issued instruction
   quadrilatero_pkg::lsu_instr_t fifo_data_out;
@@ -53,11 +53,11 @@ module quadrilatero_register_lsu_controller #(
   assign issued_instr_o = issued_instr_ff;
 
   logic pop_instr;
-  assign pop_instr  = !busy_i && !issue_queue_empty && !start_o;
+  assign pop_instr = !busy_i && !issue_queue_empty && !start_o;
 
   assign start_load = pop_instr;
 
-  assign issue_queue_almost_full = (issue_queue_usage == N_SLOTS-1);
+  assign issue_queue_almost_full = (issue_queue_usage == N_SLOTS - 1);
   assign issue_queue_full_o = issue_queue_full | issue_queue_almost_full;
 
   fifo_v3 #(

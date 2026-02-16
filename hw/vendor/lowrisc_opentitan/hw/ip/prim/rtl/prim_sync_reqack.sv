@@ -24,23 +24,24 @@
 `include "prim_assert.sv"
 
 module prim_sync_reqack #(
-  // Non-functional parameter to switch on the request stability assertion
-  parameter bit EnReqStabA = 1
+    // Non-functional parameter to switch on the request stability assertion
+    parameter bit EnReqStabA = 1
 ) (
-  input  clk_src_i,       // REQ side, SRC domain
-  input  rst_src_ni,      // REQ side, SRC domain
-  input  clk_dst_i,       // ACK side, DST domain
-  input  rst_dst_ni,      // ACK side, DST domain
+    input clk_src_i,   // REQ side, SRC domain
+    input rst_src_ni,  // REQ side, SRC domain
+    input clk_dst_i,   // ACK side, DST domain
+    input rst_dst_ni,  // ACK side, DST domain
 
-  input  logic src_req_i, // REQ side, SRC domain
-  output logic src_ack_o, // REQ side, SRC domain
-  output logic dst_req_o, // ACK side, DST domain
-  input  logic dst_ack_i  // ACK side, DST domain
+    input  logic src_req_i,  // REQ side, SRC domain
+    output logic src_ack_o,  // REQ side, SRC domain
+    output logic dst_req_o,  // ACK side, DST domain
+    input  logic dst_ack_i   // ACK side, DST domain
 );
 
   // Types
   typedef enum logic {
-    EVEN, ODD
+    EVEN,
+    ODD
   } sync_reqack_fsm_e;
 
   // Signals
@@ -55,22 +56,22 @@ module prim_sync_reqack #(
 
   // Move REQ over to DST domain.
   prim_flop_2sync #(
-    .Width(1)
+      .Width(1)
   ) req_sync (
-    .clk_i  (clk_dst_i),
-    .rst_ni (rst_dst_ni),
-    .d_i    (src_req_q),
-    .q_o    (dst_req)
+      .clk_i (clk_dst_i),
+      .rst_ni(rst_dst_ni),
+      .d_i   (src_req_q),
+      .q_o   (dst_req)
   );
 
   // Move ACK over to SRC domain.
   prim_flop_2sync #(
-    .Width(1)
+      .Width(1)
   ) ack_sync (
-    .clk_i  (clk_src_i),
-    .rst_ni (rst_src_ni),
-    .d_i    (dst_ack_q),
-    .q_o    (src_ack)
+      .clk_i (clk_src_i),
+      .rst_ni(rst_src_ni),
+      .d_i   (dst_ack_q),
+      .q_o   (src_ack)
   );
 
   // REQ-side FSM (SRC domain)
@@ -78,8 +79,8 @@ module prim_sync_reqack #(
     src_fsm_ns = src_fsm_cs;
 
     // By default, we keep the internal REQ value and don't ACK.
-    src_req_d = src_req_q;
-    src_ack_o = 1'b0;
+    src_req_d  = src_req_q;
+    src_ack_o  = 1'b0;
 
     unique case (src_fsm_cs)
 
@@ -115,8 +116,8 @@ module prim_sync_reqack #(
     dst_fsm_ns = dst_fsm_cs;
 
     // By default, we don't REQ and keep the internal ACK.
-    dst_req_o = 1'b0;
-    dst_ack_d = dst_ack_q;
+    dst_req_o  = 1'b0;
+    dst_ack_d  = dst_ack_q;
 
     unique case (dst_fsm_cs)
 

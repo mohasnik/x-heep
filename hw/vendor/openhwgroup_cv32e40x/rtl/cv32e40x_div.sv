@@ -25,43 +25,44 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_div import cv32e40x_pkg::*;
+module cv32e40x_div
+  import cv32e40x_pkg::*;
 (
     // Clock and reset
-    input logic                clk,
-    input logic                rst_n,
+    input logic clk,
+    input logic rst_n,
 
     // Control signals
-    input                      div_opcode_e operator_i,
-    input logic                data_ind_timing_i,
+    input div_opcode_e operator_i,
+    input logic        data_ind_timing_i,
 
     // Input operands
-    input logic [31:0]         op_a_i,
-    input logic [31:0]         op_b_i,
+    input logic [31:0] op_a_i,
+    input logic [31:0] op_b_i,
 
 
     // CLZ interface towards ALU
-    output logic               alu_clz_en_o,
-    output logic [31:0]        alu_clz_data_rev_o,
-    input logic [5:0]          alu_clz_result_i,
+    output logic        alu_clz_en_o,
+    output logic [31:0] alu_clz_data_rev_o,
+    input  logic [ 5:0] alu_clz_result_i,
 
     // Shifter interface towards ALU
-    output logic               alu_shift_en_o,
-    output logic [5:0]         alu_shift_amt_o,
-    input logic [31:0]         alu_op_b_shifted_i,
+    output logic        alu_shift_en_o,
+    output logic [ 5:0] alu_shift_amt_o,
+    input  logic [31:0] alu_op_b_shifted_i,
 
     // Divider enable
-    input logic                div_en_i,
+    input logic div_en_i,
 
     // Input handshake
-    input logic                valid_i,
-    output logic               ready_o,
+    input  logic valid_i,
+    output logic ready_o,
 
     // Output handshake and result
-    input logic                ready_i,
-    output logic               valid_o,
-    output logic [31:0]        result_o
-  );
+    input  logic        ready_i,
+    output logic        valid_o,
+    output logic [31:0] result_o
+);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Signal declarations
@@ -112,31 +113,27 @@ module cv32e40x_div import cv32e40x_pkg::*;
   // and shift one less to preserve sign bit
   assign op_b_alt = (~op_b_i << 1);
 
-  always_comb
-  begin
+  always_comb begin
     alu_clz_data = op_b_i;
 
     case (operator_i)
-      DIV_DIVU,
-      DIV_REMU: alu_clz_data = op_b_i;
+      DIV_DIVU, DIV_REMU: alu_clz_data = op_b_i;
 
-      DIV_DIV,
-      DIV_REM: begin
+      DIV_DIV, DIV_REM: begin
         if (op_b_is_neg) begin
           alu_clz_data = {op_b_alt[31:1], 1'b1};
         end else begin
           alu_clz_data = op_b_i;
         end
       end
-      default:;
+      default: ;
     endcase
   end
 
   // CLZ circuit needs reversed input
   generate
     genvar l;
-    for (l = 0; l < 32; l++)
-    begin : gen_div_clz_data_rev
+    for (l = 0; l < 32; l++) begin : gen_div_clz_data_rev
       assign alu_clz_data_rev_o[l] = alu_clz_data[31-l];
     end
   endgenerate
@@ -145,8 +142,8 @@ module cv32e40x_div import cv32e40x_pkg::*;
 
   // Deternmine initial shift of divisor
   assign op_b_is_neg = op_b_i[31] & div_signed;
-  assign alu_shift_amt_o = alu_clz_result_i ;
-  assign alu_shift_en_o  = div_en_i;
+  assign alu_shift_amt_o = alu_clz_result_i;
+  assign alu_shift_en_o = div_en_i;
 
   // Check for op_b_i == 0
   assign op_b_is_zero = !(|op_b_i);
@@ -168,10 +165,10 @@ module cv32e40x_div import cv32e40x_pkg::*;
   // Main adder and adder input muxes
   assign add_b_mux = init_en ? 0 : remainder_q;
   assign add_a_mux = init_en ? op_a_i : divisor_q;
-  assign add_out   = init_remainder_pos ? add_b_mux + add_a_mux : add_b_mux - $signed(add_a_mux);
+  assign add_out = init_remainder_pos ? add_b_mux + add_a_mux : add_b_mux - $signed(add_a_mux);
 
   // Result mux, negate if necessary
-  assign res_mux  = div_rem_q ? remainder_q : quotient_q;
+  assign res_mux = div_rem_q ? remainder_q : quotient_q;
   assign result_o = res_inv_q ? -$signed(res_mux) : res_mux;
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -182,8 +179,7 @@ module cv32e40x_div import cv32e40x_pkg::*;
 
   assign cnt_d = init_en        ? alu_shift_amt_o    :
                  init_dummy_cnt ? cnt_d_dummy - 6'd1 : /*-1 because one cycle is used to update the counter*/
-                 !cnt_q_is_zero ? cnt_q       - 6'd1 :
-                 cnt_q;
+      !cnt_q_is_zero ? cnt_q - 6'd1 : cnt_q;
 
   assign cnt_q_is_zero = !(|cnt_q);
 
@@ -191,8 +187,7 @@ module cv32e40x_div import cv32e40x_pkg::*;
   // FSM
   ///////////////////////////////////////////////////////////////////////////////
 
-  always_comb
-  begin : p_fsm
+  always_comb begin : p_fsm
     // default
     next_state     = state;
 
@@ -247,7 +242,7 @@ module cv32e40x_div import cv32e40x_pkg::*;
         end
       end
 
-      default : /* default */ ;
+      default:  /* default */;
 
     endcase
 
@@ -264,36 +259,37 @@ module cv32e40x_div import cv32e40x_pkg::*;
   // Registers
   ///////////////////////////////////////////////////////////////////////////////
 
-  assign div_rem_d  = init_en ? div_rem : div_rem_q;
+  assign div_rem_d = init_en ? div_rem : div_rem_q;
   assign comp_inv_d = init_en ? op_b_is_neg : comp_inv_q;
-  assign res_inv_d  = init_en ? (!op_b_is_zero || div_rem) && div_signed && (op_a_i[$high(op_a_i)] ^ op_b_is_neg) :
-                      res_inv_q;
+  assign res_inv_d = init_en ? (!op_b_is_zero || div_rem) && div_signed && (op_a_i[$high(
+      op_a_i
+  )] ^ op_b_is_neg) : res_inv_q;
 
-  assign remainder_d = remainder_en ? add_out     : remainder_q;
-  assign divisor_d   = divisor_en   ? divisor_mux : divisor_q;
-  assign quotient_d  = init_en      ? '0                                            :
-                       quotient_en  ? {quotient_q[$high(quotient_q)-1:0], comp_out} :
-                       quotient_q;
+  assign remainder_d = remainder_en ? add_out : remainder_q;
+  assign divisor_d = divisor_en ? divisor_mux : divisor_q;
+  assign quotient_d = init_en ? '0 : quotient_en ? {quotient_q[$high(
+      quotient_q
+  )-1:0], comp_out} : quotient_q;
 
   always_ff @(posedge clk, negedge rst_n) begin : p_regs
     if (rst_n == 1'b0) begin
-       state       <= DIV_IDLE;
-       remainder_q <= '0;
-       divisor_q   <= '0;
-       quotient_q  <= '0;
-       cnt_q       <= '0;
-       div_rem_q   <= 1'b0;
-       comp_inv_q  <= 1'b0;
-       res_inv_q   <= 1'b0;
+      state       <= DIV_IDLE;
+      remainder_q <= '0;
+      divisor_q   <= '0;
+      quotient_q  <= '0;
+      cnt_q       <= '0;
+      div_rem_q   <= 1'b0;
+      comp_inv_q  <= 1'b0;
+      res_inv_q   <= 1'b0;
     end else begin
-       state       <= next_state;
-       remainder_q <= remainder_d;
-       divisor_q   <= divisor_d;
-       quotient_q  <= quotient_d;
-       cnt_q       <= cnt_d;
-       div_rem_q   <= div_rem_d;
-       comp_inv_q  <= comp_inv_d;
-       res_inv_q   <= res_inv_d;
+      state       <= next_state;
+      remainder_q <= remainder_d;
+      divisor_q   <= divisor_d;
+      quotient_q  <= quotient_d;
+      cnt_q       <= cnt_d;
+      div_rem_q   <= div_rem_d;
+      comp_inv_q  <= comp_inv_d;
+      res_inv_q   <= res_inv_d;
     end
   end
 

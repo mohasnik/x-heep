@@ -12,8 +12,8 @@
 //              Mainly shifters at the moment.
 
 module cluster_level_shifter_in (
-  input  logic in_i,
-  output logic out_o
+    input  logic in_i,
+    output logic out_o
 );
 
   assign out_o = in_i;
@@ -21,9 +21,9 @@ module cluster_level_shifter_in (
 endmodule
 
 module cluster_level_shifter_in_clamp (
-  input  logic in_i,
-  output logic out_o,
-  input  logic clamp_i
+    input  logic in_i,
+    output logic out_o,
+    input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b0 : in_i;
@@ -31,8 +31,8 @@ module cluster_level_shifter_in_clamp (
 endmodule
 
 module cluster_level_shifter_inout (
-  input  logic data_i,
-  output logic data_o
+    input  logic data_i,
+    output logic data_o
 );
 
   assign data_o = data_i;
@@ -40,8 +40,8 @@ module cluster_level_shifter_inout (
 endmodule
 
 module cluster_level_shifter_out (
-  input  logic in_i,
-  output logic out_o
+    input  logic in_i,
+    output logic out_o
 );
 
   assign out_o = in_i;
@@ -49,9 +49,9 @@ module cluster_level_shifter_out (
 endmodule
 
 module cluster_level_shifter_out_clamp (
-  input  logic in_i,
-  output logic out_o,
-  input  logic clamp_i
+    input  logic in_i,
+    output logic out_o,
+    input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b0 : in_i;

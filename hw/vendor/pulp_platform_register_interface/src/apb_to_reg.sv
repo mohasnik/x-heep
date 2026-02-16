@@ -11,19 +11,19 @@
 // Florian Zaruba <zarubaf@iis.ee.ethz.ch>
 
 module apb_to_reg (
-  input  logic          clk_i,
-  input  logic          rst_ni,
+    input logic clk_i,
+    input logic rst_ni,
 
-  input  logic          penable_i,
-  input  logic          pwrite_i,
-  input  logic [31:0]   paddr_i,
-  input  logic          psel_i,
-  input  logic [31:0]   pwdata_i,
-  output logic [31:0]   prdata_o,
-  output logic          pready_o,
-  output logic          pslverr_o,
+    input  logic        penable_i,
+    input  logic        pwrite_i,
+    input  logic [31:0] paddr_i,
+    input  logic        psel_i,
+    input  logic [31:0] pwdata_i,
+    output logic [31:0] prdata_o,
+    output logic        pready_o,
+    output logic        pslverr_o,
 
-  REG_BUS.out  reg_o
+    REG_BUS.out reg_o
 );
 
   always_comb begin
@@ -39,11 +39,11 @@ module apb_to_reg (
 endmodule
 
 module apb_to_reg_intf #(
-  parameter int unsigned DATA_WIDTH = 32,
-  parameter int unsigned ADDR_WIDTH = 32
-)(
-  APB.Slave    apb_i,
-  REG_BUS.out  reg_o
+    parameter int unsigned DATA_WIDTH = 32,
+    parameter int unsigned ADDR_WIDTH = 32
+) (
+    APB.Slave   apb_i,
+    REG_BUS.out reg_o
 );
 
   always_comb begin

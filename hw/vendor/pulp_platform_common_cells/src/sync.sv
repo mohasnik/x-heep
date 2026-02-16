@@ -20,18 +20,17 @@ module sync #(
     output logic serial_o
 );
 
-   (* dont_touch = "true" *)
-   (* async_reg = "true" *)
-   logic [STAGES-1:0] reg_q;
+  (* dont_touch = "true" *) (* async_reg = "true" *)
+  logic [STAGES-1:0] reg_q;
 
-    always_ff @(posedge clk_i, negedge rst_ni) begin
-        if (!rst_ni) begin
-            reg_q <= {STAGES{ResetValue}};
-        end else begin
-            reg_q <= {reg_q[STAGES-2:0], serial_i};
-        end
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
+      reg_q <= {STAGES{ResetValue}};
+    end else begin
+      reg_q <= {reg_q[STAGES-2:0], serial_i};
     end
+  end
 
-    assign serial_o = reg_q[STAGES-1];
+  assign serial_o = reg_q[STAGES-1];
 
 endmodule

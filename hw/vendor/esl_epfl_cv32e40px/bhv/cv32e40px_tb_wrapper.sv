@@ -90,7 +90,7 @@ module cv32e40px_tb_wrapper
     input  logic [31:0] data_rdata_i,
 
     // Interrupt inputs
-    input  logic [31:0] irq_i,  // CLINT interrupts + CLINT extension interrupts
+    input  logic [31:0] irq_i,      // CLINT interrupts + CLINT extension interrupts
     output logic        irq_ack_o,
     output logic [ 4:0] irq_id_o,
 
@@ -432,7 +432,7 @@ module cv32e40px_tb_wrapper
       .csr_dscratch1_q_i(cv32e40px_top_i.core_i.cs_registers_i.dscratch1_q),
       .csr_dscratch1_we_i('0),  //cv32e40px_top_i.core_i.cs_registers_i.),
 
-      .csr_mhpmcounter_q_i          (cv32e40px_top_i.core_i.cs_registers_i.mhpmcounter_q),
+      .csr_mhpmcounter_q_i(cv32e40px_top_i.core_i.cs_registers_i.mhpmcounter_q),
       .csr_mhpmcounter_write_lower_i(cv32e40px_top_i.core_i.cs_registers_i.mhpmcounter_write_lower),
       .csr_mhpmcounter_write_upper_i(cv32e40px_top_i.core_i.cs_registers_i.mhpmcounter_write_upper),
 

@@ -20,31 +20,31 @@
 /// This module has no data ports because stream data does not need to be forked: the data of the
 /// input stream can just be applied at all output streams.
 module stream_fork_dynamic #(
-  /// Number of output streams
-  parameter int unsigned N_OUP = 32'd0 // Synopsys DC requires a default value for parameters.
+    /// Number of output streams
+    parameter int unsigned N_OUP = 32'd0  // Synopsys DC requires a default value for parameters.
 ) (
-  /// Clock
-  input  logic             clk_i,
-  /// Asynchronous reset, active low
-  input  logic             rst_ni,
-  /// Input stream valid handshake,
-  input  logic             valid_i,
-  /// Input stream ready handshake
-  output logic             ready_o,
-  /// Selection mask for the output handshake
-  input  logic [N_OUP-1:0] sel_i,
-  /// Selection mask valid
-  input  logic             sel_valid_i,
-  /// Selection mask ready
-  output logic             sel_ready_o,
-  /// Output streams valid handshakes
-  output logic [N_OUP-1:0] valid_o,
-  /// Output streams ready handshakes
-  input  logic [N_OUP-1:0] ready_i
+    /// Clock
+    input  logic             clk_i,
+    /// Asynchronous reset, active low
+    input  logic             rst_ni,
+    /// Input stream valid handshake,
+    input  logic             valid_i,
+    /// Input stream ready handshake
+    output logic             ready_o,
+    /// Selection mask for the output handshake
+    input  logic [N_OUP-1:0] sel_i,
+    /// Selection mask valid
+    input  logic             sel_valid_i,
+    /// Selection mask ready
+    output logic             sel_ready_o,
+    /// Output streams valid handshakes
+    output logic [N_OUP-1:0] valid_o,
+    /// Output streams ready handshakes
+    input  logic [N_OUP-1:0] ready_i
 );
 
-  logic             int_inp_valid,  int_inp_ready;
-  logic [N_OUP-1:0] int_oup_valid,  int_oup_ready;
+  logic int_inp_valid, int_inp_ready;
+  logic [N_OUP-1:0] int_oup_valid, int_oup_ready;
 
   // Output handshaking
   for (genvar i = 0; i < N_OUP; i++) begin : gen_oups
@@ -75,21 +75,22 @@ module stream_fork_dynamic #(
   end
 
   stream_fork #(
-    .N_OUP  ( N_OUP )
+      .N_OUP(N_OUP)
   ) i_fork (
-    .clk_i,
-    .rst_ni,
-    .valid_i ( int_inp_valid ),
-    .ready_o ( int_inp_ready ),
-    .valid_o ( int_oup_valid ),
-    .ready_i ( int_oup_ready )
+      .clk_i,
+      .rst_ni,
+      .valid_i(int_inp_valid),
+      .ready_o(int_inp_ready),
+      .valid_o(int_oup_valid),
+      .ready_i(int_oup_ready)
   );
 
-// pragma translate_off
+  // pragma translate_off
 `ifndef VERILATOR
-  initial begin: p_assertions
-    assert (N_OUP >= 1) else $fatal(1, "N_OUP must be at least 1!");
+  initial begin : p_assertions
+    assert (N_OUP >= 1)
+    else $fatal(1, "N_OUP must be at least 1!");
   end
 `endif
-// pragma translate_on
+  // pragma translate_on
 endmodule

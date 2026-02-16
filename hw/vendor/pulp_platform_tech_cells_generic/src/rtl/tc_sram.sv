@@ -51,34 +51,34 @@
 //                       on write requests.
 
 module tc_sram #(
-  parameter int unsigned NumWords     = 32'd1024, // Number of Words in data array
-  parameter int unsigned DataWidth    = 32'd128,  // Data signal width
-  parameter int unsigned ByteWidth    = 32'd8,    // Width of a data byte
-  parameter int unsigned NumPorts     = 32'd2,    // Number of read and write ports
-  parameter int unsigned Latency      = 32'd1,    // Latency when the read data is available
-  parameter              SimInit      = "none",   // Simulation initialization
-  parameter bit          PrintSimCfg  = 1'b0,     // Print configuration
-  // DEPENDENT PARAMETERS, DO NOT OVERWRITE!
-  parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1,
-  parameter int unsigned BeWidth   = (DataWidth + ByteWidth - 32'd1) / ByteWidth, // ceil_div
-  parameter type         addr_t    = logic [AddrWidth-1:0],
-  parameter type         data_t    = logic [DataWidth-1:0],
-  parameter type         be_t      = logic [BeWidth-1:0]
+    parameter int unsigned NumWords = 32'd1024,  // Number of Words in data array
+    parameter int unsigned DataWidth = 32'd128,  // Data signal width
+    parameter int unsigned ByteWidth = 32'd8,  // Width of a data byte
+    parameter int unsigned NumPorts = 32'd2,  // Number of read and write ports
+    parameter int unsigned Latency = 32'd1,  // Latency when the read data is available
+    parameter SimInit = "none",  // Simulation initialization
+    parameter bit PrintSimCfg = 1'b0,  // Print configuration
+    // DEPENDENT PARAMETERS, DO NOT OVERWRITE!
+    parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1,
+    parameter int unsigned BeWidth = (DataWidth + ByteWidth - 32'd1) / ByteWidth,  // ceil_div
+    parameter type addr_t = logic [AddrWidth-1:0],
+    parameter type data_t = logic [DataWidth-1:0],
+    parameter type be_t = logic [BeWidth-1:0]
 ) (
-  input  logic                 clk_i,      // Clock
-  input  logic                 rst_ni,     // Asynchronous reset active low
-  // input ports
-  input  logic  [NumPorts-1:0] req_i,      // request
-  input  logic  [NumPorts-1:0] we_i,       // write enable
-  input  addr_t [NumPorts-1:0] addr_i,     // request address
-  input  data_t [NumPorts-1:0] wdata_i,    // write data
-  input  be_t   [NumPorts-1:0] be_i,       // write byte enable
-  // output ports
-  output data_t [NumPorts-1:0] rdata_o     // read data
+    input  logic                 clk_i,    // Clock
+    input  logic                 rst_ni,   // Asynchronous reset active low
+    // input ports
+    input  logic  [NumPorts-1:0] req_i,    // request
+    input  logic  [NumPorts-1:0] we_i,     // write enable
+    input  addr_t [NumPorts-1:0] addr_i,   // request address
+    input  data_t [NumPorts-1:0] wdata_i,  // write data
+    input  be_t   [NumPorts-1:0] be_i,     // write byte enable
+    // output ports
+    output data_t [NumPorts-1:0] rdata_o   // read data
 );
 
   // memory array
-  data_t sram [NumWords-1:0];
+  data_t sram[NumWords-1:0];
   // hold the read address when no read access is made
   addr_t [NumPorts-1:0] r_addr_q;
 
@@ -103,7 +103,7 @@ module tc_sram #(
   // array index 0.
 
   // read data output assignment
-  data_t [NumPorts-1:0][Latency-1:0] rdata_q,  rdata_d;
+  data_t [NumPorts-1:0][Latency-1:0] rdata_q, rdata_d;
   if (Latency == 32'd0) begin : gen_no_read_lat
     for (genvar i = 0; i < NumPorts; i++) begin : gen_port
       assign rdata_o[i] = (req_i[i] && !we_i[i]) ? sram[addr_i[i]] : sram[r_addr_q[i]];
@@ -113,7 +113,7 @@ module tc_sram #(
     always_comb begin
       for (int unsigned i = 0; i < NumPorts; i++) begin
         rdata_o[i] = rdata_q[i][0];
-        for (int unsigned j = 0; j < (Latency-1); j++) begin
+        for (int unsigned j = 0; j < (Latency - 1); j++) begin
           rdata_d[i][j] = rdata_q[i][j+1];
         end
         rdata_d[i][Latency-1] = (req_i[i] && !we_i[i]) ? sram[addr_i[i]] : sram[r_addr_q[i]];
@@ -159,49 +159,60 @@ module tc_sram #(
             // otherwise update read address for subsequent non request cycles
             r_addr_q[i] <= addr_i[i];
           end
-        end // if req_i
-      end // for ports
-    end // if !rst_ni
+        end  // if req_i
+      end  // for ports
+    end  // if !rst_ni
   end
 
-// Validate parameters.
-// pragma translate_off
+  // Validate parameters.
+  // pragma translate_off
 `ifndef VERILATOR
 `ifndef TARGET_SYNTHESIS
-  initial begin: p_assertions
-    assert ($bits(addr_i)  == NumPorts * AddrWidth) else $fatal(1, "AddrWidth problem on `addr_i`");
-    assert ($bits(wdata_i) == NumPorts * DataWidth) else $fatal(1, "DataWidth problem on `wdata_i`");
-    assert ($bits(be_i)    == NumPorts * BeWidth)   else $fatal(1, "BeWidth   problem on `be_i`"   );
-    assert ($bits(rdata_o) == NumPorts * DataWidth) else $fatal(1, "DataWidth problem on `rdata_o`");
-    assert (NumWords  >= 32'd1) else $fatal(1, "NumWords has to be > 0");
-    assert (DataWidth >= 32'd1) else $fatal(1, "DataWidth has to be > 0");
-    assert (ByteWidth >= 32'd1) else $fatal(1, "ByteWidth has to be > 0");
-    assert (NumPorts  >= 32'd1) else $fatal(1, "The number of ports must be at least 1!");
+  initial begin : p_assertions
+    assert ($bits(addr_i) == NumPorts * AddrWidth)
+    else $fatal(1, "AddrWidth problem on `addr_i`");
+    assert ($bits(wdata_i) == NumPorts * DataWidth)
+    else $fatal(1, "DataWidth problem on `wdata_i`");
+    assert ($bits(be_i) == NumPorts * BeWidth)
+    else $fatal(1, "BeWidth   problem on `be_i`");
+    assert ($bits(rdata_o) == NumPorts * DataWidth)
+    else $fatal(1, "DataWidth problem on `rdata_o`");
+    assert (NumWords >= 32'd1)
+    else $fatal(1, "NumWords has to be > 0");
+    assert (DataWidth >= 32'd1)
+    else $fatal(1, "DataWidth has to be > 0");
+    assert (ByteWidth >= 32'd1)
+    else $fatal(1, "ByteWidth has to be > 0");
+    assert (NumPorts >= 32'd1)
+    else $fatal(1, "The number of ports must be at least 1!");
   end
-  initial begin: p_sim_hello
+  initial begin : p_sim_hello
     if (PrintSimCfg) begin
       $display("#################################################################################");
-      $display("tc_sram functional instantiated with the configuration:"                          );
-      $display("Instance: %m"                                                                     );
-      $display("Number of ports   (dec): %0d", NumPorts                                           );
-      $display("Number of words   (dec): %0d", NumWords                                           );
-      $display("Address width     (dec): %0d", AddrWidth                                          );
-      $display("Data width        (dec): %0d", DataWidth                                          );
-      $display("Byte width        (dec): %0d", ByteWidth                                          );
-      $display("Byte enable width (dec): %0d", BeWidth                                            );
-      $display("Latency Cycles    (dec): %0d", Latency                                            );
-      $display("Simulation init   (str): %0s", SimInit                                            );
+      $display("tc_sram functional instantiated with the configuration:");
+      $display("Instance: %m");
+      $display("Number of ports   (dec): %0d", NumPorts);
+      $display("Number of words   (dec): %0d", NumWords);
+      $display("Address width     (dec): %0d", AddrWidth);
+      $display("Data width        (dec): %0d", DataWidth);
+      $display("Byte width        (dec): %0d", ByteWidth);
+      $display("Byte enable width (dec): %0d", BeWidth);
+      $display("Latency Cycles    (dec): %0d", Latency);
+      $display("Simulation init   (str): %0s", SimInit);
       $display("#################################################################################");
     end
   end
   for (genvar i = 0; i < NumPorts; i++) begin : gen_assertions
-    assert property ( @(posedge clk_i) disable iff (!rst_ni)
-        (req_i[i] |-> (addr_i[i] < NumWords))) else
-      $warning("Request address %0h not mapped, port %0d, expect random write or read behavior!",
-          addr_i[i], i);
+    assert property (@(posedge clk_i) disable iff (!rst_ni) (req_i[i] |-> (addr_i[i] < NumWords)))
+    else
+      $warning(
+          "Request address %0h not mapped, port %0d, expect random write or read behavior!",
+          addr_i[i],
+          i
+      );
   end
 
 `endif
 `endif
-// pragma translate_on
+  // pragma translate_on
 endmodule

@@ -9,40 +9,38 @@
 // specific language governing permissions and limitations under the License.
 
 
-module pad_functional_pd
-(
-   input  logic             OEN,
-   input  logic             I,
-   output logic             O,
-   input  logic             PEN,
-   inout  logic             PAD
+module pad_functional_pd (
+    input  logic OEN,
+    input  logic I,
+    output logic O,
+    input  logic PEN,
+    inout  logic PAD
 );
 
   (* PULLDOWN = "YES" *)
   IOBUF iobuf_i (
-    .T ( OEN ),
-    .I ( I    ),
-    .O ( O    ),
-    .IO( PAD  )
+      .T (OEN),
+      .I (I),
+      .O (O),
+      .IO(PAD)
   );
 
 endmodule
 
-module pad_functional_pu
-(
-   input  logic             OEN,
-   input  logic             I,
-   output logic             O,
-   input  logic             PEN,
-   inout  logic             PAD
+module pad_functional_pu (
+    input  logic OEN,
+    input  logic I,
+    output logic O,
+    input  logic PEN,
+    inout  logic PAD
 );
 
   (* PULLUP = "YES" *)
   IOBUF iobuf_i (
-    .T ( OEN ),
-    .I ( I    ),
-    .O ( O    ),
-    .IO( PAD  )
+      .T (OEN),
+      .I (I),
+      .O (O),
+      .IO(PAD)
   );
 
 endmodule

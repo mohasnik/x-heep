@@ -8,12 +8,11 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-module pulp_buffer
-(
+module pulp_buffer (
     input  logic in_i,
     output logic out_o
 );
 
-   assign out_o = in_i;
+  assign out_o = in_i;
 
 endmodule

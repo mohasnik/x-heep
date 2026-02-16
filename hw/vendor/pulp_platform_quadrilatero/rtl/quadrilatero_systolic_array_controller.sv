@@ -28,12 +28,12 @@ module quadrilatero_systolic_array_controller #(
   logic [USAGE_DEPTH-1:0] issue_queue_inst_usage;
   assign pop_instr = wl_ready_i & !issue_queue_empty;
 
-  assign start_o   = pop_instr;
+  assign start_o = pop_instr;
 
 
   assign issue_queue_almost_full = issue_queue_inst_usage == (N_SLOTS[USAGE_DEPTH:0] - 1);
   assign issue_queue_full_o = issue_queue_almost_full | issue_queue_full;
-  
+
   fifo_v3 #(
       .FALL_THROUGH(0),
       .DATA_WIDTH  (DATA_WIDTH),

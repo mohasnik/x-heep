@@ -14,18 +14,18 @@
 
 /// Multiplex/Arbitrate one register interface to `NoPorts`.
 module reg_mux #(
-  parameter int unsigned NoPorts = 32'd0,
-  parameter int unsigned AW = 0,
-  parameter int unsigned DW = 0,
-  parameter type req_t = logic,
-  parameter type rsp_t = logic
+    parameter int unsigned NoPorts = 32'd0,
+    parameter int unsigned AW = 0,
+    parameter int unsigned DW = 0,
+    parameter type req_t = logic,
+    parameter type rsp_t = logic
 ) (
-  input  logic               clk_i,
-  input  logic               rst_ni,
-  input  req_t [NoPorts-1:0] in_req_i,
-  output rsp_t [NoPorts-1:0] in_rsp_o,
-  output req_t               out_req_o,
-  input  rsp_t               out_rsp_i
+    input  logic               clk_i,
+    input  logic               rst_ni,
+    input  req_t [NoPorts-1:0] in_req_i,
+    output rsp_t [NoPorts-1:0] in_rsp_o,
+    output req_t               out_req_o,
+    input  rsp_t               out_rsp_i
 );
 
   logic [NoPorts-1:0] in_valid, in_ready;
@@ -49,20 +49,20 @@ module reg_mux #(
   end
 
   stream_arbiter #(
-    .DATA_T (req_payload_t),
-    .N_INP (NoPorts)
+      .DATA_T(req_payload_t),
+      .N_INP (NoPorts)
   ) i_stream_arbiter (
-    .clk_i,
-    .rst_ni,
-    .inp_data_i (in_payload),
-    .inp_valid_i (in_valid),
-    .inp_ready_o (in_ready),
-    .oup_data_o (out_payload),
-    .oup_valid_o (out_req_o.valid),
-    .oup_ready_i (out_rsp_i.ready)
+      .clk_i,
+      .rst_ni,
+      .inp_data_i (in_payload),
+      .inp_valid_i(in_valid),
+      .inp_ready_o(in_ready),
+      .oup_data_o (out_payload),
+      .oup_valid_o(out_req_o.valid),
+      .oup_ready_i(out_rsp_i.ready)
   );
 
-  assign out_req_o.addr = out_payload.addr;
+  assign out_req_o.addr  = out_payload.addr;
   assign out_req_o.write = out_payload.write;
   assign out_req_o.wdata = out_payload.wdata;
   assign out_req_o.wstrb = out_payload.wstrb;

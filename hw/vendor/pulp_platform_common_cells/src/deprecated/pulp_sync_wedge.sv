@@ -21,35 +21,35 @@ module pulp_sync_wedge #(
     output logic f_edge_o,
     output logic serial_o
 );
-    logic clk;
-    logic serial, serial_q;
+  logic clk;
+  logic serial, serial_q;
 
-    assign serial_o =  serial_q;
-    assign f_edge_o = ~serial &  serial_q;
-    assign r_edge_o =  serial & ~serial_q;
+  assign serial_o = serial_q;
+  assign f_edge_o = ~serial & serial_q;
+  assign r_edge_o = serial & ~serial_q;
 
-    pulp_sync #(
-        .STAGES(STAGES)
-    ) i_pulp_sync (
-        .clk_i,
-        .rstn_i,
-        .serial_i,
-        .serial_o ( serial )
-    );
+  pulp_sync #(
+      .STAGES(STAGES)
+  ) i_pulp_sync (
+      .clk_i,
+      .rstn_i,
+      .serial_i,
+      .serial_o(serial)
+  );
 
-    pulp_clock_gating i_pulp_clock_gating (
-        .clk_i,
-        .en_i,
-        .test_en_i ( 1'b0    ),
-        .clk_o     ( clk )
-    );
+  pulp_clock_gating i_pulp_clock_gating (
+      .clk_i,
+      .en_i,
+      .test_en_i(1'b0),
+      .clk_o    (clk)
+  );
 
-    always_ff @(posedge clk, negedge rstn_i) begin
-        if (!rstn_i) begin
-            serial_q <= 1'b0;
-        end else begin
-            serial_q <= serial;
-        end
+  always_ff @(posedge clk, negedge rstn_i) begin
+    if (!rstn_i) begin
+      serial_q <= 1'b0;
+    end else begin
+      serial_q <= serial;
     end
+  end
 
 endmodule

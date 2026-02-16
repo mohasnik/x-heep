@@ -12,16 +12,16 @@
 
 /// Testbench for the module `stream_xbar`.
 module stream_xbar_tb #(
-  /// Number of requests per input.
-  parameter int unsigned NumReq   = 32'd10000,
-  /// Number of inputs.
-  parameter int unsigned NumInp   = 32'd10,
-  /// Number of outputs.
-  parameter int unsigned NumOut   = 32'd10,
-  /// Outputs have a spill register.
-  parameter bit          SpillReg = 1'b0,
-  /// Clock cycle time.
-  parameter time         CyclTime = 20ns
+    /// Number of requests per input.
+    parameter int unsigned NumReq   = 32'd10000,
+    /// Number of inputs.
+    parameter int unsigned NumInp   = 32'd10,
+    /// Number of outputs.
+    parameter int unsigned NumOut   = 32'd10,
+    /// Outputs have a spill register.
+    parameter bit          SpillReg = 1'b0,
+    /// Clock cycle time.
+    parameter time         CyclTime = 20ns
 );
   localparam OutSelWidth = (NumOut > 32'd1) ? unsigned'($clog2(NumOut)) : 32'd1;
   localparam InpIdxWidth = (NumInp > 32'd1) ? unsigned'($clog2(NumInp)) : 32'd1;
@@ -41,42 +41,38 @@ module stream_xbar_tb #(
 
   // clock generator
   clk_rst_gen #(
-    .ClkPeriod    ( CyclTime ),
-    .RstClkCycles ( 5        )
+      .ClkPeriod   (CyclTime),
+      .RstClkCycles(5)
   ) i_clk_rst_gen (
-    .clk_o  ( clk   ),
-    .rst_no ( rst_n )
+      .clk_o (clk),
+      .rst_no(rst_n)
   );
 
   // check FIFO
-  payload_t data_fifo [NumInp-1:0][NumOut-1:0][$];
+  payload_t data_fifo[NumInp-1:0][NumOut-1:0][$];
 
-  typedef stream_test::stream_driver #(
-    .payload_t (payload_t),
-    .TA (CyclTime*0.2),
-    .TT (CyclTime*0.8)
+  typedef stream_test::stream_driver#(
+      .payload_t(payload_t),
+      .TA(CyclTime * 0.2),
+      .TT(CyclTime * 0.8)
   ) stream_driver_in_t;
 
-  typedef stream_test::stream_driver #(
-    .payload_t (payload_t),
-    .TA (CyclTime*0.2),
-    .TT (CyclTime*0.8)
+  typedef stream_test::stream_driver#(
+      .payload_t(payload_t),
+      .TA(CyclTime * 0.2),
+      .TT(CyclTime * 0.8)
   ) stream_driver_out_t;
 
   payload_t [NumInp-1:0] inp_data;
-  logic     [NumInp-1:0] inp_valid, inp_ready;
-  sel_t     [NumInp-1:0] out_sel;
+  logic [NumInp-1:0] inp_valid, inp_ready;
+  sel_t [NumInp-1:0] out_sel;
   for (genvar i = 0; i < NumInp; i++) begin : gen_inp
-    STREAM_DV #(
-      .payload_t (payload_t)
-    ) dut_in (
-      .clk_i (clk)
-    );
+    STREAM_DV #(.payload_t(payload_t)) dut_in (.clk_i(clk));
     assign inp_data[i]  = dut_in.data;
     assign inp_valid[i] = dut_in.valid;
     assign dut_in.ready = inp_ready[i];
 
-    stream_driver_in_t  in_driver = new(dut_in);
+    stream_driver_in_t in_driver = new(dut_in);
 
     initial begin : proc_source
       automatic payload_t    data;
@@ -92,7 +88,7 @@ module stream_xbar_tb #(
         wait_cycl = $urandom_range(0, 5);
         repeat (wait_cycl) @(posedge clk);
         data.payload = $urandom();
-        out_sel[i]   = sel_t'($urandom_range(0, NumOut-1));
+        out_sel[i]   = sel_t'($urandom_range(0, NumOut - 1));
         data_fifo[i][out_sel[i]].push_back(data);
         in_driver.send(data);
       end
@@ -102,21 +98,17 @@ module stream_xbar_tb #(
   end
 
   payload_t [NumOut-1:0] out_data;
-  logic     [NumOut-1:0] out_valid, out_ready;
-  idx_t     [NumOut-1:0] out_idx;
+  logic [NumOut-1:0] out_valid, out_ready;
+  idx_t [NumOut-1:0] out_idx;
   for (genvar j = 0; j < NumOut; j++) begin : gen_out
-    STREAM_DV #(
-      .payload_t (payload_t)
-    ) dut_out (
-      .clk_i (clk)
-    );
+    STREAM_DV #(.payload_t(payload_t)) dut_out (.clk_i(clk));
     assign dut_out.data  = out_data[j];
     assign dut_out.valid = out_valid[j];
     assign out_ready[j]  = dut_out.ready;
 
     stream_driver_out_t out_driver = new(dut_out);
     initial begin : proc_sink
-      automatic payload_t    data,      exp;
+      automatic payload_t data, exp;
       automatic int unsigned wait_cycl;
       @(posedge rst_n);
       out_driver.reset_out();
@@ -126,9 +118,11 @@ module stream_xbar_tb #(
         repeat (wait_cycl) @(posedge clk);
         out_driver.recv(data);
         exp = data_fifo[out_idx[j]][j].pop_front();
-        assert(data == exp) else
+        assert (data == exp)
+        else
           $error("Out %d: Payload data does not match. Observed: %0h Expected: %0h", j, data, exp);
-        assert(data.index == out_idx[j]) else
+        assert (data.index == out_idx[j])
+        else
           $error("Index in payload: %0d does not match idx_o[%0d]: %0d", data.index, j, out_idx[j]);
       end
     end
@@ -144,25 +138,25 @@ module stream_xbar_tb #(
 
   // Dut instantiation
   stream_xbar #(
-    .NumInp       ( NumInp    ),
-    .NumOut       ( NumOut    ),
-    .payload_t    ( payload_t ),
-    .OutSpillReg  ( SpillReg  ),
-    .ExtPrio      ( 1'b0      ),
-    .AxiVldRdy    ( 1'b1      ),
-    .LockIn       ( 1'b1      )
+      .NumInp     (NumInp),
+      .NumOut     (NumOut),
+      .payload_t  (payload_t),
+      .OutSpillReg(SpillReg),
+      .ExtPrio    (1'b0),
+      .AxiVldRdy  (1'b1),
+      .LockIn     (1'b1)
   ) i_stream_xbar_dut (
-    .clk_i   ( clk       ),
-    .rst_ni  ( rst_n     ),
-    .flush_i ( flush     ),
-    .rr_i    ( '0        ),
-    .data_i  ( inp_data  ),
-    .sel_i   ( out_sel   ),
-    .valid_i ( inp_valid ),
-    .ready_o ( inp_ready ),
-    .data_o  ( out_data  ),
-    .idx_o   ( out_idx   ),
-    .valid_o ( out_valid ),
-    .ready_i ( out_ready )
+      .clk_i  (clk),
+      .rst_ni (rst_n),
+      .flush_i(flush),
+      .rr_i   ('0),
+      .data_i (inp_data),
+      .sel_i  (out_sel),
+      .valid_i(inp_valid),
+      .ready_o(inp_ready),
+      .data_o (out_data),
+      .idx_o  (out_idx),
+      .valid_o(out_valid),
+      .ready_i(out_ready)
   );
 endmodule

@@ -35,22 +35,23 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_data_obi_interface import cv32e40x_pkg::*;
+module cv32e40x_data_obi_interface
+  import cv32e40x_pkg::*;
 (
-  input  logic        clk,
-  input  logic        rst_n,
+    input logic clk,
+    input logic rst_n,
 
-  // Transaction request interface
-  input  logic         trans_valid_i,
-  output logic         trans_ready_o,
-  input obi_data_req_t trans_i,
+    // Transaction request interface
+    input  logic          trans_valid_i,
+    output logic          trans_ready_o,
+    input  obi_data_req_t trans_i,
 
-  // Transaction response interface
-  output logic           resp_valid_o,          // Note: Consumer is assumed to be 'ready' whenever resp_valid_o = 1
-  output obi_data_resp_t resp_o,
+    // Transaction response interface
+    output logic resp_valid_o,  // Note: Consumer is assumed to be 'ready' whenever resp_valid_o = 1
+    output obi_data_resp_t resp_o,
 
-  // OBI interface
-  if_c_obi.master     m_c_obi_data_if
+    // OBI interface
+    if_c_obi.master m_c_obi_data_if
 );
 
   //////////////////////////////////////////////////////////////////////////////
@@ -61,8 +62,8 @@ module cv32e40x_data_obi_interface import cv32e40x_pkg::*;
   // interface (resp_*). It is assumed that the consumer of the transaction response
   // is always receptive when resp_valid_o = 1 (otherwise a response would get dropped)
 
-  assign resp_valid_o = m_c_obi_data_if.s_rvalid.rvalid;
-  assign resp_o       = m_c_obi_data_if.resp_payload;
+  assign resp_valid_o                = m_c_obi_data_if.s_rvalid.rvalid;
+  assign resp_o                      = m_c_obi_data_if.resp_payload;
 
   //////////////////////////////////////////////////////////////////////////////
   // OBI A Channel
@@ -73,6 +74,6 @@ module cv32e40x_data_obi_interface import cv32e40x_pkg::*;
   assign m_c_obi_data_if.s_req.req   = trans_valid_i;
   assign m_c_obi_data_if.req_payload = trans_i;
 
-  assign trans_ready_o = m_c_obi_data_if.s_gnt.gnt;
+  assign trans_ready_o               = m_c_obi_data_if.s_gnt.gnt;
 
 endmodule

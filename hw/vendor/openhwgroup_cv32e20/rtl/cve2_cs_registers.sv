@@ -14,118 +14,117 @@
 `include "prim_assert.sv"
 
 module cve2_cs_registers #(
-  parameter bit               DbgTriggerEn      = 0,
-  parameter int unsigned      DbgHwBreakNum     = 1,
-  parameter int unsigned      MHPMCounterNum    = 10,
-  parameter int unsigned      MHPMCounterWidth  = 40,
-  parameter bit               PMPEnable         = 0,
-  parameter int unsigned      PMPGranularity    = 0,
-  parameter int unsigned      PMPNumRegions     = 4,
-  parameter bit               RV32E             = 0,
-  parameter cve2_pkg::rv32m_e RV32M             = cve2_pkg::RV32MFast,
-  parameter cve2_pkg::rv32b_e RV32B             = cve2_pkg::RV32BNone
+    parameter bit               DbgTriggerEn     = 0,
+    parameter int unsigned      DbgHwBreakNum    = 1,
+    parameter int unsigned      MHPMCounterNum   = 10,
+    parameter int unsigned      MHPMCounterWidth = 40,
+    parameter bit               PMPEnable        = 0,
+    parameter int unsigned      PMPGranularity   = 0,
+    parameter int unsigned      PMPNumRegions    = 4,
+    parameter bit               RV32E            = 0,
+    parameter cve2_pkg::rv32m_e RV32M            = cve2_pkg::RV32MFast,
+    parameter cve2_pkg::rv32b_e RV32B            = cve2_pkg::RV32BNone
 ) (
 
-  // Clock and Reset
-  input  logic                 clk_i,
-  input  logic                 rst_ni,
+    // Clock and Reset
+    input logic clk_i,
+    input logic rst_ni,
 
-  // Hart ID
-  input  logic [31:0]          hart_id_i,
+    // Hart ID
+    input logic [31:0] hart_id_i,
 
-  // Privilege mode
-  output cve2_pkg::priv_lvl_e  priv_mode_id_o,
-  output cve2_pkg::priv_lvl_e  priv_mode_lsu_o,
-  output logic                 csr_mstatus_tw_o,
+    // Privilege mode
+    output cve2_pkg::priv_lvl_e priv_mode_id_o,
+    output cve2_pkg::priv_lvl_e priv_mode_lsu_o,
+    output logic                csr_mstatus_tw_o,
 
-  // mtvec
-  output logic [31:0]          csr_mtvec_o,
-  input  logic                 csr_mtvec_init_i,
-  input  logic [31:0]          boot_addr_i,
+    // mtvec
+    output logic [31:0] csr_mtvec_o,
+    input  logic        csr_mtvec_init_i,
+    input  logic [31:0] boot_addr_i,
 
-  // Interface to registers (SRAM like)
-  input  logic                 csr_access_i,
-  input  cve2_pkg::csr_num_e   csr_addr_i,
-  input  logic [31:0]          csr_wdata_i,
-  input  cve2_pkg::csr_op_e    csr_op_i,
-  input                        csr_op_en_i,
-  output logic [31:0]          csr_rdata_o,
+    // Interface to registers (SRAM like)
+    input  logic                      csr_access_i,
+    input  cve2_pkg::csr_num_e        csr_addr_i,
+    input  logic               [31:0] csr_wdata_i,
+    input  cve2_pkg::csr_op_e         csr_op_i,
+    input                             csr_op_en_i,
+    output logic               [31:0] csr_rdata_o,
 
-  // interrupts
-  input  logic                 irq_software_i,
-  input  logic                 irq_timer_i,
-  input  logic                 irq_external_i,
-  input  logic [15:0]          irq_fast_i,
-  input  logic                 nmi_mode_i,
-  output logic                 irq_pending_o,          // interrupt request pending
-  output cve2_pkg::irqs_t      irqs_o,                 // interrupt requests qualified with mie
-  output logic                 csr_mstatus_mie_o,
-  output logic [31:0]          csr_mepc_o,
+    // interrupts
+    input  logic                   irq_software_i,
+    input  logic                   irq_timer_i,
+    input  logic                   irq_external_i,
+    input  logic            [15:0] irq_fast_i,
+    input  logic                   nmi_mode_i,
+    output logic                   irq_pending_o,      // interrupt request pending
+    output cve2_pkg::irqs_t        irqs_o,             // interrupt requests qualified with mie
+    output logic                   csr_mstatus_mie_o,
+    output logic            [31:0] csr_mepc_o,
 
-  // PMP
-  output cve2_pkg::pmp_cfg_t     csr_pmp_cfg_o  [PMPNumRegions],
-  output logic [33:0]            csr_pmp_addr_o [PMPNumRegions],
-  output cve2_pkg::pmp_mseccfg_t csr_pmp_mseccfg_o,
+    // PMP
+    output cve2_pkg::pmp_cfg_t            csr_pmp_cfg_o    [PMPNumRegions],
+    output logic                   [33:0] csr_pmp_addr_o   [PMPNumRegions],
+    output cve2_pkg::pmp_mseccfg_t        csr_pmp_mseccfg_o,
 
-  // debug
-  input  logic                 debug_mode_i,
-  input  cve2_pkg::dbg_cause_e debug_cause_i,
-  input  logic                 debug_csr_save_i,
-  output logic [31:0]          csr_depc_o,
-  output logic                 debug_single_step_o,
-  output logic                 debug_ebreakm_o,
-  output logic                 debug_ebreaku_o,
-  output logic                 trigger_match_o,
+    // debug
+    input  logic                        debug_mode_i,
+    input  cve2_pkg::dbg_cause_e        debug_cause_i,
+    input  logic                        debug_csr_save_i,
+    output logic                 [31:0] csr_depc_o,
+    output logic                        debug_single_step_o,
+    output logic                        debug_ebreakm_o,
+    output logic                        debug_ebreaku_o,
+    output logic                        trigger_match_o,
 
-  input  logic [31:0]          pc_if_i,
-  input  logic [31:0]          pc_id_i,
+    input logic [31:0] pc_if_i,
+    input logic [31:0] pc_id_i,
 
-  // Exception save/restore
-  input  logic                 csr_save_if_i,
-  input  logic                 csr_save_id_i,
-  input  logic                 csr_restore_mret_i,
-  input  logic                 csr_restore_dret_i,
-  input  logic                 csr_save_cause_i,
-  input  cve2_pkg::exc_cause_e csr_mcause_i,
-  input  logic [31:0]          csr_mtval_i,
-  output logic                 illegal_csr_insn_o,     // access to non-existent CSR,
-                                                        // with wrong priviledge level, or
-                                                        // missing write permissions
-  // Performance Counters
-  input  logic                 instr_ret_i,                 // instr retired in ID/EX stage
-  input  logic                 instr_ret_compressed_i,      // compressed instr retired
-  input  logic                 iside_wait_i,                // core waiting for the iside
-  input  logic                 jump_i,                      // jump instr seen (j, jr, jal, jalr)
-  input  logic                 branch_i,                    // branch instr seen (bf, bnf)
-  input  logic                 branch_taken_i,              // branch was taken
-  input  logic                 mem_load_i,                  // load from memory in this cycle
-  input  logic                 mem_store_i,                 // store to memory in this cycle
-  input  logic                 dside_wait_i,                // core waiting for the dside
-  input  logic                 wfi_wait_i,                  // core waiting for interrupt
-  input  logic                 div_wait_i                   // core waiting for divide
+    // Exception save/restore
+    input logic csr_save_if_i,
+    input logic csr_save_id_i,
+    input logic csr_restore_mret_i,
+    input logic csr_restore_dret_i,
+    input logic csr_save_cause_i,
+    input cve2_pkg::exc_cause_e csr_mcause_i,
+    input logic [31:0] csr_mtval_i,
+    output logic illegal_csr_insn_o,  // access to non-existent CSR,
+                                      // with wrong priviledge level, or
+                                      // missing write permissions
+    // Performance Counters
+    input logic instr_ret_i,  // instr retired in ID/EX stage
+    input logic instr_ret_compressed_i,  // compressed instr retired
+    input logic iside_wait_i,  // core waiting for the iside
+    input logic jump_i,  // jump instr seen (j, jr, jal, jalr)
+    input logic branch_i,  // branch instr seen (bf, bnf)
+    input logic branch_taken_i,  // branch was taken
+    input logic mem_load_i,  // load from memory in this cycle
+    input logic mem_store_i,  // store to memory in this cycle
+    input logic dside_wait_i,  // core waiting for the dside
+    input logic wfi_wait_i,  // core waiting for interrupt
+    input logic div_wait_i  // core waiting for divide
 );
 
-import cve2_pkg::*;
+  import cve2_pkg::*;
 
   localparam int unsigned RV32BEnabled = (RV32B == RV32BNone) ? 0 : 1;
   localparam int unsigned RV32MEnabled = (RV32M == RV32MNone) ? 0 : 1;
   localparam int unsigned PMPAddrWidth = (PMPGranularity > 0) ? 33 - PMPGranularity : 32;
 
   // misa
-  localparam logic [31:0] MISA_VALUE =
-      (0                 <<  0)  // A - Atomic Instructions extension
-    | (RV32BEnabled      <<  1)  // B - Bit-Manipulation extension
-    | (1                 <<  2)  // C - Compressed extension
-    | (0                 <<  3)  // D - Double precision floating-point extension
-    | (32'(RV32E)        <<  4)  // E - RV32E base ISA
-    | (0                 <<  5)  // F - Single precision floating-point extension
-    | (32'(!RV32E)       <<  8)  // I - RV32I/64I/128I base ISA
-    | (RV32MEnabled      << 12)  // M - Integer Multiply/Divide extension
-    | (0                 << 13)  // N - User level interrupts supported
-    | (0                 << 18)  // S - Supervisor mode implemented
-    | (1                 << 20)  // U - User mode implemented
-    | (0                 << 23)  // X - Non-standard extensions present
-    | (32'(CSR_MISA_MXL) << 30); // M-XLEN
+  localparam logic [31:0] MISA_VALUE = (0 << 0)  // A - Atomic Instructions extension
+  | (RV32BEnabled << 1)  // B - Bit-Manipulation extension
+  | (1 << 2)  // C - Compressed extension
+  | (0 << 3)  // D - Double precision floating-point extension
+  | (32'(RV32E) << 4)  // E - RV32E base ISA
+  | (0 << 5)  // F - Single precision floating-point extension
+  | (32'(!RV32E) << 8)  // I - RV32I/64I/128I base ISA
+  | (RV32MEnabled << 12)  // M - Integer Multiply/Divide extension
+  | (0 << 13)  // N - User level interrupts supported
+  | (0 << 18)  // S - Supervisor mode implemented
+  | (1 << 20)  // U - User mode implemented
+  | (0 << 23)  // X - Non-standard extensions present
+  | (32'(CSR_MISA_MXL) << 30);  // M-XLEN
 
   typedef struct packed {
     logic      mie;
@@ -141,78 +140,78 @@ import cve2_pkg::*;
   } status_stk_t;
 
   typedef struct packed {
-      x_debug_ver_e xdebugver;
-      logic [11:0]  zero2;
-      logic         ebreakm;
-      logic         zero1;
-      logic         ebreaks;
-      logic         ebreaku;
-      logic         stepie;
-      logic         stopcount;
-      logic         stoptime;
-      dbg_cause_e   cause;
-      logic         zero0;
-      logic         mprven;
-      logic         nmip;
-      logic         step;
-      priv_lvl_e    prv;
+    x_debug_ver_e xdebugver;
+    logic [11:0]  zero2;
+    logic         ebreakm;
+    logic         zero1;
+    logic         ebreaks;
+    logic         ebreaku;
+    logic         stepie;
+    logic         stopcount;
+    logic         stoptime;
+    dbg_cause_e   cause;
+    logic         zero0;
+    logic         mprven;
+    logic         nmip;
+    logic         step;
+    priv_lvl_e    prv;
   } dcsr_t;
 
   // Interrupt and exception control signals
   logic [31:0] exception_pc;
 
   // CSRs
-  priv_lvl_e   priv_lvl_q, priv_lvl_d;
-  status_t     mstatus_q, mstatus_d;
-  logic        mstatus_en;
-  irqs_t       mie_q, mie_d;
+  priv_lvl_e priv_lvl_q, priv_lvl_d;
+  status_t mstatus_q, mstatus_d;
+  logic mstatus_en;
+  irqs_t mie_q, mie_d;
   logic        mie_en;
   logic [31:0] mscratch_q;
   logic        mscratch_en;
   logic [31:0] mepc_q, mepc_d;
-  logic        mepc_en;
-  logic  [6:0] mcause_q, mcause_d;
-  logic        mcause_en;
+  logic mepc_en;
+  logic [6:0] mcause_q, mcause_d;
+  logic mcause_en;
   logic [31:0] mtval_q, mtval_d;
-  logic        mtval_en;
+  logic mtval_en;
   logic [31:0] mtvec_q, mtvec_d;
-  logic        mtvec_en;
-  irqs_t       mip;
-  dcsr_t       dcsr_q, dcsr_d;
-  logic        dcsr_en;
+  logic  mtvec_en;
+  irqs_t mip;
+  dcsr_t dcsr_q, dcsr_d;
+  logic dcsr_en;
   logic [31:0] depc_q, depc_d;
   logic        depc_en;
   logic [31:0] dscratch0_q;
   logic [31:0] dscratch1_q;
-  logic        dscratch0_en, dscratch1_en;
+  logic dscratch0_en, dscratch1_en;
 
   // CSRs for recoverable NMIs
   // NOTE: these CSRS are nonstandard, see https://github.com/riscv/riscv-isa-manual/issues/261
   status_stk_t mstack_q, mstack_d;
-  logic        mstack_en;
+  logic mstack_en;
   logic [31:0] mstack_epc_q, mstack_epc_d;
-  logic  [6:0] mstack_cause_q, mstack_cause_d;
+  logic [6:0] mstack_cause_q, mstack_cause_d;
 
   // PMP Signals
-  logic [31:0]                 pmp_addr_rdata  [PMP_MAX_REGIONS];
-  logic [PMP_CFG_W-1:0]        pmp_cfg_rdata   [PMP_MAX_REGIONS];
-  pmp_mseccfg_t                pmp_mseccfg;
+  logic         [         31:0] pmp_addr_rdata[PMP_MAX_REGIONS];
+  logic         [PMP_CFG_W-1:0] pmp_cfg_rdata [PMP_MAX_REGIONS];
+  pmp_mseccfg_t                 pmp_mseccfg;
 
   // Hardware performance monitor signals
-  logic [31:0]                 mcountinhibit;
+  logic         [         31:0] mcountinhibit;
   // Only have mcountinhibit flops for counters that actually exist
   logic [MHPMCounterNum+3-1:0] mcountinhibit_d, mcountinhibit_q;
-  logic                        mcountinhibit_we;
+  logic        mcountinhibit_we;
 
   // mhpmcounter flops are elaborated below providing only the precise number that is required based
   // on MHPMCounterNum/MHPMCounterWidth. This signal connects to the Q output of these flops
   // where they exist and is otherwise 0.
-  logic [63:0] mhpmcounter [32];
+  logic [63:0] mhpmcounter               [32];
   logic [31:0] mhpmcounter_we;
   logic [31:0] mhpmcounterh_we;
   logic [31:0] mhpmcounter_incr;
-  logic [31:0] mhpmevent [32];
-  logic  [4:0] mhpmcounter_idx;
+  logic [31:0] mhpmevent                 [32];
+  logic [ 4:0] mhpmcounter_idx;
   logic        unused_mhpmcounter_we_1;
   logic        unused_mhpmcounterh_we_1;
   logic        unused_mhpmcounter_incr_1;
@@ -235,8 +234,8 @@ import cve2_pkg::*;
   logic        illegal_csr_priv;
   logic        illegal_csr_write;
 
-  logic [7:0]  unused_boot_addr;
-  logic [2:0]  unused_csr_addr;
+  logic [ 7:0] unused_boot_addr;
+  logic [ 2:0] unused_csr_addr;
 
   assign unused_boot_addr = boot_addr_i[7:0];
 
@@ -255,10 +254,10 @@ import cve2_pkg::*;
   assign illegal_csr_insn_o = csr_access_i & (illegal_csr | illegal_csr_write | illegal_csr_priv);
 
   // mip CSR is purely combinational - must be able to re-enable the clock upon WFI
-  assign mip.irq_software = irq_software_i;
-  assign mip.irq_timer    = irq_timer_i;
-  assign mip.irq_external = irq_external_i;
-  assign mip.irq_fast     = irq_fast_i;
+  assign mip.irq_software   = irq_software_i;
+  assign mip.irq_timer      = irq_timer_i;
+  assign mip.irq_external   = irq_external_i;
+  assign mip.irq_fast       = irq_fast_i;
 
   // read logic
   always_comb begin
@@ -354,24 +353,24 @@ import cve2_pkg::*;
       end
 
       // PMP registers
-      CSR_PMPCFG0:   csr_rdata_int = {pmp_cfg_rdata[3],  pmp_cfg_rdata[2],
-                                      pmp_cfg_rdata[1],  pmp_cfg_rdata[0]};
-      CSR_PMPCFG1:   csr_rdata_int = {pmp_cfg_rdata[7],  pmp_cfg_rdata[6],
-                                      pmp_cfg_rdata[5],  pmp_cfg_rdata[4]};
-      CSR_PMPCFG2:   csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10],
-                                      pmp_cfg_rdata[9],  pmp_cfg_rdata[8]};
-      CSR_PMPCFG3:   csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14],
-                                      pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
-      CSR_PMPADDR0:  csr_rdata_int = pmp_addr_rdata[0];
-      CSR_PMPADDR1:  csr_rdata_int = pmp_addr_rdata[1];
-      CSR_PMPADDR2:  csr_rdata_int = pmp_addr_rdata[2];
-      CSR_PMPADDR3:  csr_rdata_int = pmp_addr_rdata[3];
-      CSR_PMPADDR4:  csr_rdata_int = pmp_addr_rdata[4];
-      CSR_PMPADDR5:  csr_rdata_int = pmp_addr_rdata[5];
-      CSR_PMPADDR6:  csr_rdata_int = pmp_addr_rdata[6];
-      CSR_PMPADDR7:  csr_rdata_int = pmp_addr_rdata[7];
-      CSR_PMPADDR8:  csr_rdata_int = pmp_addr_rdata[8];
-      CSR_PMPADDR9:  csr_rdata_int = pmp_addr_rdata[9];
+      CSR_PMPCFG0:
+      csr_rdata_int = {pmp_cfg_rdata[3], pmp_cfg_rdata[2], pmp_cfg_rdata[1], pmp_cfg_rdata[0]};
+      CSR_PMPCFG1:
+      csr_rdata_int = {pmp_cfg_rdata[7], pmp_cfg_rdata[6], pmp_cfg_rdata[5], pmp_cfg_rdata[4]};
+      CSR_PMPCFG2:
+      csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10], pmp_cfg_rdata[9], pmp_cfg_rdata[8]};
+      CSR_PMPCFG3:
+      csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14], pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
+      CSR_PMPADDR0: csr_rdata_int = pmp_addr_rdata[0];
+      CSR_PMPADDR1: csr_rdata_int = pmp_addr_rdata[1];
+      CSR_PMPADDR2: csr_rdata_int = pmp_addr_rdata[2];
+      CSR_PMPADDR3: csr_rdata_int = pmp_addr_rdata[3];
+      CSR_PMPADDR4: csr_rdata_int = pmp_addr_rdata[4];
+      CSR_PMPADDR5: csr_rdata_int = pmp_addr_rdata[5];
+      CSR_PMPADDR6: csr_rdata_int = pmp_addr_rdata[6];
+      CSR_PMPADDR7: csr_rdata_int = pmp_addr_rdata[7];
+      CSR_PMPADDR8: csr_rdata_int = pmp_addr_rdata[8];
+      CSR_PMPADDR9: csr_rdata_int = pmp_addr_rdata[9];
       CSR_PMPADDR10: csr_rdata_int = pmp_addr_rdata[10];
       CSR_PMPADDR11: csr_rdata_int = pmp_addr_rdata[11];
       CSR_PMPADDR12: csr_rdata_int = pmp_addr_rdata[12];
@@ -381,19 +380,19 @@ import cve2_pkg::*;
 
       CSR_DCSR: begin
         csr_rdata_int = dcsr_q;
-        illegal_csr = ~debug_mode_i;
+        illegal_csr   = ~debug_mode_i;
       end
       CSR_DPC: begin
         csr_rdata_int = depc_q;
-        illegal_csr = ~debug_mode_i;
+        illegal_csr   = ~debug_mode_i;
       end
       CSR_DSCRATCH0: begin
         csr_rdata_int = dscratch0_q;
-        illegal_csr = ~debug_mode_i;
+        illegal_csr   = ~debug_mode_i;
       end
       CSR_DSCRATCH1: begin
         csr_rdata_int = dscratch1_q;
-        illegal_csr = ~debug_mode_i;
+        illegal_csr   = ~debug_mode_i;
       end
 
       // machine counter/timers
@@ -486,50 +485,50 @@ import cve2_pkg::*;
   always_comb begin
     exception_pc = pc_id_i;
 
-    priv_lvl_d   = priv_lvl_q;
-    mstatus_en   = 1'b0;
-    mstatus_d    = mstatus_q;
-    mie_en       = 1'b0;
-    mscratch_en  = 1'b0;
-    mepc_en      = 1'b0;
-    mepc_d       = {csr_wdata_int[31:1], 1'b0};
-    mcause_en    = 1'b0;
-    mcause_d     = {csr_wdata_int[31], csr_wdata_int[5:0]};
-    mtval_en     = 1'b0;
-    mtval_d      = csr_wdata_int;
-    mtvec_en     = csr_mtvec_init_i;
+    priv_lvl_d = priv_lvl_q;
+    mstatus_en = 1'b0;
+    mstatus_d = mstatus_q;
+    mie_en = 1'b0;
+    mscratch_en = 1'b0;
+    mepc_en = 1'b0;
+    mepc_d = {csr_wdata_int[31:1], 1'b0};
+    mcause_en = 1'b0;
+    mcause_d = {csr_wdata_int[31], csr_wdata_int[5:0]};
+    mtval_en = 1'b0;
+    mtval_d = csr_wdata_int;
+    mtvec_en = csr_mtvec_init_i;
     // mtvec.MODE set to vectored
     // mtvec.BASE must be 256-byte aligned
     mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} :
                                       {csr_wdata_int[31:8], 6'b0, 2'b01};
-    dcsr_en      = 1'b0;
-    dcsr_d       = dcsr_q;
-    depc_d       = {csr_wdata_int[31:1], 1'b0};
-    depc_en      = 1'b0;
+    dcsr_en = 1'b0;
+    dcsr_d = dcsr_q;
+    depc_d = {csr_wdata_int[31:1], 1'b0};
+    depc_en = 1'b0;
     dscratch0_en = 1'b0;
     dscratch1_en = 1'b0;
 
-    mstack_en      = 1'b0;
-    mstack_d.mpie  = mstatus_q.mpie;
-    mstack_d.mpp   = mstatus_q.mpp;
-    mstack_epc_d   = mepc_q;
+    mstack_en = 1'b0;
+    mstack_d.mpie = mstatus_q.mpie;
+    mstack_d.mpp = mstatus_q.mpp;
+    mstack_epc_d = mepc_q;
     mstack_cause_d = mcause_q;
 
     mcountinhibit_we = 1'b0;
-    mhpmcounter_we   = '0;
-    mhpmcounterh_we  = '0;
+    mhpmcounter_we = '0;
+    mhpmcounterh_we = '0;
 
     if (csr_we_int) begin
       unique case (csr_addr_i)
         // mstatus: IE bit
         CSR_MSTATUS: begin
           mstatus_en = 1'b1;
-          mstatus_d    = '{
-              mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
+          mstatus_d = '{
+              mie: csr_wdata_int[CSR_MSTATUS_MIE_BIT],
               mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
-              mpp:  priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
+              mpp: priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
               mprv: csr_wdata_int[CSR_MSTATUS_MPRV_BIT],
-              tw:   csr_wdata_int[CSR_MSTATUS_TW_BIT]
+              tw: csr_wdata_int[CSR_MSTATUS_TW_BIT]
           };
           // Convert illegal values to M-mode
           if ((mstatus_d.mpp != PRIV_LVL_M) && (mstatus_d.mpp != PRIV_LVL_U)) begin
@@ -563,22 +562,22 @@ import cve2_pkg::*;
           end
 
           // Read-only for SW
-          dcsr_d.cause = dcsr_q.cause;
+          dcsr_d.cause     = dcsr_q.cause;
 
           // Interrupts always disabled during single stepping
-          dcsr_d.stepie = 1'b0;
+          dcsr_d.stepie    = 1'b0;
 
           // currently not supported:
-          dcsr_d.nmip = 1'b0;
-          dcsr_d.mprven = 1'b0;
+          dcsr_d.nmip      = 1'b0;
+          dcsr_d.mprven    = 1'b0;
           dcsr_d.stopcount = 1'b0;
-          dcsr_d.stoptime = 1'b0;
+          dcsr_d.stoptime  = 1'b0;
 
           // forced to be zero
-          dcsr_d.zero0 = 1'b0;
-          dcsr_d.zero1 = 1'b0;
-          dcsr_d.zero2 = 12'h0;
-          dcsr_en      = 1'b1;
+          dcsr_d.zero0     = 1'b0;
+          dcsr_d.zero1     = 1'b0;
+          dcsr_d.zero2     = 12'h0;
+          dcsr_en          = 1'b1;
         end
 
         // dpc: debug program counter
@@ -616,7 +615,7 @@ import cve2_pkg::*;
           mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
         end
 
-        default:;
+        default: ;
       endcase
     end
 
@@ -631,7 +630,7 @@ import cve2_pkg::*;
           csr_save_id_i: begin
             exception_pc = pc_id_i;
           end
-          default:;
+          default: ;
         endcase
 
         // Any exception, including debug mode, causes a switch to M-mode
@@ -651,7 +650,7 @@ import cve2_pkg::*;
           mtval_en       = 1'b1;
           mtval_d        = csr_mtval_i;
           mstatus_en     = 1'b1;
-          mstatus_d.mie  = 1'b0; // disable interrupts
+          mstatus_d.mie  = 1'b0;  // disable interrupts
           // save current status
           mstatus_d.mpie = mstatus_q.mie;
           mstatus_d.mpp  = priv_lvl_q;
@@ -663,16 +662,16 @@ import cve2_pkg::*;
           mstack_en      = 1'b1;
 
         end
-      end // csr_save_cause_i
+      end  // csr_save_cause_i
 
-      csr_restore_dret_i: begin // DRET
+      csr_restore_dret_i: begin  // DRET
         priv_lvl_d = dcsr_q.prv;
-      end // csr_restore_dret_i
+      end  // csr_restore_dret_i
 
-      csr_restore_mret_i: begin // MRET
-        priv_lvl_d     = mstatus_q.mpp;
-        mstatus_en     = 1'b1;
-        mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+      csr_restore_mret_i: begin  // MRET
+        priv_lvl_d    = mstatus_q.mpp;
+        mstatus_en    = 1'b1;
+        mstatus_d.mie = mstatus_q.mpie;  // re-enable interrupts
 
         if (mstatus_q.mpp != PRIV_LVL_M) begin
           mstatus_d.mprv = 1'b0;
@@ -695,48 +694,48 @@ import cve2_pkg::*;
           mstatus_d.mpie = 1'b1;
           mstatus_d.mpp  = PRIV_LVL_U;
         end
-      end // csr_restore_mret_i
+      end  // csr_restore_mret_i
 
-      default:;
+      default: ;
     endcase
   end
 
   // Update current priv level
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      priv_lvl_q     <= PRIV_LVL_M;
+      priv_lvl_q <= PRIV_LVL_M;
     end else begin
-      priv_lvl_q     <= priv_lvl_d;
+      priv_lvl_q <= priv_lvl_d;
     end
   end
 
   // Send current priv level to the decoder
-  assign priv_mode_id_o = priv_lvl_q;
+  assign priv_mode_id_o  = priv_lvl_q;
   // Load/store instructions must factor in MPRV for PMP checking
   assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
 
   // CSR operation logic
   always_comb begin
     unique case (csr_op_i)
-      CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
-      CSR_OP_SET:   csr_wdata_int =  csr_wdata_i | csr_rdata_o;
+      CSR_OP_WRITE: csr_wdata_int = csr_wdata_i;
+      CSR_OP_SET:   csr_wdata_int = csr_wdata_i | csr_rdata_o;
       CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i & csr_rdata_o;
       CSR_OP_READ:  csr_wdata_int = csr_wdata_i;
       default:      csr_wdata_int = csr_wdata_i;
     endcase
   end
 
-  assign csr_wr = (csr_op_i inside {CSR_OP_WRITE, CSR_OP_SET, CSR_OP_CLEAR});
+  assign csr_wr              = (csr_op_i inside {CSR_OP_WRITE, CSR_OP_SET, CSR_OP_CLEAR});
 
   // only write CSRs during one clock cycle
-  assign csr_we_int  = csr_wr & csr_op_en_i & ~illegal_csr_insn_o;
+  assign csr_we_int          = csr_wr & csr_op_en_i & ~illegal_csr_insn_o;
 
-  assign csr_rdata_o = csr_rdata_int;
+  assign csr_rdata_o         = csr_rdata_int;
 
   // directly output some registers
-  assign csr_mepc_o  = mepc_q;
-  assign csr_depc_o  = depc_q;
-  assign csr_mtvec_o = mtvec_q;
+  assign csr_mepc_o          = mepc_q;
+  assign csr_depc_o          = depc_q;
+  assign csr_mtvec_o         = mtvec_q;
 
   assign csr_mstatus_mie_o   = mstatus_q.mie;
   assign csr_mstatus_tw_o    = mstatus_q.tw;
@@ -746,43 +745,45 @@ import cve2_pkg::*;
 
   // Qualify incoming interrupt requests in mip CSR with mie CSR for controller and to re-enable
   // clock upon WFI (must be purely combinational).
-  assign irqs_o        = mip & mie_q;
-  assign irq_pending_o = |irqs_o;
+  assign irqs_o              = mip & mie_q;
+  assign irq_pending_o       = |irqs_o;
 
   ////////////////////////
   // CSR instantiations //
   ////////////////////////
 
   // MSTATUS
-  localparam status_t MSTATUS_RST_VAL = '{mie:  1'b0,
-                                          mpie: 1'b0,
-                                          mpp:  PRIV_LVL_M,
-                                          mprv: 1'b0,
-                                          tw:   1'b0};
+  localparam status_t MSTATUS_RST_VAL = '{
+      mie: 1'b0,
+      mpie: 1'b0,
+      mpp: PRIV_LVL_M,
+      mprv: 1'b0,
+      tw: 1'b0
+  };
   cve2_csr #(
-    .Width     ($bits(status_t)),
-    .ResetValue({MSTATUS_RST_VAL})
+      .Width     ($bits(status_t)),
+      .ResetValue({MSTATUS_RST_VAL})
   ) u_mstatus_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i ({mstatus_d}),
-    .wr_en_i   (mstatus_en),
-    .rd_data_o (mstatus_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i ({mstatus_d}),
+      .wr_en_i   (mstatus_en),
+      .rd_data_o (mstatus_q),
+      .rd_error_o()
   );
 
   // MEPC
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mepc_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (mepc_d),
-    .wr_en_i   (mepc_en),
-    .rd_data_o (mepc_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (mepc_d),
+      .wr_en_i   (mepc_en),
+      .rd_data_o (mepc_q),
+      .rd_error_o()
   );
 
   // MIE
@@ -791,71 +792,71 @@ import cve2_pkg::*;
   assign mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
   assign mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
   cve2_csr #(
-    .Width     ($bits(irqs_t)),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     ($bits(irqs_t)),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mie_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i ({mie_d}),
-    .wr_en_i   (mie_en),
-    .rd_data_o (mie_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i ({mie_d}),
+      .wr_en_i   (mie_en),
+      .rd_data_o (mie_q),
+      .rd_error_o()
   );
 
   // MSCRATCH
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mscratch_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (csr_wdata_int),
-    .wr_en_i   (mscratch_en),
-    .rd_data_o (mscratch_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (csr_wdata_int),
+      .wr_en_i   (mscratch_en),
+      .rd_data_o (mscratch_q),
+      .rd_error_o()
   );
 
   // MCAUSE
   cve2_csr #(
-    .Width     (7),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (7),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mcause_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (mcause_d),
-    .wr_en_i   (mcause_en),
-    .rd_data_o (mcause_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (mcause_d),
+      .wr_en_i   (mcause_en),
+      .rd_data_o (mcause_q),
+      .rd_error_o()
   );
 
   // MTVAL
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mtval_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (mtval_d),
-    .wr_en_i   (mtval_en),
-    .rd_data_o (mtval_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (mtval_d),
+      .wr_en_i   (mtval_en),
+      .rd_data_o (mtval_q),
+      .rd_error_o()
   );
 
   // MTVEC
   cve2_csr #(
-    .Width     (32),
-    .ResetValue(32'd1)
+      .Width     (32),
+      .ResetValue(32'd1)
   ) u_mtvec_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (mtvec_d),
-    .wr_en_i   (mtvec_en),
-    .rd_data_o (mtvec_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (mtvec_d),
+      .wr_en_i   (mtvec_en),
+      .rd_data_o (mtvec_q),
+      .rd_error_o()
   );
 
   // DCSR
@@ -866,101 +867,101 @@ import cve2_pkg::*;
       default: '0
   };
   cve2_csr #(
-    .Width     ($bits(dcsr_t)),
-    .ShadowCopy(1'b0),
-    .ResetValue({DCSR_RESET_VAL})
+      .Width     ($bits(dcsr_t)),
+      .ShadowCopy(1'b0),
+      .ResetValue({DCSR_RESET_VAL})
   ) u_dcsr_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i ({dcsr_d}),
-    .wr_en_i   (dcsr_en),
-    .rd_data_o (dcsr_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i ({dcsr_d}),
+      .wr_en_i   (dcsr_en),
+      .rd_data_o (dcsr_q),
+      .rd_error_o()
   );
 
   // DEPC
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_depc_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (depc_d),
-    .wr_en_i   (depc_en),
-    .rd_data_o (depc_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (depc_d),
+      .wr_en_i   (depc_en),
+      .rd_data_o (depc_q),
+      .rd_error_o()
   );
 
   // DSCRATCH0
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_dscratch0_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (csr_wdata_int),
-    .wr_en_i   (dscratch0_en),
-    .rd_data_o (dscratch0_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (csr_wdata_int),
+      .wr_en_i   (dscratch0_en),
+      .rd_data_o (dscratch0_q),
+      .rd_error_o()
   );
 
   // DSCRATCH1
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_dscratch1_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (csr_wdata_int),
-    .wr_en_i   (dscratch1_en),
-    .rd_data_o (dscratch1_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (csr_wdata_int),
+      .wr_en_i   (dscratch1_en),
+      .rd_data_o (dscratch1_q),
+      .rd_error_o()
   );
 
   // MSTACK
   localparam status_stk_t MSTACK_RESET_VAL = '{mpie: 1'b1, mpp: PRIV_LVL_U};
   cve2_csr #(
-    .Width     ($bits(status_stk_t)),
-    .ShadowCopy(1'b0),
-    .ResetValue({MSTACK_RESET_VAL})
+      .Width     ($bits(status_stk_t)),
+      .ShadowCopy(1'b0),
+      .ResetValue({MSTACK_RESET_VAL})
   ) u_mstack_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i ({mstack_d}),
-    .wr_en_i   (mstack_en),
-    .rd_data_o (mstack_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i ({mstack_d}),
+      .wr_en_i   (mstack_en),
+      .rd_data_o (mstack_q),
+      .rd_error_o()
   );
 
   // MSTACK_EPC
   cve2_csr #(
-    .Width     (32),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (32),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mstack_epc_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (mstack_epc_d),
-    .wr_en_i   (mstack_en),
-    .rd_data_o (mstack_epc_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (mstack_epc_d),
+      .wr_en_i   (mstack_en),
+      .rd_data_o (mstack_epc_q),
+      .rd_error_o()
   );
 
   // MSTACK_CAUSE
   cve2_csr #(
-    .Width     (7),
-    .ShadowCopy(1'b0),
-    .ResetValue('0)
+      .Width     (7),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
   ) u_mstack_cause_csr (
-    .clk_i     (clk_i),
-    .rst_ni    (rst_ni),
-    .wr_data_i (mstack_cause_d),
-    .wr_en_i   (mstack_en),
-    .rd_data_o (mstack_cause_q),
-    .rd_error_o()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (mstack_cause_d),
+      .wr_en_i   (mstack_en),
+      .rd_data_o (mstack_cause_q),
+      .rd_error_o()
   );
 
   // -----------------
@@ -969,31 +970,37 @@ import cve2_pkg::*;
 
   if (PMPEnable) begin : g_pmp_registers
     // PMP reset values
-    `ifdef CVE2_CUSTOM_PMP_RESET_VALUES
-      `include "cve2_pmp_reset.svh"
-    `else
-      `include "cve2_pmp_reset_default.svh"
-    `endif
+`ifdef CVE2_CUSTOM_PMP_RESET_VALUES
+    `include "cve2_pmp_reset.svh"
+`else
+    `include "cve2_pmp_reset_default.svh"
+`endif
 
-    pmp_mseccfg_t                pmp_mseccfg_q, pmp_mseccfg_d;
-    logic                        pmp_mseccfg_we;
-    logic                        pmp_mseccfg_err;
-    pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
-    logic [PMPNumRegions-1:0]    pmp_cfg_locked;
-    pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
-    logic [PMPAddrWidth-1:0]     pmp_addr        [PMPNumRegions];
-    logic [PMPNumRegions-1:0]    pmp_cfg_we;
-    logic [PMPNumRegions-1:0]    pmp_cfg_err;
-    logic [PMPNumRegions-1:0]    pmp_addr_we;
-    logic [PMPNumRegions-1:0]    pmp_addr_err;
-    logic                        any_pmp_entry_locked;
+    pmp_mseccfg_t pmp_mseccfg_q, pmp_mseccfg_d;
+    logic                         pmp_mseccfg_we;
+    logic                         pmp_mseccfg_err;
+    pmp_cfg_t                     pmp_cfg              [PMPNumRegions];
+    logic     [PMPNumRegions-1:0] pmp_cfg_locked;
+    pmp_cfg_t                     pmp_cfg_wdata        [PMPNumRegions];
+    logic     [ PMPAddrWidth-1:0] pmp_addr             [PMPNumRegions];
+    logic     [PMPNumRegions-1:0] pmp_cfg_we;
+    logic     [PMPNumRegions-1:0] pmp_cfg_err;
+    logic     [PMPNumRegions-1:0] pmp_addr_we;
+    logic     [PMPNumRegions-1:0] pmp_addr_err;
+    logic                         any_pmp_entry_locked;
 
     // Expanded / qualified register read data
     for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin : g_exp_rd_data
       if (i < PMPNumRegions) begin : g_implemented_regions
         // Add in zero padding for reserved fields
-        assign pmp_cfg_rdata[i] = {pmp_cfg[i].lock, 2'b00, pmp_cfg[i].mode,
-                                   pmp_cfg[i].exec, pmp_cfg[i].write, pmp_cfg[i].read};
+        assign pmp_cfg_rdata[i] = {
+          pmp_cfg[i].lock,
+          2'b00,
+          pmp_cfg[i].mode,
+          pmp_cfg[i].exec,
+          pmp_cfg[i].write,
+          pmp_cfg[i].read
+        };
 
         // Address field read data depends on the current programmed mode and the granularity
         // See RISC-V Privileged Specification, version 1.11, Section 3.6.1
@@ -1039,35 +1046,34 @@ import cve2_pkg::*;
                              (csr_addr == (CSR_OFF_PMP_CFG + (i[11:0] >> 2)));
 
       // Select the correct WDATA (each CSR contains 4 CFG fields, each with 2 RES bits)
-      assign pmp_cfg_wdata[i].lock  = csr_wdata_int[(i%4)*PMP_CFG_W+7];
+      assign pmp_cfg_wdata[i].lock = csr_wdata_int[(i%4)*PMP_CFG_W+7];
       // NA4 mode is not selectable when G > 0, mode is treated as OFF
       always_comb begin
         unique case (csr_wdata_int[(i%4)*PMP_CFG_W+3+:2])
-          2'b00   : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
-          2'b01   : pmp_cfg_wdata[i].mode = PMP_MODE_TOR;
-          2'b10   : pmp_cfg_wdata[i].mode = (PMPGranularity == 0) ? PMP_MODE_NA4:
-                                                                    PMP_MODE_OFF;
-          2'b11   : pmp_cfg_wdata[i].mode = PMP_MODE_NAPOT;
-          default : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+          2'b00:   pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+          2'b01:   pmp_cfg_wdata[i].mode = PMP_MODE_TOR;
+          2'b10:   pmp_cfg_wdata[i].mode = (PMPGranularity == 0) ? PMP_MODE_NA4 : PMP_MODE_OFF;
+          2'b11:   pmp_cfg_wdata[i].mode = PMP_MODE_NAPOT;
+          default: pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
         endcase
       end
-      assign pmp_cfg_wdata[i].exec  = csr_wdata_int[(i%4)*PMP_CFG_W+2];
+      assign pmp_cfg_wdata[i].exec = csr_wdata_int[(i%4)*PMP_CFG_W+2];
       // When MSECCFG.MML is unset, W = 1, R = 0 is a reserved combination, so force W to 0 if R ==
       // 0. Otherwise allow all possible values to be written.
       assign pmp_cfg_wdata[i].write = pmp_mseccfg_q.mml ? csr_wdata_int[(i%4)*PMP_CFG_W+1] :
                                                           &csr_wdata_int[(i%4)*PMP_CFG_W+:2];
-      assign pmp_cfg_wdata[i].read  = csr_wdata_int[(i%4)*PMP_CFG_W];
+      assign pmp_cfg_wdata[i].read = csr_wdata_int[(i%4)*PMP_CFG_W];
 
       cve2_csr #(
-        .Width     ($bits(pmp_cfg_t)),
-        .ResetValue(pmp_cfg_rst[i])
+          .Width     ($bits(pmp_cfg_t)),
+          .ResetValue(pmp_cfg_rst[i])
       ) u_pmp_cfg_csr (
-        .clk_i     (clk_i),
-        .rst_ni    (rst_ni),
-        .wr_data_i ({pmp_cfg_wdata[i]}),
-        .wr_en_i   (pmp_cfg_we[i]),
-        .rd_data_o (pmp_cfg[i]),
-        .rd_error_o(pmp_cfg_err[i])
+          .clk_i     (clk_i),
+          .rst_ni    (rst_ni),
+          .wr_data_i ({pmp_cfg_wdata[i]}),
+          .wr_en_i   (pmp_cfg_we[i]),
+          .rd_data_o (pmp_cfg[i]),
+          .rd_error_o(pmp_cfg_err[i])
       );
 
       // MSECCFG.RLB allows the lock bit to be bypassed (allowing cfg writes when MSECCFG.RLB is
@@ -1087,15 +1093,15 @@ import cve2_pkg::*;
       end
 
       cve2_csr #(
-        .Width     (PMPAddrWidth),
-        .ResetValue(pmp_addr_rst[i][33-:PMPAddrWidth])
+          .Width     (PMPAddrWidth),
+          .ResetValue(pmp_addr_rst[i][33-:PMPAddrWidth])
       ) u_pmp_addr_csr (
-        .clk_i     (clk_i),
-        .rst_ni    (rst_ni),
-        .wr_data_i (csr_wdata_int[31-:PMPAddrWidth]),
-        .wr_en_i   (pmp_addr_we[i]),
-        .rd_data_o (pmp_addr[i]),
-        .rd_error_o(pmp_addr_err[i])
+          .clk_i     (clk_i),
+          .rst_ni    (rst_ni),
+          .wr_data_i (csr_wdata_int[31-:PMPAddrWidth]),
+          .wr_en_i   (pmp_addr_we[i]),
+          .rd_data_o (pmp_addr[i]),
+          .rd_error_o(pmp_addr_err[i])
       );
 
       `ASSERT_INIT(PMPAddrRstLowBitsZero_A, pmp_addr_rst[i][33-PMPAddrWidth:0] == '0)
@@ -1107,7 +1113,7 @@ import cve2_pkg::*;
     assign pmp_mseccfg_we = csr_we_int & (csr_addr == CSR_MSECCFG);
 
     // MSECCFG.MML/MSECCFG.MMWP cannot be unset once set
-    assign pmp_mseccfg_d.mml  = pmp_mseccfg_q.mml  ? 1'b1 : csr_wdata_int[CSR_MSECCFG_MML_BIT];
+    assign pmp_mseccfg_d.mml = pmp_mseccfg_q.mml ? 1'b1 : csr_wdata_int[CSR_MSECCFG_MML_BIT];
     assign pmp_mseccfg_d.mmwp = pmp_mseccfg_q.mmwp ? 1'b1 : csr_wdata_int[CSR_MSECCFG_MMWP_BIT];
 
     // pmp_cfg_locked factors in MSECCFG.RLB so any_pmp_entry_locked will only be set if MSECCFG.RLB
@@ -1119,15 +1125,15 @@ import cve2_pkg::*;
     assign pmp_mseccfg_d.rlb = any_pmp_entry_locked ? 1'b0 : csr_wdata_int[CSR_MSECCFG_RLB_BIT];
 
     cve2_csr #(
-      .Width     ($bits(pmp_mseccfg_t)),
-      .ResetValue(pmp_mseccfg_rst)
+        .Width     ($bits(pmp_mseccfg_t)),
+        .ResetValue(pmp_mseccfg_rst)
     ) u_pmp_mseccfg (
-      .clk_i     (clk_i),
-      .rst_ni    (rst_ni),
-      .wr_data_i (pmp_mseccfg_d),
-      .wr_en_i   (pmp_mseccfg_we),
-      .rd_data_o (pmp_mseccfg_q),
-      .rd_error_o(pmp_mseccfg_err)
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .wr_data_i (pmp_mseccfg_d),
+        .wr_en_i   (pmp_mseccfg_we),
+        .rd_data_o (pmp_mseccfg_q),
+        .rd_error_o(pmp_mseccfg_err)
     );
 
     assign pmp_mseccfg = pmp_mseccfg_q;
@@ -1174,19 +1180,19 @@ import cve2_pkg::*;
     // appropriately.
     //
     // active counters
-    mhpmcounter_incr[0]  = 1'b1;                   // mcycle
-    mhpmcounter_incr[1]  = 1'b0;                   // reserved
-    mhpmcounter_incr[2]  = instr_ret_i;            // minstret
-    mhpmcounter_incr[3]  = dside_wait_i;           // cycles waiting for data memory
-    mhpmcounter_incr[4]  = iside_wait_i;           // cycles waiting for instr fetches
-    mhpmcounter_incr[5]  = mem_load_i;             // num of loads
-    mhpmcounter_incr[6]  = mem_store_i;            // num of stores
-    mhpmcounter_incr[7]  = jump_i;                 // num of jumps (unconditional)
-    mhpmcounter_incr[8]  = branch_i;               // num of branches (conditional)
-    mhpmcounter_incr[9]  = branch_taken_i;         // num of taken branches (conditional)
-    mhpmcounter_incr[10] = instr_ret_compressed_i; // num of compressed instr
-    mhpmcounter_incr[11] = wfi_wait_i;             // cycles waiting for multiply
-    mhpmcounter_incr[12] = div_wait_i;             // cycles waiting for divide
+    mhpmcounter_incr[0]  = 1'b1;  // mcycle
+    mhpmcounter_incr[1]  = 1'b0;  // reserved
+    mhpmcounter_incr[2]  = instr_ret_i;  // minstret
+    mhpmcounter_incr[3]  = dside_wait_i;  // cycles waiting for data memory
+    mhpmcounter_incr[4]  = iside_wait_i;  // cycles waiting for instr fetches
+    mhpmcounter_incr[5]  = mem_load_i;  // num of loads
+    mhpmcounter_incr[6]  = mem_store_i;  // num of stores
+    mhpmcounter_incr[7]  = jump_i;  // num of jumps (unconditional)
+    mhpmcounter_incr[8]  = branch_i;  // num of branches (conditional)
+    mhpmcounter_incr[9]  = branch_taken_i;  // num of taken branches (conditional)
+    mhpmcounter_incr[10] = instr_ret_compressed_i;  // num of compressed instr
+    mhpmcounter_incr[11] = wfi_wait_i;  // cycles waiting for multiply
+    mhpmcounter_incr[12] = div_wait_i;  // cycles waiting for divide
   end
 
   // event selector (hardwired, 0 means no event)
@@ -1199,7 +1205,7 @@ import cve2_pkg::*;
     end
 
     // deactivate
-    mhpmevent[1] = '0; // not existing, reserved
+    mhpmevent[1] = '0;  // not existing, reserved
     for (int unsigned i = 3 + MHPMCounterNum; i < 32; i++) begin : gen_mhpmevent_inactive
       mhpmevent[i] = '0;
     end
@@ -1207,32 +1213,32 @@ import cve2_pkg::*;
 
   // mcycle
   cve2_counter #(
-    .CounterWidth(64)
+      .CounterWidth(64)
   ) mcycle_counter_i (
-    .clk_i(clk_i),
-    .rst_ni(rst_ni),
-    .counter_inc_i(mhpmcounter_incr[0] & ~mcountinhibit[0]),
-    .counterh_we_i(mhpmcounterh_we[0]),
-    .counter_we_i(mhpmcounter_we[0]),
-    .counter_val_i(csr_wdata_int),
-    .counter_val_o(mhpmcounter[0]),
-    .counter_val_upd_o()
+      .clk_i(clk_i),
+      .rst_ni(rst_ni),
+      .counter_inc_i(mhpmcounter_incr[0] & ~mcountinhibit[0]),
+      .counterh_we_i(mhpmcounterh_we[0]),
+      .counter_we_i(mhpmcounter_we[0]),
+      .counter_val_i(csr_wdata_int),
+      .counter_val_o(mhpmcounter[0]),
+      .counter_val_upd_o()
   );
 
 
   // minstret
   cve2_counter #(
-    .CounterWidth(64),
-    .ProvideValUpd(1)
+      .CounterWidth (64),
+      .ProvideValUpd(1)
   ) minstret_counter_i (
-    .clk_i(clk_i),
-    .rst_ni(rst_ni),
-    .counter_inc_i(mhpmcounter_incr[2] & ~mcountinhibit[2]),
-    .counterh_we_i(mhpmcounterh_we[2]),
-    .counter_we_i(mhpmcounter_we[2]),
-    .counter_val_i(csr_wdata_int),
-    .counter_val_o(minstret_raw),
-    .counter_val_upd_o()
+      .clk_i(clk_i),
+      .rst_ni(rst_ni),
+      .counter_inc_i(mhpmcounter_incr[2] & ~mcountinhibit[2]),
+      .counterh_we_i(mhpmcounterh_we[2]),
+      .counter_we_i(mhpmcounter_we[2]),
+      .counter_val_i(csr_wdata_int),
+      .counter_val_o(minstret_raw),
+      .counter_val_upd_o()
   );
 
   // Where the writeback stage is present instruction in ID observing value of minstret must take
@@ -1242,7 +1248,7 @@ import cve2_pkg::*;
   // so the incorrect value doesn't matter. A similar behaviour is required for the compressed
   // instruction retired counter below. When the writeback stage isn't present the speculative
   // signals are always 0.
-  assign mhpmcounter[2] = minstret_raw;
+  assign mhpmcounter[2]            = minstret_raw;
 
   // reserved:
   assign mhpmcounter[1]            = '0;
@@ -1258,24 +1264,23 @@ import cve2_pkg::*;
       logic [63:0] mhpmcounter_raw, mhpmcounter_next;
 
       cve2_counter #(
-        .CounterWidth(MHPMCounterWidth),
-        .ProvideValUpd(Cnt == 10)
+          .CounterWidth (MHPMCounterWidth),
+          .ProvideValUpd(Cnt == 10)
       ) mcounters_variable_i (
-        .clk_i(clk_i),
-        .rst_ni(rst_ni),
-        .counter_inc_i(mhpmcounter_incr[Cnt] & ~mcountinhibit[Cnt]),
-        .counterh_we_i(mhpmcounterh_we[Cnt]),
-        .counter_we_i(mhpmcounter_we[Cnt]),
-        .counter_val_i(csr_wdata_int),
-        .counter_val_o(mhpmcounter_raw),
-        .counter_val_upd_o(mhpmcounter_next)
+          .clk_i(clk_i),
+          .rst_ni(rst_ni),
+          .counter_inc_i(mhpmcounter_incr[Cnt] & ~mcountinhibit[Cnt]),
+          .counterh_we_i(mhpmcounterh_we[Cnt]),
+          .counter_we_i(mhpmcounter_we[Cnt]),
+          .counter_val_i(csr_wdata_int),
+          .counter_val_o(mhpmcounter_raw),
+          .counter_val_upd_o(mhpmcounter_next)
       );
 
       if (Cnt == 10) begin : gen_compressed_instr_cnt
         // Special behaviour for reading compressed instruction retired counter, see comment on
         // `mhpmcounter[2]` above for further information.
-        assign mhpmcounter[Cnt] =
-                                                              mhpmcounter_raw;
+        assign mhpmcounter[Cnt] = mhpmcounter_raw;
       end else begin : gen_other_cnts
         logic [63:0] unused_mhpmcounter_next;
         // All other counters just see the raw counter value directly.
@@ -1294,8 +1299,8 @@ import cve2_pkg::*;
 
     assign mcountinhibit = {{29 - MHPMCounterNum{1'b1}}, mcountinhibit_q};
     // Lint tieoffs for unused bits
-    assign unused_mhphcounter_we   = mhpmcounter_we[31:MHPMCounterNum+3];
-    assign unused_mhphcounterh_we  = mhpmcounterh_we[31:MHPMCounterNum+3];
+    assign unused_mhphcounter_we = mhpmcounter_we[31:MHPMCounterNum+3];
+    assign unused_mhphcounterh_we = mhpmcounterh_we[31:MHPMCounterNum+3];
     assign unused_mhphcounter_incr = mhpmcounter_incr[31:MHPMCounterNum+3];
   end else begin : g_mcountinhibit_full
     assign mcountinhibit = mcountinhibit_q;
@@ -1318,13 +1323,13 @@ import cve2_pkg::*;
     localparam int unsigned MaxTselect = DbgHwBreakNum - 1;
 
     // Register values
-    logic [DbgHwNumLen-1:0]   tselect_d, tselect_q;
+    logic [DbgHwNumLen-1:0] tselect_d, tselect_q;
     logic                     tmatch_control_d;
     logic [DbgHwBreakNum-1:0] tmatch_control_q;
-    logic [31:0]              tmatch_value_d;
-    logic [31:0]              tmatch_value_q[DbgHwBreakNum];
+    logic [             31:0] tmatch_value_d;
+    logic [             31:0] tmatch_value_q          [DbgHwBreakNum];
     logic                     selected_tmatch_control;
-    logic [31:0]              selected_tmatch_value;
+    logic [             31:0] selected_tmatch_value;
 
     // Write enables
     logic                     tselect_we;
@@ -1349,47 +1354,47 @@ import cve2_pkg::*;
 
     // tmatch_control is enabled when the execute bit is set
     assign tmatch_control_d = csr_wdata_int[2];
-    assign tmatch_value_d   = csr_wdata_int[31:0];
+    assign tmatch_value_d = csr_wdata_int[31:0];
 
     // Registers
     cve2_csr #(
-      .Width     (DbgHwNumLen),
-      .ShadowCopy(1'b0),
-      .ResetValue('0)
+        .Width     (DbgHwNumLen),
+        .ShadowCopy(1'b0),
+        .ResetValue('0)
     ) u_tselect_csr (
-      .clk_i     (clk_i),
-      .rst_ni    (rst_ni),
-      .wr_data_i (tselect_d),
-      .wr_en_i   (tselect_we),
-      .rd_data_o (tselect_q),
-      .rd_error_o()
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .wr_data_i (tselect_d),
+        .wr_en_i   (tselect_we),
+        .rd_data_o (tselect_q),
+        .rd_error_o()
     );
 
     for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_tmatch_reg
       cve2_csr #(
-        .Width     (1),
-        .ShadowCopy(1'b0),
-        .ResetValue('0)
+          .Width     (1),
+          .ShadowCopy(1'b0),
+          .ResetValue('0)
       ) u_tmatch_control_csr (
-        .clk_i     (clk_i),
-        .rst_ni    (rst_ni),
-        .wr_data_i (tmatch_control_d),
-        .wr_en_i   (tmatch_control_we[i]),
-        .rd_data_o (tmatch_control_q[i]),
-        .rd_error_o()
+          .clk_i     (clk_i),
+          .rst_ni    (rst_ni),
+          .wr_data_i (tmatch_control_d),
+          .wr_en_i   (tmatch_control_we[i]),
+          .rd_data_o (tmatch_control_q[i]),
+          .rd_error_o()
       );
 
       cve2_csr #(
-        .Width     (32),
-        .ShadowCopy(1'b0),
-        .ResetValue('0)
+          .Width     (32),
+          .ShadowCopy(1'b0),
+          .ResetValue('0)
       ) u_tmatch_value_csr (
-        .clk_i     (clk_i),
-        .rst_ni    (rst_ni),
-        .wr_data_i (tmatch_value_d),
-        .wr_en_i   (tmatch_value_we[i]),
-        .rd_data_o (tmatch_value_q[i]),
-        .rd_error_o()
+          .clk_i     (clk_i),
+          .rst_ni    (rst_ni),
+          .wr_data_i (tmatch_value_d),
+          .wr_en_i   (tmatch_value_we[i]),
+          .rd_data_o (tmatch_value_q[i]),
+          .rd_error_o()
       );
     end
 
@@ -1407,23 +1412,25 @@ import cve2_pkg::*;
     end
 
     // TDATA0 - only support simple address matching
-    assign tmatch_control_rdata = {4'h2,                    // type    : address/data match
-                                   1'b1,                    // dmode   : access from D mode only
-                                   6'h00,                   // maskmax : exact match only
-                                   1'b0,                    // hit     : not supported
-                                   1'b0,                    // select  : address match only
-                                   1'b0,                    // timing  : match before execution
-                                   2'b00,                   // sizelo  : match any access
-                                   4'h1,                    // action  : enter debug mode
-                                   1'b0,                    // chain   : not supported
-                                   4'h0,                    // match   : simple match
-                                   1'b1,                    // m       : match in m-mode
-                                   1'b0,                    // 0       : zero
-                                   1'b0,                    // s       : not supported
-                                   1'b1,                    // u       : match in u-mode
-                                   selected_tmatch_control, // execute : match instruction address
-                                   1'b0,                    // store   : not supported
-                                   1'b0};                   // load    : not supported
+    assign tmatch_control_rdata = {
+      4'h2,  // type    : address/data match
+      1'b1,  // dmode   : access from D mode only
+      6'h00,  // maskmax : exact match only
+      1'b0,  // hit     : not supported
+      1'b0,  // select  : address match only
+      1'b0,  // timing  : match before execution
+      2'b00,  // sizelo  : match any access
+      4'h1,  // action  : enter debug mode
+      1'b0,  // chain   : not supported
+      4'h0,  // match   : simple match
+      1'b1,  // m       : match in m-mode
+      1'b0,  // 0       : zero
+      1'b0,  // s       : not supported
+      1'b1,  // u       : match in u-mode
+      selected_tmatch_control,  // execute : match instruction address
+      1'b0,  // store   : not supported
+      1'b0
+    };  // load    : not supported
 
     // TDATA1 - address match value only
     assign tmatch_value_rdata = selected_tmatch_value;
@@ -1447,90 +1454,90 @@ import cve2_pkg::*;
   //////////////////////////
 
 `ifdef RVFI
-    logic [63:0] mstatus_extended_read, mie_extended_read, mip_extended_read, mcause_extended_read;
-    struct {
-      logic clk;
-      logic reset_n;
-    } clknrst_if;
+  logic [63:0] mstatus_extended_read, mie_extended_read, mip_extended_read, mcause_extended_read;
+  struct {
+    logic clk;
+    logic reset_n;
+  } clknrst_if;
 
-    assign clknrst_if.clk = clk_i;
-    assign clknrst_if.reset_n = rst_ni;
+  assign clknrst_if.clk = clk_i;
+  assign clknrst_if.reset_n = rst_ni;
 
-    struct {
-      logic [63:0]   rvfi_named_csr_rmask;
-      logic [63:0]   rvfi_named_csr_wmask;
-      logic [63:0]   rvfi_named_csr_rdata;
-      logic [63:0]   rvfi_named_csr_wdata;
-  
-      // Generic READ/WRITE values
-      logic [63:0]   rvfi_csr_addr;
-      logic [63:0]   rvfi_csr_rmask;
-      logic [63:0]   rvfi_csr_wmask;
-      logic [63:0]   rvfi_csr_rdata;
-      logic [63:0]   rvfi_csr_wdata;
-    } rvfi_csr_if;
+  struct {
+    logic [63:0] rvfi_named_csr_rmask;
+    logic [63:0] rvfi_named_csr_wmask;
+    logic [63:0] rvfi_named_csr_rdata;
+    logic [63:0] rvfi_named_csr_wdata;
 
-    // Extended Reads
-    assign  mstatus_extended_read[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
-    assign  mstatus_extended_read[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
-    assign  mstatus_extended_read[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
-    assign  mstatus_extended_read[CSR_MSTATUS_MPRV_BIT]                             = mstatus_q.mprv;
-    assign  mstatus_extended_read[CSR_MSTATUS_TW_BIT]                               = mstatus_q.tw;
+    // Generic READ/WRITE values
+    logic [63:0] rvfi_csr_addr;
+    logic [63:0] rvfi_csr_rmask;
+    logic [63:0] rvfi_csr_wmask;
+    logic [63:0] rvfi_csr_rdata;
+    logic [63:0] rvfi_csr_wdata;
+  } rvfi_csr_if;
 
-    assign mie_extended_read[CSR_MSIX_BIT]                       = mie_q.irq_software;
-    assign mie_extended_read[CSR_MTIX_BIT]                       = mie_q.irq_timer;
-    assign mie_extended_read[CSR_MEIX_BIT]                       = mie_q.irq_external;
+  // Extended Reads
+  assign mstatus_extended_read[CSR_MSTATUS_MIE_BIT] = mstatus_q.mie;
+  assign mstatus_extended_read[CSR_MSTATUS_MPIE_BIT] = mstatus_q.mpie;
+  assign mstatus_extended_read[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
+  assign mstatus_extended_read[CSR_MSTATUS_MPRV_BIT] = mstatus_q.mprv;
+  assign mstatus_extended_read[CSR_MSTATUS_TW_BIT] = mstatus_q.tw;
 
-    assign mip_extended_read[CSR_MSIX_BIT]                       = mip.irq_software;
-    assign mip_extended_read[CSR_MTIX_BIT]                       = mip.irq_timer;
-    assign mip_extended_read[CSR_MEIX_BIT]                       = mip.irq_external;
-    assign mip_extended_read[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
+  assign mie_extended_read[CSR_MSIX_BIT] = mie_q.irq_software;
+  assign mie_extended_read[CSR_MTIX_BIT] = mie_q.irq_timer;
+  assign mie_extended_read[CSR_MEIX_BIT] = mie_q.irq_external;
 
-    assign mcause_extended_read = {32'b0, mcause_q[6], 25'b0, mcause_q[5:0]};
+  assign mip_extended_read[CSR_MSIX_BIT] = mip.irq_software;
+  assign mip_extended_read[CSR_MTIX_BIT] = mip.irq_timer;
+  assign mip_extended_read[CSR_MEIX_BIT] = mip.irq_external;
+  assign mip_extended_read[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
 
-    // Extended Writes
-    logic [63:0] mstatus_extended_write, mie_extended_write, mcause_extended_write;
+  assign mcause_extended_read = {32'b0, mcause_q[6], 25'b0, mcause_q[5:0]};
 
-    assign mie_extended_write[CSR_MSIX_BIT]                       = mie_d.irq_software;
-    assign mie_extended_write[CSR_MTIX_BIT]                       = mie_d.irq_timer;
-    assign mie_extended_write[CSR_MEIX_BIT]                       = mie_d.irq_external;
-    assign mie_extended_write[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_d.irq_fast;
-    //
-    assign  mstatus_extended_write[CSR_MSTATUS_MIE_BIT]                              = mstatus_d.mie;
-    assign  mstatus_extended_write[CSR_MSTATUS_MPIE_BIT]                             = mstatus_d.mpie;
-    assign  mstatus_extended_write[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_d.mpp;
-    assign  mstatus_extended_write[CSR_MSTATUS_MPRV_BIT]                             = mstatus_d.mprv;
-    assign  mstatus_extended_write[CSR_MSTATUS_TW_BIT]                               = mstatus_d.tw;
+  // Extended Writes
+  logic [63:0] mstatus_extended_write, mie_extended_write, mcause_extended_write;
 
-    assign mcause_extended_write = {32'b0, mcause_d[6], 25'b0, mcause_d[5:0]};
+  assign mie_extended_write[CSR_MSIX_BIT] = mie_d.irq_software;
+  assign mie_extended_write[CSR_MTIX_BIT] = mie_d.irq_timer;
+  assign mie_extended_write[CSR_MEIX_BIT] = mie_d.irq_external;
+  assign mie_extended_write[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_d.irq_fast;
+  //
+  assign mstatus_extended_write[CSR_MSTATUS_MIE_BIT] = mstatus_d.mie;
+  assign mstatus_extended_write[CSR_MSTATUS_MPIE_BIT] = mstatus_d.mpie;
+  assign mstatus_extended_write[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_d.mpp;
+  assign mstatus_extended_write[CSR_MSTATUS_MPRV_BIT] = mstatus_d.mprv;
+  assign mstatus_extended_write[CSR_MSTATUS_TW_BIT] = mstatus_d.tw;
 
-    wire [63:0] rvfi_csr_bypass;
+  assign mcause_extended_write = {32'b0, mcause_d[6], 25'b0, mcause_d[5:0]};
 
-    assign rvfi_csr_bypass = csr_save_cause_i | debug_csr_save_i;
+  wire [63:0] rvfi_csr_bypass;
 
-    bit [63:0] rvfi_csr_addr;
-    bit [63:0] rvfi_csr_rdata;
-    bit [63:0] rvfi_csr_wdata;
-    bit [63:0] rvfi_csr_rmask;
-    bit [63:0] rvfi_csr_wmask;
-    wire [63:0] rvfi_csr_wmask_q;
-    wire [63:0] rvfi_csr_rmask_q;
-    assign rvfi_csr_if.rvfi_csr_addr =  rvfi_csr_addr;
-    assign rvfi_csr_if.rvfi_csr_rdata = rvfi_csr_rdata;
-    assign rvfi_csr_if.rvfi_csr_wdata = rvfi_csr_wdata;
-    assign rvfi_csr_if.rvfi_csr_rmask = rvfi_csr_rmask;
-    assign rvfi_csr_if.rvfi_csr_wmask = rvfi_csr_wmask;
-    assign rvfi_csr_rmask_q =  ((~csr_wr & csr_op_en_i & ~illegal_csr_insn_o)) ? -1 : 0;
-    assign rvfi_csr_wmask_q =   ((csr_wr & csr_op_en_i & ~illegal_csr_insn_o)) ? -1 : 0;
-    always @(posedge clknrst_if.clk) begin
-        rvfi_csr_addr  = csr_addr_i;
-        rvfi_csr_rdata = csr_rdata_int;
-        rvfi_csr_wdata = csr_wdata_int;
-        rvfi_csr_rmask = (rvfi_csr_rmask_q);
-        rvfi_csr_wmask = (rvfi_csr_wmask_q);
-    end
+  assign rvfi_csr_bypass = csr_save_cause_i | debug_csr_save_i;
 
-`define RVFI_CONNECT(CSR_ADDR, CSR_NAME, CSR_RDATA, CSR_WDATA, CSR_RMASK, CSR_WMASK) \
+  bit  [63:0] rvfi_csr_addr;
+  bit  [63:0] rvfi_csr_rdata;
+  bit  [63:0] rvfi_csr_wdata;
+  bit  [63:0] rvfi_csr_rmask;
+  bit  [63:0] rvfi_csr_wmask;
+  wire [63:0] rvfi_csr_wmask_q;
+  wire [63:0] rvfi_csr_rmask_q;
+  assign rvfi_csr_if.rvfi_csr_addr = rvfi_csr_addr;
+  assign rvfi_csr_if.rvfi_csr_rdata = rvfi_csr_rdata;
+  assign rvfi_csr_if.rvfi_csr_wdata = rvfi_csr_wdata;
+  assign rvfi_csr_if.rvfi_csr_rmask = rvfi_csr_rmask;
+  assign rvfi_csr_if.rvfi_csr_wmask = rvfi_csr_wmask;
+  assign rvfi_csr_rmask_q = ((~csr_wr & csr_op_en_i & ~illegal_csr_insn_o)) ? -1 : 0;
+  assign rvfi_csr_wmask_q = ((csr_wr & csr_op_en_i & ~illegal_csr_insn_o)) ? -1 : 0;
+  always @(posedge clknrst_if.clk) begin
+    rvfi_csr_addr  = csr_addr_i;
+    rvfi_csr_rdata = csr_rdata_int;
+    rvfi_csr_wdata = csr_wdata_int;
+    rvfi_csr_rmask = (rvfi_csr_rmask_q);
+    rvfi_csr_wmask = (rvfi_csr_wmask_q);
+  end
+
+  `define RVFI_CONNECT(CSR_ADDR, CSR_NAME, CSR_RDATA, CSR_WDATA, CSR_RMASK, CSR_WMASK) \
     bit [63:0] rvfi_``CSR_NAME``_csr_rdata;\
     bit [63:0] rvfi_``CSR_NAME``_csr_wdata;\
     bit [63:0] rvfi_``CSR_NAME``_csr_rmask;\
@@ -1550,20 +1557,20 @@ import cve2_pkg::*;
         rvfi_``CSR_NAME``_csr_wmask = (rvfi_``CSR_NAME``_csr_wmask_q); \
     end
 
-   `RVFI_CONNECT( CSR_MSTATUS,          mstatus                     ,  mstatus_extended_read  , mstatus_extended_write , , || mstatus_en)
-   `RVFI_CONNECT( CSR_MIE,              mie                         ,  mie_extended_read      , mie_extended_write     , , || mie_en    )
-   `RVFI_CONNECT( CSR_MIP,              mip                         ,  mip_extended_read      , mip_extended_read      , , )
-   `RVFI_CONNECT( CSR_MISA,             misa                        ,  MISA_VALUE             , MISA_VALUE             , ,              )
-   `RVFI_CONNECT( CSR_MTVEC,            mtvec                       ,  mtvec_q                , mtvec_d                , , || mtvec_en  )
-   `RVFI_CONNECT( CSR_MEPC,             mepc                        ,  mepc_q                 , mepc_d                 , , || mepc_en   )
-   `RVFI_CONNECT( CSR_MCAUSE,           mcause                      ,  mcause_extended_read   , mcause_extended_write  , , || mcause_en )
-   `RVFI_CONNECT( CSR_MTVAL,            mtval                       ,  mtval_q                , mtval_d                , , || mtval_en  )
-   `RVFI_CONNECT( CSR_MSTATUSH,         mstatush                    ,  'h0                    , csr_wdata_int          , , )
-   `RVFI_CONNECT( CSR_DCSR,             dcsr                        ,  dcsr_q                 , dcsr_d                 , , || dcsr_en)
-   `RVFI_CONNECT( CSR_DPC,              dpc                         ,  depc_q                 , depc_d                 , , || depc_en)
-   `RVFI_CONNECT( CSR_DSCRATCH0,        dscratch0                   ,  dscratch0_q            , csr_wdata_int          , , || dscratch0_en)
-   `RVFI_CONNECT( CSR_DSCRATCH1,        dscratch1                   ,  dscratch1_q            , csr_wdata_int          , , || dscratch1_en)
-   `RVFI_CONNECT( CSR_MSCRATCH,         mscratch                    ,  mscratch_q             , csr_wdata_int          , , || mscratch_en)
+  `RVFI_CONNECT(CSR_MSTATUS, mstatus, mstatus_extended_read, mstatus_extended_write,, || mstatus_en)
+  `RVFI_CONNECT(CSR_MIE, mie, mie_extended_read, mie_extended_write,, || mie_en)
+  `RVFI_CONNECT(CSR_MIP, mip, mip_extended_read, mip_extended_read,,)
+  `RVFI_CONNECT(CSR_MISA, misa, MISA_VALUE, MISA_VALUE,,)
+  `RVFI_CONNECT(CSR_MTVEC, mtvec, mtvec_q, mtvec_d,, || mtvec_en)
+  `RVFI_CONNECT(CSR_MEPC, mepc, mepc_q, mepc_d,, || mepc_en)
+  `RVFI_CONNECT(CSR_MCAUSE, mcause, mcause_extended_read, mcause_extended_write,, || mcause_en)
+  `RVFI_CONNECT(CSR_MTVAL, mtval, mtval_q, mtval_d,, || mtval_en)
+  `RVFI_CONNECT(CSR_MSTATUSH, mstatush, 'h0, csr_wdata_int,,)
+  `RVFI_CONNECT(CSR_DCSR, dcsr, dcsr_q, dcsr_d,, || dcsr_en)
+  `RVFI_CONNECT(CSR_DPC, dpc, depc_q, depc_d,, || depc_en)
+  `RVFI_CONNECT(CSR_DSCRATCH0, dscratch0, dscratch0_q, csr_wdata_int,, || dscratch0_en)
+  `RVFI_CONNECT(CSR_DSCRATCH1, dscratch1, dscratch1_q, csr_wdata_int,, || dscratch1_en)
+  `RVFI_CONNECT(CSR_MSCRATCH, mscratch, mscratch_q, csr_wdata_int,, || mscratch_en)
 
 `endif
 

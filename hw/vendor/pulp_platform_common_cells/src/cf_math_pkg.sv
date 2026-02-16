@@ -17,45 +17,45 @@
 /// must be called with arguments that are constants.
 package cf_math_pkg;
 
-    /// Ceiled Division of Two Natural Numbers
-    ///
-    /// Returns the quotient of two natural numbers, rounded towards plus infinity.
-    function automatic integer ceil_div (input longint dividend, input longint divisor);
-        automatic longint remainder;
+  /// Ceiled Division of Two Natural Numbers
+  ///
+  /// Returns the quotient of two natural numbers, rounded towards plus infinity.
+  function automatic integer ceil_div(input longint dividend, input longint divisor);
+    automatic longint remainder;
 
-        // pragma translate_off
-        `ifndef VERILATOR
-        if (dividend < 0) begin
-            $fatal(1, "Dividend %0d is not a natural number!", dividend);
-        end
+    // pragma translate_off
+`ifndef VERILATOR
+    if (dividend < 0) begin
+      $fatal(1, "Dividend %0d is not a natural number!", dividend);
+    end
 
-        if (divisor < 0) begin
-            $fatal(1, "Divisor %0d is not a natural number!", divisor);
-        end
+    if (divisor < 0) begin
+      $fatal(1, "Divisor %0d is not a natural number!", divisor);
+    end
 
-        if (divisor == 0) begin
-            $fatal(1, "Division by zero!");
-        end
-        `endif
-        // pragma translate_on
+    if (divisor == 0) begin
+      $fatal(1, "Division by zero!");
+    end
+`endif
+    // pragma translate_on
 
-        remainder = dividend;
-        for (ceil_div = 0; remainder > 0; ceil_div++) begin
-            remainder = remainder - divisor;
-        end
-    endfunction
+    remainder = dividend;
+    for (ceil_div = 0; remainder > 0; ceil_div++) begin
+      remainder = remainder - divisor;
+    end
+  endfunction
 
-    /// Index width required to be able to represent up to `num_idx` indices as a binary
-    /// encoded signal.
-    /// Ensures that the minimum width if an index signal is `1`, regardless of parametrization.
-    ///
-    /// Sample usage in type definition:
-    /// As parameter:
-    ///   `parameter type idx_t = logic[cf_math_pkg::idx_width(NumIdx)-1:0]`
-    /// As typedef:
-    ///   `typedef logic [cf_math_pkg::idx_width(NumIdx)-1:0] idx_t`
-    function automatic integer unsigned idx_width (input integer unsigned num_idx);
-        return (num_idx > 32'd1) ? unsigned'($clog2(num_idx)) : 32'd1;
-    endfunction
+  /// Index width required to be able to represent up to `num_idx` indices as a binary
+  /// encoded signal.
+  /// Ensures that the minimum width if an index signal is `1`, regardless of parametrization.
+  ///
+  /// Sample usage in type definition:
+  /// As parameter:
+  ///   `parameter type idx_t = logic[cf_math_pkg::idx_width(NumIdx)-1:0]`
+  /// As typedef:
+  ///   `typedef logic [cf_math_pkg::idx_width(NumIdx)-1:0] idx_t`
+  function automatic integer unsigned idx_width(input integer unsigned num_idx);
+    return (num_idx > 32'd1) ? unsigned'($clog2(num_idx)) : 32'd1;
+  endfunction
 
 endpackage
