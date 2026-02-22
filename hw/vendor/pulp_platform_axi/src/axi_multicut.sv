@@ -19,27 +19,6 @@
 //
 // These can be used to relax timing pressure on very long AXI busses.
 module axi_multicut #(
-<<<<<<< HEAD
-    parameter int unsigned NoCuts    = 32'd1,  // Number of cuts.
-    // AXI channel structs
-    parameter type         aw_chan_t = logic,
-    parameter type         w_chan_t  = logic,
-    parameter type         b_chan_t  = logic,
-    parameter type         ar_chan_t = logic,
-    parameter type         r_chan_t  = logic,
-    // AXI request & response structs
-    parameter type         req_t     = logic,
-    parameter type         resp_t    = logic
-) (
-    input logic clk_i,  // Clock
-    input logic rst_ni,  // Asynchronous reset active low
-    // slave port
-    input req_t slv_req_i,
-    output resp_t slv_resp_o,
-    // master port
-    output req_t mst_req_o,
-    input resp_t mst_resp_i
-=======
   parameter int unsigned NoCuts = 32'd1, // Number of cuts.
   // AXI channel structs
   parameter type  aw_chan_t = logic,
@@ -59,7 +38,6 @@ module axi_multicut #(
   // master port
   output axi_req_t  mst_req_o,
   input  axi_resp_t mst_resp_i
->>>>>>> main
 );
 
   if (NoCuts == '0) begin : gen_no_cut
@@ -78,16 +56,6 @@ module axi_multicut #(
     // AXI cuts
     for (genvar i = 0; i < NoCuts; i++) begin : gen_axi_cuts
       axi_cut #(
-<<<<<<< HEAD
-          .Bypass   (1'b0),
-          .aw_chan_t(aw_chan_t),
-          .w_chan_t (w_chan_t),
-          .b_chan_t (b_chan_t),
-          .ar_chan_t(ar_chan_t),
-          .r_chan_t (r_chan_t),
-          .req_t    (req_t),
-          .resp_t   (resp_t)
-=======
         .Bypass     (       1'b0 ),
         .aw_chan_t  (  aw_chan_t ),
         .w_chan_t   (   w_chan_t ),
@@ -96,14 +64,13 @@ module axi_multicut #(
         .r_chan_t   (   r_chan_t ),
         .axi_req_t  (  axi_req_t ),
         .axi_resp_t ( axi_resp_t )
->>>>>>> main
       ) i_cut (
-          .clk_i,
-          .rst_ni,
-          .slv_req_i (cut_req[i]),
-          .slv_resp_o(cut_resp[i]),
-          .mst_req_o (cut_req[i+1]),
-          .mst_resp_i(cut_resp[i+1])
+        .clk_i,
+        .rst_ni,
+        .slv_req_i  ( cut_req[i]    ),
+        .slv_resp_o ( cut_resp[i]   ),
+        .mst_req_o  ( cut_req[i+1]  ),
+        .mst_resp_i ( cut_resp[i+1] )
       );
     end
 
@@ -114,11 +81,11 @@ module axi_multicut #(
 
   // Check the invariants
   // pragma translate_off
-`ifndef VERILATOR
+  `ifndef VERILATOR
   initial begin
-    assert (NoCuts >= 0);
+    assert(NoCuts >= 0);
   end
-`endif
+  `endif
   // pragma translate_on
 endmodule
 
@@ -127,23 +94,23 @@ endmodule
 
 // interface wrapper
 module axi_multicut_intf #(
-    parameter int unsigned ADDR_WIDTH = 0,  // The address width.
-    parameter int unsigned DATA_WIDTH = 0,  // The data width.
-    parameter int unsigned ID_WIDTH   = 0,  // The ID width.
-    parameter int unsigned USER_WIDTH = 0,  // The user data width.
-    parameter int unsigned NUM_CUTS   = 0   // The number of cuts.
+  parameter int unsigned ADDR_WIDTH = 0, // The address width.
+  parameter int unsigned DATA_WIDTH = 0, // The data width.
+  parameter int unsigned ID_WIDTH   = 0, // The ID width.
+  parameter int unsigned USER_WIDTH = 0, // The user data width.
+  parameter int unsigned NUM_CUTS   = 0  // The number of cuts.
 ) (
-    input logic    clk_i,
-    input logic    rst_ni,
-    AXI_BUS.Slave  in,
-    AXI_BUS.Master out
+  input logic    clk_i,
+  input logic    rst_ni,
+  AXI_BUS.Slave  in,
+  AXI_BUS.Master out
 );
 
-  typedef logic [ID_WIDTH-1:0] id_t;
-  typedef logic [ADDR_WIDTH-1:0] addr_t;
-  typedef logic [DATA_WIDTH-1:0] data_t;
+  typedef logic [ID_WIDTH-1:0]     id_t;
+  typedef logic [ADDR_WIDTH-1:0]   addr_t;
+  typedef logic [DATA_WIDTH-1:0]   data_t;
   typedef logic [DATA_WIDTH/8-1:0] strb_t;
-  typedef logic [USER_WIDTH-1:0] user_t;
+  typedef logic [USER_WIDTH-1:0]   user_t;
 
   `AXI_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_W_CHAN_T(w_chan_t, data_t, strb_t, user_t)
@@ -153,13 +120,8 @@ module axi_multicut_intf #(
   `AXI_TYPEDEF_REQ_T(axi_req_t, aw_chan_t, w_chan_t, ar_chan_t)
   `AXI_TYPEDEF_RESP_T(axi_resp_t, b_chan_t, r_chan_t)
 
-<<<<<<< HEAD
-  req_t slv_req, mst_req;
-  resp_t slv_resp, mst_resp;
-=======
   axi_req_t  slv_req,  mst_req;
   axi_resp_t slv_resp, mst_resp;
->>>>>>> main
 
   `AXI_ASSIGN_TO_REQ(slv_req, in)
   `AXI_ASSIGN_FROM_RESP(in, slv_resp)
@@ -168,16 +130,6 @@ module axi_multicut_intf #(
   `AXI_ASSIGN_TO_RESP(mst_resp, out)
 
   axi_multicut #(
-<<<<<<< HEAD
-      .NoCuts   (NUM_CUTS),
-      .aw_chan_t(aw_chan_t),
-      .w_chan_t (w_chan_t),
-      .b_chan_t (b_chan_t),
-      .ar_chan_t(ar_chan_t),
-      .r_chan_t (r_chan_t),
-      .req_t    (req_t),
-      .resp_t   (resp_t)
-=======
     .NoCuts     (   NUM_CUTS ),
     .aw_chan_t  (  aw_chan_t ),
     .w_chan_t   (   w_chan_t ),
@@ -186,65 +138,52 @@ module axi_multicut_intf #(
     .r_chan_t   (   r_chan_t ),
     .axi_req_t  (  axi_req_t ),
     .axi_resp_t ( axi_resp_t )
->>>>>>> main
   ) i_axi_multicut (
-      .clk_i,
-      .rst_ni,
-      .slv_req_i (slv_req),
-      .slv_resp_o(slv_resp),
-      .mst_req_o (mst_req),
-      .mst_resp_i(mst_resp)
+    .clk_i,
+    .rst_ni,
+    .slv_req_i  ( slv_req  ),
+    .slv_resp_o ( slv_resp ),
+    .mst_req_o  ( mst_req  ),
+    .mst_resp_i ( mst_resp )
   );
 
   // Check the invariants.
   // pragma translate_off
-`ifndef VERILATOR
+  `ifndef VERILATOR
   initial begin
-    assert (ADDR_WIDTH > 0)
-    else $fatal(1, "Wrong addr width parameter");
-    assert (DATA_WIDTH > 0)
-    else $fatal(1, "Wrong data width parameter");
-    assert (ID_WIDTH > 0)
-    else $fatal(1, "Wrong id   width parameter");
-    assert (USER_WIDTH > 0)
-    else $fatal(1, "Wrong user width parameter");
-    assert (in.AXI_ADDR_WIDTH == ADDR_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (in.AXI_DATA_WIDTH == DATA_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (in.AXI_ID_WIDTH == ID_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (in.AXI_USER_WIDTH == USER_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (out.AXI_ADDR_WIDTH == ADDR_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (out.AXI_DATA_WIDTH == DATA_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (out.AXI_ID_WIDTH == ID_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (out.AXI_USER_WIDTH == USER_WIDTH)
-    else $fatal(1, "Wrong interface definition");
+    assert (ADDR_WIDTH > 0) else $fatal(1, "Wrong addr width parameter");
+    assert (DATA_WIDTH > 0) else $fatal(1, "Wrong data width parameter");
+    assert (ID_WIDTH   > 0) else $fatal(1, "Wrong id   width parameter");
+    assert (USER_WIDTH > 0) else $fatal(1, "Wrong user width parameter");
+    assert (in.AXI_ADDR_WIDTH  == ADDR_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (in.AXI_DATA_WIDTH  == DATA_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (in.AXI_ID_WIDTH    == ID_WIDTH)   else $fatal(1, "Wrong interface definition");
+    assert (in.AXI_USER_WIDTH  == USER_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (out.AXI_ADDR_WIDTH == ADDR_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (out.AXI_DATA_WIDTH == DATA_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (out.AXI_ID_WIDTH   == ID_WIDTH)   else $fatal(1, "Wrong interface definition");
+    assert (out.AXI_USER_WIDTH == USER_WIDTH) else $fatal(1, "Wrong interface definition");
   end
-`endif
+  `endif
   // pragma translate_on
 endmodule
 
 module axi_lite_multicut_intf #(
-    // The address width.
-    parameter int unsigned ADDR_WIDTH = 0,
-    // The data width.
-    parameter int unsigned DATA_WIDTH = 0,
-    // The number of cuts.
-    parameter int unsigned NUM_CUTS   = 0
+  // The address width.
+  parameter int unsigned ADDR_WIDTH = 0,
+  // The data width.
+  parameter int unsigned DATA_WIDTH = 0,
+  // The number of cuts.
+  parameter int unsigned NUM_CUTS   = 0
 ) (
-    input logic           clk_i,
-    input logic           rst_ni,
-          AXI_LITE.Slave  in,
-          AXI_LITE.Master out
+  input logic     clk_i  ,
+  input logic     rst_ni ,
+  AXI_LITE.Slave  in     ,
+  AXI_LITE.Master out
 );
 
-  typedef logic [ADDR_WIDTH-1:0] addr_t;
-  typedef logic [DATA_WIDTH-1:0] data_t;
+  typedef logic [ADDR_WIDTH-1:0]   addr_t;
+  typedef logic [DATA_WIDTH-1:0]   data_t;
   typedef logic [DATA_WIDTH/8-1:0] strb_t;
 
   `AXI_LITE_TYPEDEF_AW_CHAN_T(aw_chan_t, addr_t)
@@ -255,13 +194,8 @@ module axi_lite_multicut_intf #(
   `AXI_LITE_TYPEDEF_REQ_T(axi_req_t, aw_chan_t, w_chan_t, ar_chan_t)
   `AXI_LITE_TYPEDEF_RESP_T(axi_resp_t, b_chan_t, r_chan_t)
 
-<<<<<<< HEAD
-  req_t slv_req, mst_req;
-  resp_t slv_resp, mst_resp;
-=======
   axi_req_t  slv_req,  mst_req;
   axi_resp_t slv_resp, mst_resp;
->>>>>>> main
 
   `AXI_LITE_ASSIGN_TO_REQ(slv_req, in)
   `AXI_LITE_ASSIGN_FROM_RESP(in, slv_resp)
@@ -270,16 +204,6 @@ module axi_lite_multicut_intf #(
   `AXI_LITE_ASSIGN_TO_RESP(mst_resp, out)
 
   axi_multicut #(
-<<<<<<< HEAD
-      .NoCuts   (NUM_CUTS),
-      .aw_chan_t(aw_chan_t),
-      .w_chan_t (w_chan_t),
-      .b_chan_t (b_chan_t),
-      .ar_chan_t(ar_chan_t),
-      .r_chan_t (r_chan_t),
-      .req_t    (req_t),
-      .resp_t   (resp_t)
-=======
     .NoCuts     (   NUM_CUTS ),
     .aw_chan_t  (  aw_chan_t ),
     .w_chan_t   (   w_chan_t ),
@@ -288,33 +212,26 @@ module axi_lite_multicut_intf #(
     .r_chan_t   (   r_chan_t ),
     .axi_req_t  (  axi_req_t ),
     .axi_resp_t ( axi_resp_t )
->>>>>>> main
   ) i_axi_multicut (
-      .clk_i,
-      .rst_ni,
-      .slv_req_i (slv_req),
-      .slv_resp_o(slv_resp),
-      .mst_req_o (mst_req),
-      .mst_resp_i(mst_resp)
+    .clk_i,
+    .rst_ni,
+    .slv_req_i  ( slv_req  ),
+    .slv_resp_o ( slv_resp ),
+    .mst_req_o  ( mst_req  ),
+    .mst_resp_i ( mst_resp )
   );
 
   // Check the invariants.
   // pragma translate_off
-`ifndef VERILATOR
+  `ifndef VERILATOR
   initial begin
-    assert (ADDR_WIDTH > 0)
-    else $fatal(1, "Wrong addr width parameter");
-    assert (DATA_WIDTH > 0)
-    else $fatal(1, "Wrong data width parameter");
-    assert (in.AXI_ADDR_WIDTH == ADDR_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (in.AXI_DATA_WIDTH == DATA_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (out.AXI_ADDR_WIDTH == ADDR_WIDTH)
-    else $fatal(1, "Wrong interface definition");
-    assert (out.AXI_DATA_WIDTH == DATA_WIDTH)
-    else $fatal(1, "Wrong interface definition");
+    assert (ADDR_WIDTH > 0) else $fatal(1, "Wrong addr width parameter");
+    assert (DATA_WIDTH > 0) else $fatal(1, "Wrong data width parameter");
+    assert (in.AXI_ADDR_WIDTH == ADDR_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (in.AXI_DATA_WIDTH == DATA_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (out.AXI_ADDR_WIDTH == ADDR_WIDTH) else $fatal(1, "Wrong interface definition");
+    assert (out.AXI_DATA_WIDTH == DATA_WIDTH) else $fatal(1, "Wrong interface definition");
   end
-`endif
+  `endif
   // pragma translate_on
 endmodule

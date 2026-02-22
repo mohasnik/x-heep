@@ -41,21 +41,21 @@ module quadrilatero_wrapper
 );
 
   // Internal signals
-  logic                                       mem_req;
-  logic                                       mem_we;
+  logic                                     mem_req;
+  logic                                     mem_we;
   logic [quadrilatero_pkg::BUS_WIDTH/8 - 1:0] mem_be;
-  logic [                               31:0] mem_addr;
+  logic [                             31:0] mem_addr;
   logic [  quadrilatero_pkg::BUS_WIDTH - 1:0] mem_wdata;
-  logic                                       mem_gnt;
-  logic                                       mem_rvalid;
+  logic                                     mem_gnt;
+  logic                                     mem_rvalid;
   logic [  quadrilatero_pkg::BUS_WIDTH - 1:0] mem_rdata;
 
 
   // Matrix coprocessor
   quadrilatero #(
       .INPUT_BUFFER_DEPTH(INPUT_BUFFER_DEPTH),  // 0 means no input buffer 
-      .RES_IF_FIFO_DEPTH (RES_IF_FIFO_DEPTH),
-      .FPU               (MATRIX_FPU)
+      .RES_IF_FIFO_DEPTH (RES_IF_FIFO_DEPTH ),
+      .FPU               (MATRIX_FPU        )
   ) mat_inst (
       .clk_i,
       .rst_ni,

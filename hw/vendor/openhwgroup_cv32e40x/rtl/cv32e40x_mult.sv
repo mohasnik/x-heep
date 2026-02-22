@@ -24,26 +24,25 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_mult
-  import cv32e40x_pkg::*;
+module cv32e40x_mult import cv32e40x_pkg::*;
 (
-    input logic clk,
-    input logic rst_n,
+  input  logic        clk,
+  input  logic        rst_n,
 
-    input logic        valid_i,
-    input mul_opcode_e operator_i,
+  input  logic        valid_i,
+  input  mul_opcode_e operator_i,
 
-    // integer and short multiplier
-    input logic [1:0] signed_mode_i,
+  // integer and short multiplier
+  input  logic [ 1:0] signed_mode_i,
 
-    input logic [31:0] op_a_i,
-    input logic [31:0] op_b_i,
+  input  logic [31:0] op_a_i,
+  input  logic [31:0] op_b_i,
 
-    output logic [31:0] result_o,
+  output logic [31:0] result_o,
 
-    output logic ready_o,
-    output logic valid_o,
-    input  logic ready_i
+  output logic        ready_o,
+  output logic        valid_o,
+  input  logic        ready_i
 );
 
   ///////////////////////////////////////////////////////////////
@@ -55,35 +54,35 @@ module cv32e40x_mult
   ///////////////////////////////////////////////////////////////
 
   // Multiplier Operands
-  logic       [31:0] op_a;
-  logic       [31:0] op_b;
-  logic       [33:0] int_result;
+  logic [31:0] op_a;
+  logic [31:0] op_b;
+  logic [33:0] int_result;
 
   // MULH control signals
-  logic              mulh_shift;
+  logic        mulh_shift;
 
   // MULH State variables
-  mul_state_e        mulh_state;
-  mul_state_e        mulh_state_next;
+  mul_state_e  mulh_state;
+  mul_state_e  mulh_state_next;
 
   // MULH Part select operands
-  logic       [16:0] mulh_al;
-  logic       [16:0] mulh_bl;
-  logic       [16:0] mulh_ah;
-  logic       [16:0] mulh_bh;
+  logic [16:0] mulh_al;
+  logic [16:0] mulh_bl;
+  logic [16:0] mulh_ah;
+  logic [16:0] mulh_bh;
 
   // MULH Operands
-  logic       [16:0] mulh_a;
-  logic       [16:0] mulh_b;
+  logic [16:0] mulh_a;
+  logic [16:0] mulh_b;
 
   // MULH Intermediate Results
-  logic       [32:0] mulh_acc;
-  logic       [32:0] mulh_acc_next;
-  logic       [32:0] mulh_acc_res;
+  logic [32:0] mulh_acc;
+  logic [32:0] mulh_acc_next;
+  logic [32:0] mulh_acc_res;
 
   // Result
-  logic       [33:0] result;
-  logic       [33:0] result_shifted;
+  logic [33:0] result;
+  logic [33:0] result_shifted;
 
   assign mulh_al[15:0] = op_a_i[15:0];
   assign mulh_bl[15:0] = op_b_i[15:0];
@@ -91,28 +90,29 @@ module cv32e40x_mult
   assign mulh_bh[15:0] = op_b_i[31:16];
 
   // Lower halfwords are always multiplied as unsigned
-  assign mulh_al[16]   = 1'b0;
-  assign mulh_bl[16]   = 1'b0;
+  assign mulh_al[16] = 1'b0;
+  assign mulh_bl[16] = 1'b0;
 
   // Sign extention for the upper halfword is decided by the instuction used.
   // MULH   :   signed x signed    : signed_mode_i == 'b00
   // MULHSU :   signed x unsigned  : signed_mode_i == 'b01
   // MULHU  : unsigned x unsigned  : signed_mode_i == 'b11
-  assign mulh_ah[16]   = signed_mode_i[0] && op_a_i[31];
-  assign mulh_bh[16]   = signed_mode_i[1] && op_b_i[31];
+  assign mulh_ah[16] = signed_mode_i[0] && op_a_i[31];
+  assign mulh_bh[16] = signed_mode_i[1] && op_b_i[31];
 
   ////////////////
   //  MULH FSM  //
   ////////////////
 
-  always_comb begin
-    mulh_shift      = 1'b0;
-    mulh_a          = mulh_al;
-    mulh_b          = mulh_bl;
-    mulh_state_next = mulh_state;
-    ready_o         = 1'b0;
-    valid_o         = 1'b0;
-    mulh_acc_next   = mulh_acc;
+  always_comb
+  begin
+    mulh_shift       = 1'b0;
+    mulh_a           = mulh_al;
+    mulh_b           = mulh_bl;
+    mulh_state_next  = mulh_state;
+    ready_o          = 1'b0;
+    valid_o          = 1'b0;
+    mulh_acc_next    = mulh_acc;
 
     // Case statement assumes valid_i = 1; the valid_i = 0 scenario
     // is handled after the case statement.    
@@ -123,35 +123,36 @@ module cv32e40x_mult
           mulh_shift      = 1'b1;
           mulh_state_next = MUL_ALBH;
           mulh_acc_next   = mulh_acc_res;
-        end else begin
+        end
+        else begin
           // Single cycle multiplication
-          valid_o = 1'b1;
+          valid_o         = 1'b1;
 
           if (ready_i) begin
-            ready_o = 1'b1;
+            ready_o        = 1'b1;
           end
         end
       end
 
       MUL_ALBH: begin
-        mulh_state_next = MUL_AHBL;
-        mulh_acc_next   = mulh_acc_res;
-        mulh_a          = mulh_al;
-        mulh_b          = mulh_bh;
+        mulh_state_next  = MUL_AHBL;
+        mulh_acc_next    = mulh_acc_res;
+        mulh_a           = mulh_al;
+        mulh_b           = mulh_bh;
       end
 
       MUL_AHBL: begin
-        mulh_state_next = MUL_AHBH;
-        mulh_acc_next   = mulh_acc_res;
-        mulh_shift      = 1'b1;
-        mulh_a          = mulh_ah;
-        mulh_b          = mulh_bl;
+        mulh_state_next  = MUL_AHBH;
+        mulh_acc_next    = mulh_acc_res;
+        mulh_shift       = 1'b1;
+        mulh_a           = mulh_ah;
+        mulh_b           = mulh_bl;
       end
 
       MUL_AHBH: begin
-        valid_o = 1'b1;
-        mulh_a  = mulh_ah;
-        mulh_b  = mulh_bh;
+        valid_o           = 1'b1;
+        mulh_a            = mulh_ah;
+        mulh_b            = mulh_bh;
 
         if (ready_i) begin
           ready_o         = 1'b1;
@@ -169,11 +170,11 @@ module cv32e40x_mult
       valid_o = 1'b0;
       mulh_acc_next = '0;
     end
-  end  // always_comb
+  end // always_comb
 
   always_ff @(posedge clk, negedge rst_n) begin
     if (rst_n == 1'b0) begin
-      mulh_acc   <= '0;
+      mulh_acc   <=  '0;
       mulh_state <= MUL_ALBL;
     end else begin
       mulh_acc   <= mulh_acc_next;
@@ -183,7 +184,7 @@ module cv32e40x_mult
 
   // MULH Shift Mux
   assign result_shifted = $signed(result) >>> 16;
-  assign mulh_acc_res = mulh_shift ? result_shifted[32:0] : result[32:0];
+  assign mulh_acc_res   = mulh_shift ? result_shifted[32:0] : result[32:0];
 
   ///////////////////////////
   //   32-bit multiplier   //
@@ -204,7 +205,7 @@ module cv32e40x_mult
   ////////////////////////////////////
 
   // 34bit Adder - mulh_acc is always 0 for the MUL instruction
-  assign result = $signed(int_result) + $signed(mulh_acc);
+  assign result   = $signed(int_result) + $signed(mulh_acc);
 
   assign result_o = result[31:0];
 

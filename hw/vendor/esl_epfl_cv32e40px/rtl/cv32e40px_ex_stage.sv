@@ -162,7 +162,7 @@ module cv32e40px_ex_stage
     output logic [ 5:0] regfile_alu_waddr_fw_o,
     output logic        regfile_alu_we_fw_o,
     output logic        regfile_alu_we_fw_power_o,
-    output logic [31:0] regfile_alu_wdata_fw_o,     // forward to RF and ID/EX pipe, ALU & MUL
+    output logic [31:0] regfile_alu_wdata_fw_o,  // forward to RF and ID/EX pipe, ALU & MUL
 
     // To IF: Jump and branch target and decision
     output logic [31:0] jump_target_o,
@@ -175,7 +175,7 @@ module cv32e40px_ex_stage
 
     output logic ex_ready_o,  // EX stage ready for new data
     output logic ex_valid_o,  // EX stage gets new data
-    input  logic wb_ready_i   // WB stage ready for new data
+    input  logic wb_ready_i  // WB stage ready for new data
 );
 
   logic [                31:0] alu_result;

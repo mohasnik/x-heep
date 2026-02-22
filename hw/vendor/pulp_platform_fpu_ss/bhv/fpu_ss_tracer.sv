@@ -43,7 +43,7 @@ module fpu_ss_tracer (
 
   // open/close output file for writing
   initial begin
-    wait (rst_ni == 1'b1);
+    wait(rst_ni == 1'b1);
     $sformat(fn, "fpu_ss_trace.log");
     fpu_ss_trace_file = $fopen(fn, "w");
     $fwrite(fpu_ss_trace_file, "time instruction result\n");
@@ -55,7 +55,7 @@ module fpu_ss_tracer (
         $sformat(rs1_s, "");
         $sformat(rs2_s, "");
         $sformat(rs3_s, "");
-        unique casez (instr_i)
+        unique casez(instr_i)
           fpu_ss_instr_pkg::FADD_S: begin
             $sformat(fpu_ss_operation, "fadd.s");
             $sformat(rs1_s, ", f%0d", rs1_i);
@@ -88,7 +88,7 @@ module fpu_ss_tracer (
             $sformat(fpu_ss_operation, "fsgnjx.s");
             $sformat(rs1_s, ", f%0d", rs1_i);
           end
-          fpu_ss_instr_pkg::FMIN_S: begin
+          fpu_ss_instr_pkg::FMIN_S:begin
             $sformat(fpu_ss_operation, "fmin.s");
             $sformat(rs1_s, ", f%0d", rs1_i);
             $sformat(rs2_s, ", f%0d", rs2_i);
@@ -165,13 +165,13 @@ module fpu_ss_tracer (
             $sformat(fpu_ss_operation, "operation unknown");
             $display("fpu_ss_operation was set to operation unknown");
           end
-        endcase  // instr_i
+        endcase // instr_i
       end
       if (x_mem_valid_i) begin
         $sformat(rs1_mem_s, "");
         $sformat(rs2_mem_s, "");
         $sformat(rs3_mem_s, "");
-        unique casez (instr_i)
+        unique casez(instr_i)
           fpu_ss_instr_pkg::FLW: begin
             $sformat(rs1_mem_s, ", x%0d", rs1_i);
           end
@@ -200,13 +200,13 @@ module fpu_ss_tracer (
           $sformat(result, "%.4f", $bitstoshortreal(x_mem_result_i));
           $sformat(instruction, "flw %s%s%s%s", rd_s, rs1_mem_s, rs2_mem_s, rs3_mem_s);
           $sformat(instruction, "%-30s", instruction);
-          $fwrite(fpu_ss_trace_file, "%t\t\t %s \t\t%s", $time, instruction, result);
+          $fwrite(fpu_ss_trace_file,"%t\t\t %s \t\t%s", $time, instruction, result);
           $fwrite(fpu_ss_trace_file, "\n");
         end else begin
           $sformat(result, "-----");
           $sformat(instruction, "fsw %s%s%s", rs1_mem_s, rs2_mem_s, rs3_mem_s);
           $sformat(instruction, "%-30s", instruction);
-          $fwrite(fpu_ss_trace_file, "%t\t\t %s \t\t%s", $time, instruction, result);
+          $fwrite(fpu_ss_trace_file,"%t\t\t %s \t\t%s", $time, instruction, result);
           $fwrite(fpu_ss_trace_file, "\n");
         end
       end

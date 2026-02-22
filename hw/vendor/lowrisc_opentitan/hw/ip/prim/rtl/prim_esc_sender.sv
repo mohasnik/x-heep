@@ -24,19 +24,19 @@
 module prim_esc_sender
   import prim_esc_pkg::*;
 (
-    input           clk_i,
-    input           rst_ni,
-    // this triggers a ping test. keep asserted until ping_ok_o is pulsed high.
-    input           ping_req_i,
-    output logic    ping_ok_o,
-    // asserted if signal integrity issue detected
-    output logic    integ_fail_o,
-    // escalation request signal
-    input           esc_req_i,
-    // escalation / ping response
-    input  esc_rx_t esc_rx_i,
-    // escalation output diff pair
-    output esc_tx_t esc_tx_o
+  input           clk_i,
+  input           rst_ni,
+  // this triggers a ping test. keep asserted until ping_ok_o is pulsed high.
+  input           ping_req_i,
+  output logic    ping_ok_o,
+  // asserted if signal integrity issue detected
+  output logic    integ_fail_o,
+  // escalation request signal
+  input           esc_req_i,
+  // escalation / ping response
+  input esc_rx_t  esc_rx_i,
+  // escalation output diff pair
+  output esc_tx_t esc_tx_o
 );
 
   /////////////////////////////////
@@ -46,17 +46,17 @@ module prim_esc_sender
   logic resp, sigint_detected;
 
   prim_diff_decode #(
-      .AsyncOn(1'b0)
+    .AsyncOn(1'b0)
   ) i_decode_resp (
-      .clk_i,
-      .rst_ni,
-      .diff_pi (esc_rx_i.resp_p),
-      .diff_ni (esc_rx_i.resp_n),
-      .level_o (resp),
-      .rise_o  (),
-      .fall_o  (),
-      .event_o (),
-      .sigint_o(sigint_detected)
+    .clk_i,
+    .rst_ni,
+    .diff_pi  ( esc_rx_i.resp_p ),
+    .diff_ni  ( esc_rx_i.resp_n ),
+    .level_o  ( resp            ),
+    .rise_o   (                 ),
+    .fall_o   (                 ),
+    .event_o  (                 ),
+    .sigint_o ( sigint_detected )
   );
 
   //////////////
@@ -76,27 +76,20 @@ module prim_esc_sender
 
   // This prevents further tool optimizations of the differential signal.
   prim_buf u_prim_buf_p (
-      .in_i (esc_p),
-      .out_o(esc_tx_o.esc_p)
+    .in_i(esc_p),
+    .out_o(esc_tx_o.esc_p)
   );
   prim_buf u_prim_buf_n (
-      .in_i (~esc_p),
-      .out_o(esc_tx_o.esc_n)
+    .in_i(~esc_p),
+    .out_o(esc_tx_o.esc_n)
   );
 
   //////////////
   // RX Logic //
   //////////////
 
-  typedef enum logic [2:0] {
-    Idle,
-    CheckEscRespLo,
-    CheckEscRespHi,
-    CheckPingResp0,
-    CheckPingResp1,
-    CheckPingResp2,
-    CheckPingResp3
-  } fsm_e;
+  typedef enum logic [2:0] {Idle, CheckEscRespLo, CheckEscRespHi,
+    CheckPingResp0, CheckPingResp1, CheckPingResp2, CheckPingResp3} fsm_e;
 
   fsm_e state_d, state_q;
 
@@ -122,7 +115,7 @@ module prim_esc_sender
       end
       // check whether response is 0
       CheckEscRespLo: begin
-        state_d = CheckEscRespHi;
+        state_d      = CheckEscRespHi;
         if (!esc_tx_o.esc_p || resp) begin
           state_d = Idle;
           integ_fail_o = sigint_detected | resp;
@@ -144,7 +137,7 @@ module prim_esc_sender
         // jump to escalation response checking (lo state)
         if (esc_req_i) begin
           state_d = CheckEscRespLo;
-          // abort if response is wrong
+        // abort if response is wrong
         end else if (!resp) begin
           state_d = Idle;
           integ_fail_o = 1'b1;
@@ -156,7 +149,7 @@ module prim_esc_sender
         // jump to escalation response checking (hi state)
         if (esc_req_i) begin
           state_d = CheckEscRespHi;
-          // abort if response is wrong
+        // abort if response is wrong
         end else if (resp) begin
           state_d = Idle;
           integ_fail_o = 1'b1;
@@ -168,7 +161,7 @@ module prim_esc_sender
         // jump to escalation response checking (lo state)
         if (esc_req_i) begin
           state_d = CheckEscRespLo;
-          // abort if response is wrong
+        // abort if response is wrong
         end else if (!resp) begin
           state_d = Idle;
           integ_fail_o = 1'b1;
@@ -180,14 +173,14 @@ module prim_esc_sender
         // jump to escalation response checking (hi state)
         if (esc_req_i) begin
           state_d = CheckEscRespHi;
-          // abort if response is wrong
+        // abort if response is wrong
         end else if (resp) begin
           integ_fail_o = 1'b1;
         end else begin
           ping_ok_o = ping_req_i;
         end
       end
-      default: state_d = Idle;
+      default : state_d = Idle;
     endcase
 
     // a sigint error will reset the state machine
@@ -195,7 +188,7 @@ module prim_esc_sender
     // receiver recover
     if (sigint_detected) begin
       ping_ok_o = 1'b0;
-      state_d   = Idle;
+      state_d = Idle;
     end
 
     // escalation takes precedence,
@@ -211,13 +204,13 @@ module prim_esc_sender
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_regs
     if (!rst_ni) begin
-      state_q <= Idle;
-      esc_req_q <= 1'b0;
+      state_q   <= Idle;
+      esc_req_q  <= 1'b0;
       esc_req_q1 <= 1'b0;
       ping_req_q <= 1'b0;
     end else begin
-      state_q <= state_d;
-      esc_req_q <= esc_req_d;
+      state_q   <= state_d;
+      esc_req_q  <= esc_req_d;
       esc_req_q1 <= esc_req_q;
       ping_req_q <= ping_req_d;
     end
@@ -235,38 +228,35 @@ module prim_esc_sender
   // diff encoding of output
   `ASSERT(DiffEncCheck_A, esc_tx_o.esc_p ^ esc_tx_o.esc_n)
   // signal integrity check propagation
-  `ASSERT(SigIntCheck0_A, esc_rx_i.resp_p == esc_rx_i.resp_n |-> integ_fail_o)
+  `ASSERT(SigIntCheck0_A, esc_rx_i.resp_p == esc_rx_i.resp_n  |-> integ_fail_o)
   // this happens in case we did not get a correct escalation response
-  `ASSERT(
-      SigIntCheck1_A,
-      ##1 $rose(esc_req_i)
-      && state_q inside {Idle, CheckPingResp1, CheckPingResp3} ##1 !esc_rx_i.resp_p |-> integ_fail_o,
-      clk_i, !rst_ni || (esc_rx_i.resp_p == esc_rx_i.resp_n) || (state_q == Idle && resp))
-  `ASSERT(SigIntCheck2_A,
-          ##1 $rose(esc_req_i)
-          && state_q inside {CheckPingResp0, CheckPingResp2} ##1 esc_rx_i.resp_p |-> integ_fail_o,
-          clk_i, !rst_ni || (esc_rx_i.resp_p == esc_rx_i.resp_n) || (state_q == Idle && resp))
+  `ASSERT(SigIntCheck1_A, ##1 $rose(esc_req_i) &&
+      state_q inside {Idle, CheckPingResp1, CheckPingResp3} ##1 !esc_rx_i.resp_p |->
+      integ_fail_o, clk_i, !rst_ni || (esc_rx_i.resp_p == esc_rx_i.resp_n) ||
+      (state_q == Idle && resp))
+  `ASSERT(SigIntCheck2_A, ##1 $rose(esc_req_i) &&
+      state_q inside {CheckPingResp0, CheckPingResp2} ##1 esc_rx_i.resp_p |->
+      integ_fail_o, clk_i, !rst_ni || (esc_rx_i.resp_p == esc_rx_i.resp_n) ||
+      (state_q == Idle && resp))
   // unexpected response
   `ASSERT(SigIntCheck3_A, state_q == Idle && resp |-> integ_fail_o)
   // signal_int_backward_check
-  `ASSERT(
-      SigIntBackCheck_A,
-      integ_fail_o |-> (esc_rx_i.resp_p == esc_rx_i.resp_n) || (esc_rx_i.resp_p && !(state_q == CheckEscRespHi)) || (!esc_rx_i.resp_p && !(state_q == CheckEscRespLo)))
+  `ASSERT(SigIntBackCheck_A, integ_fail_o |-> (esc_rx_i.resp_p == esc_rx_i.resp_n) ||
+      (esc_rx_i.resp_p && !(state_q == CheckEscRespHi)) ||
+      (!esc_rx_i.resp_p && !(state_q == CheckEscRespLo)))
   // state machine CheckEscRespLo and Hi as they are ideal resp signals
-  `ASSERT(
-      StateEscRespHiCheck_A,
-      state_q == CheckEscRespLo && esc_tx_o.esc_p && !integ_fail_o |=> state_q == CheckEscRespHi)
-  `ASSERT(
-      StateEscRespLoCheck_A,
-      state_q == CheckEscRespHi && esc_tx_o.esc_p && !integ_fail_o |=> state_q == CheckEscRespLo)
+  `ASSERT(StateEscRespHiCheck_A, state_q == CheckEscRespLo && esc_tx_o.esc_p && !integ_fail_o |=>
+      state_q == CheckEscRespHi)
+  `ASSERT(StateEscRespLoCheck_A, state_q == CheckEscRespHi && esc_tx_o.esc_p && !integ_fail_o |=>
+      state_q == CheckEscRespLo)
   `ASSERT(StateEscRespHiBackCheck_A, state_q == CheckEscRespHi |-> $past(esc_tx_o.esc_p))
   `ASSERT(StateEscRespLoBackCheck_A, state_q == CheckEscRespLo |-> $past(esc_tx_o.esc_p))
   // check that escalation signal is at least 2 cycles high
-  `ASSERT(EscCheck_A, esc_req_i |-> esc_tx_o.esc_p [* 2])
+  `ASSERT(EscCheck_A, esc_req_i |-> esc_tx_o.esc_p [*2] )
   // escalation / ping collision
   `ASSERT(EscPingCheck_A, esc_req_i && ping_req_i |-> ping_ok_o)
   // check that ping request results in only a single cycle pulse
-  `ASSERT(PingCheck_A, ##1 $rose(ping_req_i) |-> esc_tx_o.esc_p ##1 !esc_tx_o.esc_p, clk_i,
-          !rst_ni || esc_req_i || integ_fail_o)
+  `ASSERT(PingCheck_A, ##1 $rose(ping_req_i) |-> esc_tx_o.esc_p ##1 !esc_tx_o.esc_p , clk_i,
+      !rst_ni || esc_req_i || integ_fail_o)
 
 endmodule : prim_esc_sender

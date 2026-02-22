@@ -13,44 +13,44 @@
 
 /// A protocol converter from AXI4-Lite to a register interface.
 module axi_lite_to_reg #(
-    /// The width of the address.
-    parameter int ADDR_WIDTH = -1,
-    /// The width of the data.
-    parameter int DATA_WIDTH = -1,
-    /// Buffer depth (how many outstanding transactions do we allow)
-    parameter int BUFFER_DEPTH = 2,
-    /// Whether the AXI-Lite W channel should be decoupled with a register. This
-    /// can help break long paths at the expense of registers.
-    parameter bit DECOUPLE_W = 1,
-    /// AXI-Lite request struct type.
-    parameter type axi_lite_req_t = logic,
-    /// AXI-Lite response struct type.
-    parameter type axi_lite_rsp_t = logic,
-    /// Regbus request struct type.
-    parameter type reg_req_t = logic,
-    /// Regbus response struct type.
-    parameter type reg_rsp_t = logic
+  /// The width of the address.
+  parameter int ADDR_WIDTH = -1,
+  /// The width of the data.
+  parameter int DATA_WIDTH = -1,
+  /// Buffer depth (how many outstanding transactions do we allow)
+  parameter int BUFFER_DEPTH = 2,
+  /// Whether the AXI-Lite W channel should be decoupled with a register. This
+  /// can help break long paths at the expense of registers.
+  parameter bit DECOUPLE_W = 1,
+  /// AXI-Lite request struct type.
+  parameter type axi_lite_req_t = logic,
+  /// AXI-Lite response struct type.
+  parameter type axi_lite_rsp_t = logic,
+  /// Regbus request struct type.
+  parameter type reg_req_t = logic,
+  /// Regbus response struct type.
+  parameter type reg_rsp_t = logic
 ) (
-    input  logic          clk_i,
-    input  logic          rst_ni,
-    input  axi_lite_req_t axi_lite_req_i,
-    output axi_lite_rsp_t axi_lite_rsp_o,
-    output reg_req_t      reg_req_o,
-    input  reg_rsp_t      reg_rsp_i
+  input  logic           clk_i         ,
+  input  logic           rst_ni        ,
+  input  axi_lite_req_t  axi_lite_req_i,
+  output axi_lite_rsp_t  axi_lite_rsp_o,
+  output reg_req_t       reg_req_o     ,
+  input  reg_rsp_t       reg_rsp_i
 );
 
-`ifndef SYNTHESIS
+  `ifndef SYNTHESIS
   initial begin
-    assert (BUFFER_DEPTH > 0);
-    assert (ADDR_WIDTH > 0);
-    assert (DATA_WIDTH > 0);
+    assert(BUFFER_DEPTH > 0);
+    assert(ADDR_WIDTH > 0);
+    assert(DATA_WIDTH > 0);
   end
-`endif
+  `endif
 
   typedef struct packed {
     logic [ADDR_WIDTH-1:0]   addr;
     logic [DATA_WIDTH-1:0]   data;
-    logic [DATA_WIDTH/8-1:0] strb;  // byte-wise strobe
+    logic [DATA_WIDTH/8-1:0] strb; // byte-wise strobe
   } write_t;
 
   typedef struct packed {
@@ -63,21 +63,21 @@ module axi_lite_to_reg #(
     logic error;
   } resp_t;
 
-  logic write_fifo_full, write_fifo_empty;
-  write_t write_fifo_in, write_fifo_out;
-  logic write_fifo_push, write_fifo_pop;
+  logic   write_fifo_full, write_fifo_empty;
+  write_t write_fifo_in,   write_fifo_out;
+  logic   write_fifo_push, write_fifo_pop;
 
-  logic write_resp_fifo_full, write_resp_fifo_empty;
-  logic write_resp_fifo_in, write_resp_fifo_out;
-  logic write_resp_fifo_push, write_resp_fifo_pop;
+  logic   write_resp_fifo_full, write_resp_fifo_empty;
+  logic   write_resp_fifo_in,   write_resp_fifo_out;
+  logic   write_resp_fifo_push, write_resp_fifo_pop;
 
-  logic read_fifo_full, read_fifo_empty;
-  logic [ADDR_WIDTH-1:0] read_fifo_in, read_fifo_out;
-  logic read_fifo_push, read_fifo_pop;
+  logic   read_fifo_full, read_fifo_empty;
+  logic [ADDR_WIDTH-1:0]  read_fifo_in,   read_fifo_out;
+  logic   read_fifo_push, read_fifo_pop;
 
-  logic read_resp_fifo_full, read_resp_fifo_empty;
-  resp_t read_resp_fifo_in, read_resp_fifo_out;
-  logic read_resp_fifo_push, read_resp_fifo_pop;
+  logic   read_resp_fifo_full, read_resp_fifo_empty;
+  resp_t  read_resp_fifo_in,   read_resp_fifo_out;
+  logic   read_resp_fifo_push, read_resp_fifo_pop;
 
   req_t read_req, write_req, arb_req;
   logic read_valid, write_valid;
@@ -85,21 +85,21 @@ module axi_lite_to_reg #(
 
   // Combine AW/W Channel
   fifo_v3 #(
-      .FALL_THROUGH(!DECOUPLE_W),
-      .DEPTH       (BUFFER_DEPTH),
-      .dtype       (write_t)
+    .FALL_THROUGH ( !DECOUPLE_W  ),
+    .DEPTH        ( BUFFER_DEPTH ),
+    .dtype        ( write_t      )
   ) i_fifo_write_req (
-      .clk_i,
-      .rst_ni,
-      .flush_i   (1'b0),
-      .testmode_i(1'b0),
-      .full_o    (write_fifo_full),
-      .empty_o   (write_fifo_empty),
-      .usage_o   (  /* open */),
-      .data_i    (write_fifo_in),
-      .push_i    (write_fifo_push),
-      .data_o    (write_fifo_out),
-      .pop_i     (write_fifo_pop)
+    .clk_i,
+    .rst_ni,
+    .flush_i    ( 1'b0             ),
+    .testmode_i ( 1'b0             ),
+    .full_o     ( write_fifo_full  ),
+    .empty_o    ( write_fifo_empty ),
+    .usage_o    ( /* open */       ),
+    .data_i     ( write_fifo_in    ),
+    .push_i     ( write_fifo_push  ),
+    .data_o     ( write_fifo_out   ),
+    .pop_i      ( write_fifo_pop   )
   );
 
   assign axi_lite_rsp_o.aw_ready = write_fifo_push;
@@ -112,20 +112,20 @@ module axi_lite_to_reg #(
 
   //  B Channel
   fifo_v3 #(
-      .DEPTH(BUFFER_DEPTH),
-      .dtype(logic)
+    .DEPTH        ( BUFFER_DEPTH ),
+    .dtype        ( logic        )
   ) i_fifo_write_resp (
-      .clk_i,
-      .rst_ni,
-      .flush_i   (1'b0),
-      .testmode_i(1'b0),
-      .full_o    (write_resp_fifo_full),
-      .empty_o   (write_resp_fifo_empty),
-      .usage_o   (  /* open */),
-      .data_i    (write_resp_fifo_in),
-      .push_i    (write_resp_fifo_push),
-      .data_o    (write_resp_fifo_out),
-      .pop_i     (write_resp_fifo_pop)
+    .clk_i,
+    .rst_ni,
+    .flush_i    ( 1'b0                  ),
+    .testmode_i ( 1'b0                  ),
+    .full_o     ( write_resp_fifo_full  ),
+    .empty_o    ( write_resp_fifo_empty ),
+    .usage_o    ( /* open */            ),
+    .data_i     ( write_resp_fifo_in    ),
+    .push_i     ( write_resp_fifo_push  ),
+    .data_o     ( write_resp_fifo_out   ),
+    .pop_i      ( write_resp_fifo_pop   )
   );
 
   assign axi_lite_rsp_o.b_valid = ~write_resp_fifo_empty;
@@ -136,20 +136,20 @@ module axi_lite_to_reg #(
 
   // AR Channel
   fifo_v3 #(
-      .DEPTH     (BUFFER_DEPTH),
-      .DATA_WIDTH(ADDR_WIDTH)
+    .DEPTH        ( BUFFER_DEPTH ),
+    .DATA_WIDTH   ( ADDR_WIDTH   )
   ) i_fifo_read (
-      .clk_i,
-      .rst_ni,
-      .flush_i   (1'b0),
-      .testmode_i(1'b0),
-      .full_o    (read_fifo_full),
-      .empty_o   (read_fifo_empty),
-      .usage_o   (  /* open */),
-      .data_i    (read_fifo_in),
-      .push_i    (read_fifo_push),
-      .data_o    (read_fifo_out),
-      .pop_i     (read_fifo_pop)
+    .clk_i,
+    .rst_ni,
+    .flush_i    ( 1'b0            ),
+    .testmode_i ( 1'b0            ),
+    .full_o     ( read_fifo_full  ),
+    .empty_o    ( read_fifo_empty ),
+    .usage_o    ( /* open */      ),
+    .data_i     ( read_fifo_in    ),
+    .push_i     ( read_fifo_push  ),
+    .data_o     ( read_fifo_out   ),
+    .pop_i      ( read_fifo_pop   )
   );
 
   assign read_fifo_pop = read_valid && read_ready;
@@ -159,20 +159,20 @@ module axi_lite_to_reg #(
 
   // R Channel
   fifo_v3 #(
-      .DEPTH(BUFFER_DEPTH),
-      .dtype(resp_t)
+    .DEPTH        ( BUFFER_DEPTH ),
+    .dtype        ( resp_t       )
   ) i_fifo_read_resp (
-      .clk_i,
-      .rst_ni,
-      .flush_i   (1'b0),
-      .testmode_i(1'b0),
-      .full_o    (read_resp_fifo_full),
-      .empty_o   (read_resp_fifo_empty),
-      .usage_o   (  /* open */),
-      .data_i    (read_resp_fifo_in),
-      .push_i    (read_resp_fifo_push),
-      .data_o    (read_resp_fifo_out),
-      .pop_i     (read_resp_fifo_pop)
+    .clk_i,
+    .rst_ni,
+    .flush_i    ( 1'b0                 ),
+    .testmode_i ( 1'b0                 ),
+    .full_o     ( read_resp_fifo_full  ),
+    .empty_o    ( read_resp_fifo_empty ),
+    .usage_o    ( /* open */           ),
+    .data_i     ( read_resp_fifo_in    ),
+    .push_i     ( read_resp_fifo_push  ),
+    .data_o     ( read_resp_fifo_out   ),
+    .pop_i      ( read_resp_fifo_pop   )
   );
 
   assign axi_lite_rsp_o.r.data = read_resp_fifo_out.data;
@@ -195,21 +195,21 @@ module axi_lite_to_reg #(
   assign write_req.write = 1'b1;
 
   stream_arbiter #(
-      .DATA_T (req_t),
-      .N_INP  (2),
-      .ARBITER("rr")
+    .DATA_T  ( req_t ),
+    .N_INP   ( 2     ),
+    .ARBITER ( "rr"  )
   ) i_stream_arbiter (
-      .clk_i,
-      .rst_ni,
-      .inp_data_i ({read_req, write_req}),
-      .inp_valid_i({read_valid, write_valid}),
-      .inp_ready_o({read_ready, write_ready}),
-      .oup_data_o (arb_req),
-      .oup_valid_o(reg_req_o.valid),
-      .oup_ready_i(reg_rsp_i.ready)
+    .clk_i,
+    .rst_ni,
+    .inp_data_i  ( {read_req,   write_req}   ),
+    .inp_valid_i ( {read_valid, write_valid} ),
+    .inp_ready_o ( {read_ready, write_ready} ),
+    .oup_data_o  ( arb_req     ),
+    .oup_valid_o ( reg_req_o.valid ),
+    .oup_ready_i ( reg_rsp_i.ready )
   );
 
-  assign reg_req_o.addr  = arb_req.addr;
+  assign reg_req_o.addr = arb_req.addr;
   assign reg_req_o.write = arb_req.write;
   assign reg_req_o.wdata = write_fifo_out.data;
   assign reg_req_o.wstrb = write_fifo_out.strb;
@@ -223,20 +223,20 @@ endmodule
 
 /// Interface wrapper.
 module axi_lite_to_reg_intf #(
-    /// The width of the address.
-    parameter int ADDR_WIDTH   = -1,
-    /// The width of the data.
-    parameter int DATA_WIDTH   = -1,
-    /// Buffer depth (how many outstanding transactions do we allow)
-    parameter int BUFFER_DEPTH = 2,
-    /// Whether the AXI-Lite W channel should be decoupled with a register. This
-    /// can help break long paths at the expense of registers.
-    parameter bit DECOUPLE_W   = 1
+  /// The width of the address.
+  parameter int ADDR_WIDTH = -1,
+  /// The width of the data.
+  parameter int DATA_WIDTH = -1,
+  /// Buffer depth (how many outstanding transactions do we allow)
+  parameter int BUFFER_DEPTH = 2,
+  /// Whether the AXI-Lite W channel should be decoupled with a register. This
+  /// can help break long paths at the expense of registers.
+  parameter bit DECOUPLE_W = 1
 ) (
-    input  logic   clk_i  ,
-    input  logic   rst_ni ,
-    AXI_LITE.Slave axi_i  ,
-    REG_BUS.out    reg_o
+  input  logic   clk_i  ,
+  input  logic   rst_ni ,
+  AXI_LITE.Slave axi_i  ,
+  REG_BUS.out    reg_o
 );
 
   typedef logic [ADDR_WIDTH-1:0] addr_t;
@@ -256,8 +256,8 @@ module axi_lite_to_reg_intf #(
 
   axi_req_t  axi_req;
   axi_resp_t axi_resp;
-  reg_req_t  reg_req;
-  reg_rsp_t  reg_rsp;
+  reg_req_t reg_req;
+  reg_rsp_t reg_rsp;
 
   `AXI_LITE_ASSIGN_TO_REQ(axi_req, axi_i)
   `AXI_LITE_ASSIGN_FROM_RESP(axi_i, axi_resp)
@@ -266,21 +266,21 @@ module axi_lite_to_reg_intf #(
   `REG_BUS_ASSIGN_TO_RSP(reg_rsp, reg_o)
 
   axi_lite_to_reg #(
-      .ADDR_WIDTH(ADDR_WIDTH),
-      .DATA_WIDTH(DATA_WIDTH),
-      .BUFFER_DEPTH(BUFFER_DEPTH),
-      .DECOUPLE_W(DECOUPLE_W),
-      .axi_lite_req_t(axi_req_t),
-      .axi_lite_rsp_t(axi_resp_t),
-      .reg_req_t(reg_req_t),
-      .reg_rsp_t(reg_rsp_t)
+    .ADDR_WIDTH (ADDR_WIDTH),
+    .DATA_WIDTH (DATA_WIDTH),
+    .BUFFER_DEPTH (BUFFER_DEPTH),
+    .DECOUPLE_W (DECOUPLE_W),
+    .axi_lite_req_t (axi_req_t),
+    .axi_lite_rsp_t (axi_resp_t),
+    .reg_req_t (reg_req_t),
+    .reg_rsp_t (reg_rsp_t)
   ) i_axi_lite_to_reg (
-      .clk_i(clk_i),
-      .rst_ni(rst_ni),
-      .axi_lite_req_i(axi_req),
-      .axi_lite_rsp_o(axi_resp),
-      .reg_req_o(reg_req),
-      .reg_rsp_i(reg_rsp)
+    .clk_i (clk_i),
+    .rst_ni (rst_ni),
+    .axi_lite_req_i (axi_req),
+    .axi_lite_rsp_o (axi_resp),
+    .reg_req_o (reg_req),
+    .reg_rsp_i (reg_rsp)
   );
 
 endmodule

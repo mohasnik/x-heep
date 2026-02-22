@@ -73,54 +73,54 @@
 module spi_passthrough
   import spi_device_pkg::*;
 (
-    input clk_i,  // SPI input clk
-    input rst_ni, // SPI reset
+  input clk_i,   // SPI input clk
+  input rst_ni,  // SPI reset
 
-    input clk_out_i,  // SPI output clk
+  input clk_out_i, // SPI output clk
 
-    // Configurations
-    //
-    // command filter information is given as 256bit register. It is subject to be
-    // changed if command config is stored in DPSRAM. If that is supported, the
-    // command config is valid at the 6th command cycle and given only 8 bits.
-    input [255:0] cfg_cmd_filter_i,
+  // Configurations
+  //
+  // command filter information is given as 256bit register. It is subject to be
+  // changed if command config is stored in DPSRAM. If that is supported, the
+  // command config is valid at the 6th command cycle and given only 8 bits.
+  input [255:0] cfg_cmd_filter_i,
 
-    // address manipulation
-    input [31:0] cfg_addr_mask_i,
-    input [31:0] cfg_addr_value_i,
+  // address manipulation
+  input [31:0] cfg_addr_mask_i,
+  input [31:0] cfg_addr_value_i,
 
-    // Address mode
-    input cfg_addr_4b_en_i,
+  // Address mode
+  input cfg_addr_4b_en_i,
 
-    input spi_mode_e spi_mode_i,
+  input spi_mode_e spi_mode_i,
 
-    // SPI in
-    //
-    // Though it would be best if passthrough is able to re-use existing spi_s2p
-    // and cmdparse, but passthrough has to implement its own s2p and cmdparse to
-    // support the A/B binary scheme.
-    input              host_sck_i,
-    input              host_csb_i,
-    input        [3:0] host_s_i,
-    output logic [3:0] host_s_o,    // clk_out_i domain
-    output logic [3:0] host_s_en_o, // clk_out_i domain
+  // SPI in
+  //
+  // Though it would be best if passthrough is able to re-use existing spi_s2p
+  // and cmdparse, but passthrough has to implement its own s2p and cmdparse to
+  // support the A/B binary scheme.
+  input              host_sck_i,
+  input              host_csb_i,
+  input        [3:0] host_s_i,
+  output logic [3:0] host_s_o,    // clk_out_i domain
+  output logic [3:0] host_s_en_o, // clk_out_i domain
 
-    // SPI to SPI_HOST and terminal to the downstream device
-    output passthrough_req_t passthrough_o,
-    input  passthrough_rsp_t passthrough_i,
+  // SPI to SPI_HOST and terminal to the downstream device
+  output passthrough_req_t passthrough_o,
+  input  passthrough_rsp_t passthrough_i,
 
-    // Mailbox indicator
-    //
-    // If a read command falls into the mailbox address and the mailbox feature is
-    // enabled, the `Read Command` process module sends a signal to passthrough to
-    // take the control of the SPI line. If this signal asserts during Address
-    // phase, passthrough drops CSb to SPI Flash device and waits host's CSb
-    // de-assertion.
-    input mailbox_hit_i,
+  // Mailbox indicator
+  //
+  // If a read command falls into the mailbox address and the mailbox feature is
+  // enabled, the `Read Command` process module sends a signal to passthrough to
+  // take the control of the SPI line. If this signal asserts during Address
+  // phase, passthrough drops CSb to SPI Flash device and waits host's CSb
+  // de-assertion.
+  input mailbox_hit_i,
 
-    // event
-    // `cmd_filtered`: indicator of the incoming command filtered out
-    output event_cmd_filtered_o
+  // event
+  // `cmd_filtered`: indicator of the incoming command filtered out
+  output event_cmd_filtered_o
 );
 
   /////////////////
@@ -209,8 +209,8 @@ module spi_passthrough
   localparam int unsigned DummyCntW = $clog2(MaxDummyBit);
 
   typedef enum logic {
-    PayloadIn  = 1'b0,
-    PayloadOut = 1'b1
+    PayloadIn  = 1'b 0,
+    PayloadOut = 1'b 1
   } payload_dir_e;
 
   typedef struct packed {
@@ -229,7 +229,7 @@ module spi_passthrough
     // Payload Direction: If payload_en is set, the command has payload in
     // either direction. The `payload_dir` determines the input (0) or
     // output(1).
-    logic [3:0] payload_en;
+    logic [3:0]   payload_en;
     payload_dir_e payload_dir;
 
     // addr_size is determined based on the `addr_4b_affected`. If 1 and
@@ -240,384 +240,384 @@ module spi_passthrough
   } cmd_type_t;
 
   localparam cmd_type_t CmdInfoNone = '{
-      addr_en: 1'b0,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b0,
-      dummy_en: 1'b0,
-      payload_en: 4'h0,
-      payload_dir: PayloadIn,
-      addr_size: '0,
-      dummy_size: '0
+    addr_en:          1'b 0,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 0,
+    dummy_en:         1'b 0,
+    payload_en:       4'h 0,
+    payload_dir:  PayloadIn,
+    addr_size:           '0,
+    dummy_size:          '0
   };
 
   localparam cmd_type_t CmdInfoPayloadIn = '{
-      addr_en: 1'b0,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b0,
-      dummy_en: 1'b0,
-      payload_en: 4'h1,
-      payload_dir: PayloadIn,
-      addr_size: '0,
-      dummy_size: '0
+    addr_en:          1'b 0,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 0,
+    dummy_en:         1'b 0,
+    payload_en:       4'h 1,
+    payload_dir:  PayloadIn,
+    addr_size:           '0,
+    dummy_size:          '0
   };
 
   localparam cmd_type_t CmdInfoPayloadOut = '{
-      addr_en: 1'b0,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b0,
-      dummy_en: 1'b0,
-      payload_en: 4'h2,  // S[1]
-      payload_dir: PayloadOut,
-      addr_size: '0,
-      dummy_size: '0
+    addr_en:          1'b 0,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 0,
+    dummy_en:         1'b 0,
+    payload_en:       4'h 2, // S[1]
+    payload_dir: PayloadOut,
+    addr_size:           '0,
+    dummy_size:          '0
   };
 
   localparam cmd_type_t CmdInfoAddrPayloadIn = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b1,
-      dummy_en: 1'b0,
-      payload_en: 4'h1,  // S[0] only
-      payload_dir: PayloadIn,  // Host sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: '0
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 1,
+    dummy_en:         1'b 0,
+    payload_en:       4'h 1, // S[0] only
+    payload_dir:  PayloadIn, // Host sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:          '0
   };
 
   localparam cmd_type_t CmdInfoAddrPayloadInQuad = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b1,
-      dummy_en: 1'b0,
-      payload_en: 4'hF,  // S[3:0]
-      payload_dir: PayloadIn,  // Host sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: '0
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 1,
+    dummy_en:         1'b 0,
+    payload_en:       4'h F, // S[3:0]
+    payload_dir:  PayloadIn, // Host sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:          '0
   };
 
   localparam cmd_type_t CmdInfoAddrPayloadOut = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b1,
-      addr_4b_affected: 1'b1,
-      dummy_en: 1'b0,
-      payload_en: 4'h2,  // S[1] only
-      payload_dir: PayloadOut,  // Flash device sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: '0
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 1,
+    addr_4b_affected: 1'b 1,
+    dummy_en:         1'b 0,
+    payload_en:       4'h 2, // S[1] only
+    payload_dir: PayloadOut, // Flash device sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:          '0
   };
 
   // Address + Dummy + Payload but Address is 3B always
   localparam cmd_type_t CmdInfoAddr3BDummyPayloadOut = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b0,
-      dummy_en: 1'b1,
-      payload_en: 4'h2,  // S[1] only
-      payload_dir: PayloadOut,  // Flash device sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: 'h7
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 0,
+    dummy_en:         1'b 1,
+    payload_en:       4'h 2, // S[1] only
+    payload_dir: PayloadOut, // Flash device sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:        'h 7
   };
 
   localparam cmd_type_t CmdInfoAddrDummyPayloadOut = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b1,
-      addr_4b_affected: 1'b1,
-      dummy_en: 1'b1,
-      payload_en: 4'h2,  // S[1] only
-      payload_dir: PayloadOut,  // Flash device sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: 'h7
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 1,
+    addr_4b_affected: 1'b 1,
+    dummy_en:         1'b 1,
+    payload_en:       4'h 2, // S[1] only
+    payload_dir: PayloadOut, // Flash device sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:        'h 7
   };
 
   localparam cmd_type_t CmdInfoAddrDummyPayloadOutDual = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b1,
-      addr_4b_affected: 1'b1,
-      dummy_en: 1'b1,
-      payload_en: 4'h3,  // S[1:0] only
-      payload_dir: PayloadOut,  // Flash device sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: 'h7
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 1,
+    addr_4b_affected: 1'b 1,
+    dummy_en:         1'b 1,
+    payload_en:       4'h 3, // S[1:0] only
+    payload_dir: PayloadOut, // Flash device sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:        'h 7
   };
 
   localparam cmd_type_t CmdInfoAddrDummyPayloadOutQuad = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b1,
-      addr_4b_affected: 1'b1,
-      dummy_en: 1'b1,
-      payload_en: 4'hF,  // S[3:0]
-      payload_dir: PayloadOut,  // Flash device sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: 'h7
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 1,
+    addr_4b_affected: 1'b 1,
+    dummy_en:         1'b 1,
+    payload_en:       4'h F, // S[3:0]
+    payload_dir: PayloadOut, // Flash device sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:        'h 7
   };
 
   localparam cmd_type_t CmdInfoAddr = '{
-      addr_en: 1'b1,
-      addr_swap_en: 1'b0,
-      addr_4b_affected: 1'b0,  // TODO: ??
-      dummy_en: 1'b0,
-      payload_en: 4'h0,
-      payload_dir: PayloadOut,  // Flash device sends Data
-      addr_size: '0,  // Logic decide
-      dummy_size: 'h0
+    addr_en:          1'b 1,
+    addr_swap_en:     1'b 0,
+    addr_4b_affected: 1'b 0, // TODO: ??
+    dummy_en:         1'b 0,
+    payload_en:       4'h 0,
+    payload_dir: PayloadOut, // Flash device sends Data
+    addr_size:           '0, // Logic decide
+    dummy_size:        'h 0
   };
 
-  localparam cmd_type_t PassThroughCmdInfo[256] = '{
-      CmdInfoNone,  // 8'h 00
-      CmdInfoPayloadIn,  // 8'h 01 Write Status 1
-      CmdInfoAddrPayloadIn,  // 8'h 02 Page Program
-      CmdInfoAddrPayloadOut,  // 8'h 03 Read Data
-      CmdInfoNone,  // 8'h 04 Write Disable
-      CmdInfoPayloadOut,  // 8'h 05 Read Status 1
-      CmdInfoNone,  // 8'h 06 Write Enable
-      CmdInfoNone,  // 8'h 07
-      CmdInfoNone,  // 8'h 08
-      CmdInfoNone,  // 8'h 09
-      CmdInfoNone,  // 8'h 0A
-      CmdInfoAddrDummyPayloadOut,  // 8'h 0B Fast Read
-      CmdInfoNone,  // 8'h 0C
-      CmdInfoNone,  // 8'h 0D
-      CmdInfoNone,  // 8'h 0E
-      CmdInfoNone,  // 8'h 0F
-      CmdInfoNone,  // 8'h 10
-      CmdInfoPayloadIn,  // 8'h 11 Write Status 3
-      CmdInfoNone,  // 8'h 12
-      CmdInfoNone,  // 8'h 13
-      CmdInfoNone,  // 8'h 14
-      CmdInfoPayloadOut,  // 8'h 15 Read Status 3
-      CmdInfoNone,  // 8'h 16
-      CmdInfoNone,  // 8'h 17
-      CmdInfoNone,  // 8'h 18
-      CmdInfoNone,  // 8'h 19
-      CmdInfoNone,  // 8'h 1A
-      CmdInfoNone,  // 8'h 1B
-      CmdInfoNone,  // 8'h 1C
-      CmdInfoNone,  // 8'h 1D
-      CmdInfoNone,  // 8'h 1E
-      CmdInfoNone,  // 8'h 1F
-      CmdInfoAddr,  // 8'h 20 Sector Erase (4kB)
-      CmdInfoNone,  // 8'h 21
-      CmdInfoNone,  // 8'h 22
-      CmdInfoNone,  // 8'h 23
-      CmdInfoNone,  // 8'h 24
-      CmdInfoNone,  // 8'h 25
-      CmdInfoNone,  // 8'h 26
-      CmdInfoNone,  // 8'h 27
-      CmdInfoNone,  // 8'h 28
-      CmdInfoNone,  // 8'h 29
-      CmdInfoNone,  // 8'h 2A
-      CmdInfoNone,  // 8'h 2B
-      CmdInfoNone,  // 8'h 2C
-      CmdInfoNone,  // 8'h 2D
-      CmdInfoNone,  // 8'h 2E
-      CmdInfoNone,  // 8'h 2F
-      CmdInfoNone,  // 8'h 30
-      CmdInfoPayloadIn,  // 8'h 31 Write Status 2
-      CmdInfoAddrPayloadInQuad,  // 8'h 32 Quad Input Page Program
-      CmdInfoNone,  // 8'h 33
-      CmdInfoNone,  // 8'h 34
-      CmdInfoPayloadOut,  // 8'h 35 Read Status 2
-      CmdInfoAddr,  // 8'h 36 Individual Block Lock
-      CmdInfoNone,  // 8'h 37
-      CmdInfoNone,  // 8'h 38 Enter QPI (filtered)
-      CmdInfoAddr,  // 8'h 39 Individual Blck Unlock
-      CmdInfoNone,  // 8'h 3A
-      CmdInfoAddrDummyPayloadOutDual,  // 8'h 3B Fast Read Dual Out
-      CmdInfoNone,  // 8'h 3C
-      CmdInfoAddrPayloadOut,  // 8'h 3D Read Block Lock
-      CmdInfoNone,  // 8'h 3E
-      CmdInfoNone,  // 8'h 3F
-      CmdInfoNone,  // 8'h 40
-      CmdInfoNone,  // 8'h 41
-      CmdInfoNone,  // 8'h 42 TODO
-      CmdInfoNone,  // 8'h 43
-      CmdInfoNone,  // 8'h 44 TODO
-      CmdInfoNone,  // 8'h 45
-      CmdInfoNone,  // 8'h 46
-      CmdInfoNone,  // 8'h 47
-      CmdInfoNone,  // 8'h 48 TODO
-      CmdInfoNone,  // 8'h 49
-      CmdInfoNone,  // 8'h 4A
-      CmdInfoNone,  // 8'h 4B Read Unique ID (TODO)
-      CmdInfoNone,  // 8'h 4C
-      CmdInfoNone,  // 8'h 4D
-      CmdInfoNone,  // 8'h 4E
-      CmdInfoNone,  // 8'h 4F
-      CmdInfoNone,  // 8'h 50
-      CmdInfoNone,  // 8'h 51
-      CmdInfoAddr,  // 8'h 52 Block Erase (32kB)
-      CmdInfoNone,  // 8'h 53
-      CmdInfoNone,  // 8'h 54
-      CmdInfoNone,  // 8'h 55
-      CmdInfoNone,  // 8'h 56
-      CmdInfoNone,  // 8'h 57
-      CmdInfoNone,  // 8'h 58
-      CmdInfoNone,  // 8'h 59
-      CmdInfoAddr3BDummyPayloadOut,  // 8'h 5A Read SFDP
-      CmdInfoNone,  // 8'h 5B
-      CmdInfoNone,  // 8'h 5C
-      CmdInfoNone,  // 8'h 5D
-      CmdInfoNone,  // 8'h 5E
-      CmdInfoNone,  // 8'h 5F
-      CmdInfoNone,  // 8'h 60
-      CmdInfoNone,  // 8'h 61
-      CmdInfoNone,  // 8'h 62
-      CmdInfoNone,  // 8'h 63
-      CmdInfoNone,  // 8'h 64
-      CmdInfoNone,  // 8'h 65
-      CmdInfoNone,  // 8'h 66
-      CmdInfoNone,  // 8'h 67
-      CmdInfoNone,  // 8'h 68
-      CmdInfoNone,  // 8'h 69
-      CmdInfoNone,  // 8'h 6A
-      CmdInfoAddrDummyPayloadOutQuad,  // 8'h 6B Fast Read Quad Out
-      CmdInfoNone,  // 8'h 6C
-      CmdInfoNone,  // 8'h 6D
-      CmdInfoNone,  // 8'h 6E
-      CmdInfoNone,  // 8'h 6F
-      CmdInfoNone,  // 8'h 70
-      CmdInfoNone,  // 8'h 71
-      CmdInfoNone,  // 8'h 72
-      CmdInfoNone,  // 8'h 73
-      CmdInfoNone,  // 8'h 74
-      CmdInfoNone,  // 8'h 75
-      CmdInfoNone,  // 8'h 76
-      CmdInfoNone,  // 8'h 77
-      CmdInfoNone,  // 8'h 78
-      CmdInfoNone,  // 8'h 79
-      CmdInfoNone,  // 8'h 7A
-      CmdInfoNone,  // 8'h 7B
-      CmdInfoNone,  // 8'h 7C
-      CmdInfoNone,  // 8'h 7D
-      CmdInfoNone,  // 8'h 7E
-      CmdInfoNone,  // 8'h 7F
-      CmdInfoNone,  // 8'h 80
-      CmdInfoNone,  // 8'h 81
-      CmdInfoNone,  // 8'h 82
-      CmdInfoNone,  // 8'h 83
-      CmdInfoNone,  // 8'h 84
-      CmdInfoNone,  // 8'h 85
-      CmdInfoNone,  // 8'h 86
-      CmdInfoNone,  // 8'h 87
-      CmdInfoNone,  // 8'h 88
-      CmdInfoNone,  // 8'h 89
-      CmdInfoNone,  // 8'h 8A
-      CmdInfoNone,  // 8'h 8B
-      CmdInfoNone,  // 8'h 8C
-      CmdInfoNone,  // 8'h 8D
-      CmdInfoNone,  // 8'h 8E
-      CmdInfoNone,  // 8'h 8F
-      CmdInfoNone,  // 8'h 90
-      CmdInfoNone,  // 8'h 91
-      CmdInfoNone,  // 8'h 92
-      CmdInfoNone,  // 8'h 93
-      CmdInfoNone,  // 8'h 94
-      CmdInfoNone,  // 8'h 95
-      CmdInfoNone,  // 8'h 96
-      CmdInfoNone,  // 8'h 97
-      CmdInfoNone,  // 8'h 98
-      CmdInfoNone,  // 8'h 99
-      CmdInfoNone,  // 8'h 9A
-      CmdInfoNone,  // 8'h 9B
-      CmdInfoNone,  // 8'h 9C
-      CmdInfoNone,  // 8'h 9D
-      CmdInfoNone,  // 8'h 9E
-      CmdInfoPayloadOut,  // 8'h 9F JEDEC ID
-      CmdInfoNone,  // 8'h A0
-      CmdInfoNone,  // 8'h A1
-      CmdInfoNone,  // 8'h A2
-      CmdInfoNone,  // 8'h A3
-      CmdInfoNone,  // 8'h A4
-      CmdInfoNone,  // 8'h A5
-      CmdInfoNone,  // 8'h A6
-      CmdInfoNone,  // 8'h A7
-      CmdInfoNone,  // 8'h A8
-      CmdInfoNone,  // 8'h A9
-      CmdInfoNone,  // 8'h AA
-      CmdInfoNone,  // 8'h AB
-      CmdInfoNone,  // 8'h AC
-      CmdInfoNone,  // 8'h AD
-      CmdInfoNone,  // 8'h AE
-      CmdInfoNone,  // 8'h AF
-      CmdInfoNone,  // 8'h B0
-      CmdInfoNone,  // 8'h B1
-      CmdInfoNone,  // 8'h B2
-      CmdInfoNone,  // 8'h B3
-      CmdInfoNone,  // 8'h B4
-      CmdInfoNone,  // 8'h B5
-      CmdInfoNone,  // 8'h B6
-      CmdInfoNone,  // 8'h B7
-      CmdInfoNone,  // 8'h B8
-      CmdInfoNone,  // 8'h B9
-      CmdInfoNone,  // 8'h BA
-      CmdInfoNone,  // 8'h BB
-      CmdInfoNone,  // 8'h BC
-      CmdInfoNone,  // 8'h BD
-      CmdInfoNone,  // 8'h BE
-      CmdInfoNone,  // 8'h BF
-      CmdInfoNone,  // 8'h C0
-      CmdInfoNone,  // 8'h C1
-      CmdInfoNone,  // 8'h C2
-      CmdInfoNone,  // 8'h C3
-      CmdInfoNone,  // 8'h C4
-      CmdInfoNone,  // 8'h C5
-      CmdInfoNone,  // 8'h C6
-      CmdInfoNone,  // 8'h C7
-      CmdInfoNone,  // 8'h C8
-      CmdInfoNone,  // 8'h C9
-      CmdInfoNone,  // 8'h CA
-      CmdInfoNone,  // 8'h CB
-      CmdInfoNone,  // 8'h CC
-      CmdInfoNone,  // 8'h CD
-      CmdInfoNone,  // 8'h CE
-      CmdInfoNone,  // 8'h CF
-      CmdInfoNone,  // 8'h D0
-      CmdInfoNone,  // 8'h D1
-      CmdInfoNone,  // 8'h D2
-      CmdInfoNone,  // 8'h D3
-      CmdInfoNone,  // 8'h D4
-      CmdInfoNone,  // 8'h D5
-      CmdInfoNone,  // 8'h D6
-      CmdInfoNone,  // 8'h D7
-      CmdInfoAddr,  // 8'h D8 Block Erase (64kB)
-      CmdInfoNone,  // 8'h D9
-      CmdInfoNone,  // 8'h DA
-      CmdInfoNone,  // 8'h DB
-      CmdInfoNone,  // 8'h DC
-      CmdInfoNone,  // 8'h DD
-      CmdInfoNone,  // 8'h DE
-      CmdInfoNone,  // 8'h DF
-      CmdInfoNone,  // 8'h E0
-      CmdInfoNone,  // 8'h E1
-      CmdInfoNone,  // 8'h E2
-      CmdInfoNone,  // 8'h E3
-      CmdInfoNone,  // 8'h E4
-      CmdInfoNone,  // 8'h E5
-      CmdInfoNone,  // 8'h E6
-      CmdInfoNone,  // 8'h E7
-      CmdInfoNone,  // 8'h E8
-      CmdInfoNone,  // 8'h E9
-      CmdInfoNone,  // 8'h EA
-      CmdInfoNone,  // 8'h EB
-      CmdInfoNone,  // 8'h EC
-      CmdInfoNone,  // 8'h ED
-      CmdInfoNone,  // 8'h EE
-      CmdInfoNone,  // 8'h EF
-      CmdInfoNone,  // 8'h F0
-      CmdInfoNone,  // 8'h F1
-      CmdInfoNone,  // 8'h F2
-      CmdInfoNone,  // 8'h F3
-      CmdInfoNone,  // 8'h F4
-      CmdInfoNone,  // 8'h F5
-      CmdInfoNone,  // 8'h F6
-      CmdInfoNone,  // 8'h F7
-      CmdInfoNone,  // 8'h F8
-      CmdInfoNone,  // 8'h F9
-      CmdInfoNone,  // 8'h FA
-      CmdInfoNone,  // 8'h FB
-      CmdInfoNone,  // 8'h FC
-      CmdInfoNone,  // 8'h FD
-      CmdInfoNone,  // 8'h FE
-      CmdInfoNone  // 8'h FF
+  localparam cmd_type_t PassThroughCmdInfo [256] = '{
+    CmdInfoNone,                    // 8'h 00
+    CmdInfoPayloadIn,               // 8'h 01 Write Status 1
+    CmdInfoAddrPayloadIn,           // 8'h 02 Page Program
+    CmdInfoAddrPayloadOut,          // 8'h 03 Read Data
+    CmdInfoNone,                    // 8'h 04 Write Disable
+    CmdInfoPayloadOut,              // 8'h 05 Read Status 1
+    CmdInfoNone,                    // 8'h 06 Write Enable
+    CmdInfoNone,                    // 8'h 07
+    CmdInfoNone,                    // 8'h 08
+    CmdInfoNone,                    // 8'h 09
+    CmdInfoNone,                    // 8'h 0A
+    CmdInfoAddrDummyPayloadOut,     // 8'h 0B Fast Read
+    CmdInfoNone,                    // 8'h 0C
+    CmdInfoNone,                    // 8'h 0D
+    CmdInfoNone,                    // 8'h 0E
+    CmdInfoNone,                    // 8'h 0F
+    CmdInfoNone,                    // 8'h 10
+    CmdInfoPayloadIn,               // 8'h 11 Write Status 3
+    CmdInfoNone,                    // 8'h 12
+    CmdInfoNone,                    // 8'h 13
+    CmdInfoNone,                    // 8'h 14
+    CmdInfoPayloadOut,              // 8'h 15 Read Status 3
+    CmdInfoNone,                    // 8'h 16
+    CmdInfoNone,                    // 8'h 17
+    CmdInfoNone,                    // 8'h 18
+    CmdInfoNone,                    // 8'h 19
+    CmdInfoNone,                    // 8'h 1A
+    CmdInfoNone,                    // 8'h 1B
+    CmdInfoNone,                    // 8'h 1C
+    CmdInfoNone,                    // 8'h 1D
+    CmdInfoNone,                    // 8'h 1E
+    CmdInfoNone,                    // 8'h 1F
+    CmdInfoAddr,                    // 8'h 20 Sector Erase (4kB)
+    CmdInfoNone,                    // 8'h 21
+    CmdInfoNone,                    // 8'h 22
+    CmdInfoNone,                    // 8'h 23
+    CmdInfoNone,                    // 8'h 24
+    CmdInfoNone,                    // 8'h 25
+    CmdInfoNone,                    // 8'h 26
+    CmdInfoNone,                    // 8'h 27
+    CmdInfoNone,                    // 8'h 28
+    CmdInfoNone,                    // 8'h 29
+    CmdInfoNone,                    // 8'h 2A
+    CmdInfoNone,                    // 8'h 2B
+    CmdInfoNone,                    // 8'h 2C
+    CmdInfoNone,                    // 8'h 2D
+    CmdInfoNone,                    // 8'h 2E
+    CmdInfoNone,                    // 8'h 2F
+    CmdInfoNone,                    // 8'h 30
+    CmdInfoPayloadIn,               // 8'h 31 Write Status 2
+    CmdInfoAddrPayloadInQuad,       // 8'h 32 Quad Input Page Program
+    CmdInfoNone,                    // 8'h 33
+    CmdInfoNone,                    // 8'h 34
+    CmdInfoPayloadOut,              // 8'h 35 Read Status 2
+    CmdInfoAddr,                    // 8'h 36 Individual Block Lock
+    CmdInfoNone,                    // 8'h 37
+    CmdInfoNone,                    // 8'h 38 Enter QPI (filtered)
+    CmdInfoAddr,                    // 8'h 39 Individual Blck Unlock
+    CmdInfoNone,                    // 8'h 3A
+    CmdInfoAddrDummyPayloadOutDual, // 8'h 3B Fast Read Dual Out
+    CmdInfoNone,                    // 8'h 3C
+    CmdInfoAddrPayloadOut,          // 8'h 3D Read Block Lock
+    CmdInfoNone,                    // 8'h 3E
+    CmdInfoNone,                    // 8'h 3F
+    CmdInfoNone,                    // 8'h 40
+    CmdInfoNone,                    // 8'h 41
+    CmdInfoNone,                    // 8'h 42 TODO
+    CmdInfoNone,                    // 8'h 43
+    CmdInfoNone,                    // 8'h 44 TODO
+    CmdInfoNone,                    // 8'h 45
+    CmdInfoNone,                    // 8'h 46
+    CmdInfoNone,                    // 8'h 47
+    CmdInfoNone,                    // 8'h 48 TODO
+    CmdInfoNone,                    // 8'h 49
+    CmdInfoNone,                    // 8'h 4A
+    CmdInfoNone,                    // 8'h 4B Read Unique ID (TODO)
+    CmdInfoNone,                    // 8'h 4C
+    CmdInfoNone,                    // 8'h 4D
+    CmdInfoNone,                    // 8'h 4E
+    CmdInfoNone,                    // 8'h 4F
+    CmdInfoNone,                    // 8'h 50
+    CmdInfoNone,                    // 8'h 51
+    CmdInfoAddr,                    // 8'h 52 Block Erase (32kB)
+    CmdInfoNone,                    // 8'h 53
+    CmdInfoNone,                    // 8'h 54
+    CmdInfoNone,                    // 8'h 55
+    CmdInfoNone,                    // 8'h 56
+    CmdInfoNone,                    // 8'h 57
+    CmdInfoNone,                    // 8'h 58
+    CmdInfoNone,                    // 8'h 59
+    CmdInfoAddr3BDummyPayloadOut,   // 8'h 5A Read SFDP
+    CmdInfoNone,                    // 8'h 5B
+    CmdInfoNone,                    // 8'h 5C
+    CmdInfoNone,                    // 8'h 5D
+    CmdInfoNone,                    // 8'h 5E
+    CmdInfoNone,                    // 8'h 5F
+    CmdInfoNone,                    // 8'h 60
+    CmdInfoNone,                    // 8'h 61
+    CmdInfoNone,                    // 8'h 62
+    CmdInfoNone,                    // 8'h 63
+    CmdInfoNone,                    // 8'h 64
+    CmdInfoNone,                    // 8'h 65
+    CmdInfoNone,                    // 8'h 66
+    CmdInfoNone,                    // 8'h 67
+    CmdInfoNone,                    // 8'h 68
+    CmdInfoNone,                    // 8'h 69
+    CmdInfoNone,                    // 8'h 6A
+    CmdInfoAddrDummyPayloadOutQuad, // 8'h 6B Fast Read Quad Out
+    CmdInfoNone,                    // 8'h 6C
+    CmdInfoNone,                    // 8'h 6D
+    CmdInfoNone,                    // 8'h 6E
+    CmdInfoNone,                    // 8'h 6F
+    CmdInfoNone,                    // 8'h 70
+    CmdInfoNone,                    // 8'h 71
+    CmdInfoNone,                    // 8'h 72
+    CmdInfoNone,                    // 8'h 73
+    CmdInfoNone,                    // 8'h 74
+    CmdInfoNone,                    // 8'h 75
+    CmdInfoNone,                    // 8'h 76
+    CmdInfoNone,                    // 8'h 77
+    CmdInfoNone,                    // 8'h 78
+    CmdInfoNone,                    // 8'h 79
+    CmdInfoNone,                    // 8'h 7A
+    CmdInfoNone,                    // 8'h 7B
+    CmdInfoNone,                    // 8'h 7C
+    CmdInfoNone,                    // 8'h 7D
+    CmdInfoNone,                    // 8'h 7E
+    CmdInfoNone,                    // 8'h 7F
+    CmdInfoNone,                    // 8'h 80
+    CmdInfoNone,                    // 8'h 81
+    CmdInfoNone,                    // 8'h 82
+    CmdInfoNone,                    // 8'h 83
+    CmdInfoNone,                    // 8'h 84
+    CmdInfoNone,                    // 8'h 85
+    CmdInfoNone,                    // 8'h 86
+    CmdInfoNone,                    // 8'h 87
+    CmdInfoNone,                    // 8'h 88
+    CmdInfoNone,                    // 8'h 89
+    CmdInfoNone,                    // 8'h 8A
+    CmdInfoNone,                    // 8'h 8B
+    CmdInfoNone,                    // 8'h 8C
+    CmdInfoNone,                    // 8'h 8D
+    CmdInfoNone,                    // 8'h 8E
+    CmdInfoNone,                    // 8'h 8F
+    CmdInfoNone,                    // 8'h 90
+    CmdInfoNone,                    // 8'h 91
+    CmdInfoNone,                    // 8'h 92
+    CmdInfoNone,                    // 8'h 93
+    CmdInfoNone,                    // 8'h 94
+    CmdInfoNone,                    // 8'h 95
+    CmdInfoNone,                    // 8'h 96
+    CmdInfoNone,                    // 8'h 97
+    CmdInfoNone,                    // 8'h 98
+    CmdInfoNone,                    // 8'h 99
+    CmdInfoNone,                    // 8'h 9A
+    CmdInfoNone,                    // 8'h 9B
+    CmdInfoNone,                    // 8'h 9C
+    CmdInfoNone,                    // 8'h 9D
+    CmdInfoNone,                    // 8'h 9E
+    CmdInfoPayloadOut,              // 8'h 9F JEDEC ID
+    CmdInfoNone,                    // 8'h A0
+    CmdInfoNone,                    // 8'h A1
+    CmdInfoNone,                    // 8'h A2
+    CmdInfoNone,                    // 8'h A3
+    CmdInfoNone,                    // 8'h A4
+    CmdInfoNone,                    // 8'h A5
+    CmdInfoNone,                    // 8'h A6
+    CmdInfoNone,                    // 8'h A7
+    CmdInfoNone,                    // 8'h A8
+    CmdInfoNone,                    // 8'h A9
+    CmdInfoNone,                    // 8'h AA
+    CmdInfoNone,                    // 8'h AB
+    CmdInfoNone,                    // 8'h AC
+    CmdInfoNone,                    // 8'h AD
+    CmdInfoNone,                    // 8'h AE
+    CmdInfoNone,                    // 8'h AF
+    CmdInfoNone,                    // 8'h B0
+    CmdInfoNone,                    // 8'h B1
+    CmdInfoNone,                    // 8'h B2
+    CmdInfoNone,                    // 8'h B3
+    CmdInfoNone,                    // 8'h B4
+    CmdInfoNone,                    // 8'h B5
+    CmdInfoNone,                    // 8'h B6
+    CmdInfoNone,                    // 8'h B7
+    CmdInfoNone,                    // 8'h B8
+    CmdInfoNone,                    // 8'h B9
+    CmdInfoNone,                    // 8'h BA
+    CmdInfoNone,                    // 8'h BB
+    CmdInfoNone,                    // 8'h BC
+    CmdInfoNone,                    // 8'h BD
+    CmdInfoNone,                    // 8'h BE
+    CmdInfoNone,                    // 8'h BF
+    CmdInfoNone,                    // 8'h C0
+    CmdInfoNone,                    // 8'h C1
+    CmdInfoNone,                    // 8'h C2
+    CmdInfoNone,                    // 8'h C3
+    CmdInfoNone,                    // 8'h C4
+    CmdInfoNone,                    // 8'h C5
+    CmdInfoNone,                    // 8'h C6
+    CmdInfoNone,                    // 8'h C7
+    CmdInfoNone,                    // 8'h C8
+    CmdInfoNone,                    // 8'h C9
+    CmdInfoNone,                    // 8'h CA
+    CmdInfoNone,                    // 8'h CB
+    CmdInfoNone,                    // 8'h CC
+    CmdInfoNone,                    // 8'h CD
+    CmdInfoNone,                    // 8'h CE
+    CmdInfoNone,                    // 8'h CF
+    CmdInfoNone,                    // 8'h D0
+    CmdInfoNone,                    // 8'h D1
+    CmdInfoNone,                    // 8'h D2
+    CmdInfoNone,                    // 8'h D3
+    CmdInfoNone,                    // 8'h D4
+    CmdInfoNone,                    // 8'h D5
+    CmdInfoNone,                    // 8'h D6
+    CmdInfoNone,                    // 8'h D7
+    CmdInfoAddr,                    // 8'h D8 Block Erase (64kB)
+    CmdInfoNone,                    // 8'h D9
+    CmdInfoNone,                    // 8'h DA
+    CmdInfoNone,                    // 8'h DB
+    CmdInfoNone,                    // 8'h DC
+    CmdInfoNone,                    // 8'h DD
+    CmdInfoNone,                    // 8'h DE
+    CmdInfoNone,                    // 8'h DF
+    CmdInfoNone,                    // 8'h E0
+    CmdInfoNone,                    // 8'h E1
+    CmdInfoNone,                    // 8'h E2
+    CmdInfoNone,                    // 8'h E3
+    CmdInfoNone,                    // 8'h E4
+    CmdInfoNone,                    // 8'h E5
+    CmdInfoNone,                    // 8'h E6
+    CmdInfoNone,                    // 8'h E7
+    CmdInfoNone,                    // 8'h E8
+    CmdInfoNone,                    // 8'h E9
+    CmdInfoNone,                    // 8'h EA
+    CmdInfoNone,                    // 8'h EB
+    CmdInfoNone,                    // 8'h EC
+    CmdInfoNone,                    // 8'h ED
+    CmdInfoNone,                    // 8'h EE
+    CmdInfoNone,                    // 8'h EF
+    CmdInfoNone,                    // 8'h F0
+    CmdInfoNone,                    // 8'h F1
+    CmdInfoNone,                    // 8'h F2
+    CmdInfoNone,                    // 8'h F3
+    CmdInfoNone,                    // 8'h F4
+    CmdInfoNone,                    // 8'h F5
+    CmdInfoNone,                    // 8'h F6
+    CmdInfoNone,                    // 8'h F7
+    CmdInfoNone,                    // 8'h F8
+    CmdInfoNone,                    // 8'h F9
+    CmdInfoNone,                    // 8'h FA
+    CmdInfoNone,                    // 8'h FB
+    CmdInfoNone,                    // 8'h FC
+    CmdInfoNone,                    // 8'h FD
+    CmdInfoNone,                    // 8'h FE
+    CmdInfoNone                     // 8'h FF
   };
 
   /* Not synthesizable in DC
@@ -750,7 +750,7 @@ module spi_passthrough
 
   // == BEGIN: Counters  ======================================================
   // bitcnt to count up to dummy
-  localparam int unsigned MetaMaxBeat = 8 + 32 + 8;  // Cmd + Addr + Dummy
+  localparam int unsigned MetaMaxBeat = 8+32+8; // Cmd + Addr + Dummy
   localparam int unsigned MetaBitCntW = $clog2(MetaMaxBeat);
   logic [MetaBitCntW-1:0] bitcnt;
 
@@ -768,8 +768,8 @@ module spi_passthrough
   logic mailbox_hit;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) mailbox_hit <= 1'b0;  // reset by CSb
-    else if (mailbox_hit_i) mailbox_hit <= 1'b1;  // set by event
+    if (!rst_ni) mailbox_hit <= 1'b 0; // reset by CSb
+    else if (mailbox_hit_i) mailbox_hit <= 1'b 1; // set by event
   end
 
   //////////////
@@ -781,7 +781,7 @@ module spi_passthrough
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      opcode <= 8'h00;
+      opcode <= 8'h 00;
     end else if (bitcnt < MetaBitCntW'(8)) begin
       opcode <= opcode_d;
     end
@@ -789,12 +789,12 @@ module spi_passthrough
 
   // Command Filter: CSb control
   always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) csb_deassert <= 1'b0;
-    else if (filter) csb_deassert <= 1'b1;
+    if (!rst_ni)     csb_deassert <= 1'b 0;
+    else if (filter) csb_deassert <= 1'b 1;
   end
   always_ff @(posedge clk_out_i or negedge rst_ni) begin
-    if (!rst_ni) csb_deassert_outclk <= 1'b0;
-    else csb_deassert_outclk <= csb_deassert;
+    if (!rst_ni) csb_deassert_outclk <= 1'b 0;
+    else         csb_deassert_outclk <= csb_deassert;
   end
 
   // Look at the waveform above to see why sck_gate_en is inversion of fliter OR
@@ -812,8 +812,8 @@ module spi_passthrough
   end
 
   // Latch only two bits at 7th cmd opcode
-  logic cmd_7th;  // 7th beat of transaction
-  logic cmd_8th;  // in 8th beat of transaction
+  logic cmd_7th; // 7th beat of transaction
+  logic cmd_8th; // in 8th beat of transaction
   logic [1:0] cmd_filter;
 
   assign cmd_7th = (bitcnt == MetaBitCntW'(6));
@@ -821,7 +821,7 @@ module spi_passthrough
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      cmd_filter <= 2'b00;
+      cmd_filter <= 2'b 00;
     end else if (cmd_7th) begin
       // In this 7th beat, cmd_filter latches 2 bits from cfg_cmd_filter_i
       // This reduces the last filter datapath from muxing 256 to just mux2
@@ -830,7 +830,7 @@ module spi_passthrough
       // for (int unsigned i = 0 ; i < 128 ; i++) begin
       //   it (i == opcode[6:0]) cmd_filter <= cfg_cmd_filter_i[2*i+:2];
       // end
-      cmd_filter <= cfg_cmd_filter_i[{opcode_d[6:0], 1'b0}+:2];
+      cmd_filter <= cfg_cmd_filter_i[{opcode_d[6:0],1'b0}+:2];
     end
   end
 
@@ -842,9 +842,8 @@ module spi_passthrough
     if (!rst_ni) begin
       cmd_info_7th <= '0;
     end else if (cmd_7th) begin
-      cmd_info_7th <= {
-        PassThroughCmdInfo[{opcode_d[6:0], 1'b1}], PassThroughCmdInfo[{opcode_d[6:0], 1'b0}]
-      };
+      cmd_info_7th <= {PassThroughCmdInfo[{opcode_d[6:0],1'b1}],
+                       PassThroughCmdInfo[{opcode_d[6:0],1'b0}]};
     end
   end
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -866,7 +865,8 @@ module spi_passthrough
       cmd_info_d = cmd_info_7th[host_s_i[0]];
       // TODO: Addr size
       if (cmd_info_7th[host_s_i[0]].addr_4b_affected) begin
-        cmd_info_d.addr_size = (cfg_addr_4b_en_i) ? AddrCntW'(31) : AddrCntW'(23);
+        cmd_info_d.addr_size = (cfg_addr_4b_en_i)
+                             ? AddrCntW'(31) : AddrCntW'(23);
       end
 
       // dummy_size is set inside State Machine
@@ -882,8 +882,8 @@ module spi_passthrough
     if (!rst_ni) begin
       addrcnt <= '0;
     end else if (addr_set) begin
-      // When addr_set is 1, cmd_info is not yet latched.
-      addrcnt <= cmd_info_d.addr_size;
+        // When addr_set is 1, cmd_info is not yet latched.
+        addrcnt <= cmd_info_d.addr_size;
     end else if (addrcnt != '0) begin
       addrcnt <= addrcnt - AddrCntW'(1);
     end
@@ -891,7 +891,7 @@ module spi_passthrough
 
   always_ff @(posedge clk_out_i or negedge rst_ni) begin
     if (!rst_ni) addrcnt_outclk <= '0;
-    else addrcnt_outclk <= addrcnt;
+    else         addrcnt_outclk <= addrcnt;
   end
 
   // Based on AddrCnt, the logic swap.
@@ -906,8 +906,8 @@ module spi_passthrough
   // The state generates mux selection signal.
   // The signal latched in outclk domain then activates the mux.
   always_ff @(posedge clk_out_i or negedge rst_ni) begin
-    if (!rst_ni) addr_phase_outclk <= 1'b0;
-    else addr_phase_outclk <= addr_phase;
+    if (!rst_ni) addr_phase_outclk <= 1'b 0;
+    else         addr_phase_outclk <= addr_phase;
   end
 
   // Dummy Counter
@@ -923,31 +923,32 @@ module spi_passthrough
 
   // As addr_phase_outclk is in outclk domain, addr_swap can be directly used.
   // addr_swap value is also determined by addrcnt_outclk.
-  assign passthrough_o.s = (addr_phase_outclk) ? {host_s_i[3:1], addr_swap} : host_s_i;
+  assign passthrough_o.s = (addr_phase_outclk)
+                         ? {host_s_i[3:1], addr_swap} : host_s_i;
   logic [3:0] passthrough_s_en;
   always_ff @(posedge clk_out_i or negedge rst_ni) begin
-    if (!rst_ni) passthrough_s_en <= 4'h1;  // S[0] active by default
+    if (!rst_ni) passthrough_s_en <= 4'h 1; // S[0] active by default
     else passthrough_s_en <= device_s_en_inclk;
   end
   assign passthrough_o.s_en = passthrough_s_en;
 
   assign host_s_o = passthrough_i.s;
   always_ff @(posedge clk_out_i or negedge rst_ni) begin
-    if (!rst_ni) host_s_en_o <= '0;  // input mode
-    else host_s_en_o <= host_s_en_inclk;
+    if (!rst_ni) host_s_en_o <= '0; // input mode
+    else         host_s_en_o <= host_s_en_inclk;
   end
 
-  assign passthrough_o.sck_gate_en    = sck_gate_en;
-  assign passthrough_o.sck            = host_sck_i;
-  assign passthrough_o.sck_en         = 1'b1;
+  assign passthrough_o.sck_gate_en = sck_gate_en;
+  assign passthrough_o.sck         = host_sck_i;
+  assign passthrough_o.sck_en      = 1'b 1;
 
   // CSb propagation:  csb_deassert signal should be an output of FF or latch to
   // make CSb glitch-free.
-  assign passthrough_o.csb_en         = 1'b1;
-  assign passthrough_o.csb            = host_csb_i | csb_deassert_outclk;
+  assign passthrough_o.csb_en = 1'b 1;
+  assign passthrough_o.csb    = host_csb_i | csb_deassert_outclk ;
 
   // passthrough_en
-  assign passthrough_o.passthrough_en = is_active;
+  assign passthrough_o.passthrough_en = is_active ;
 
   // - END:   Passthrough Mux (!important) ------------------------------------
 
@@ -966,33 +967,33 @@ module spi_passthrough
     st_d = st;
 
     // filter
-    filter = 1'b0;
+    filter = 1'b 0;
 
     // Command Cfg Latch
-    cmd_info_latch = 1'b0;
+    cmd_info_latch = 1'b 0;
 
     // addr_set
-    addr_set = 1'b0;
+    addr_set = 1'b 0;
 
     // Dummy
-    dummy_set = 1'b0;
+    dummy_set = 1'b 0;
     dummycnt_d = '0;
 
     // Output enable
-    host_s_en_inclk = 4'h0;
-    device_s_en_inclk = 4'h1;  // S[0] MOSI active
+    host_s_en_inclk   = 4'h 0;
+    device_s_en_inclk = 4'h 1; // S[0] MOSI active
 
     unique case (st)
       StIdle: begin
         if (!is_active) begin
           st_d = StIdle;
         end else if (cmd_8th && cmd_filter[host_s_i[0]]) begin
-          st_d   = StFilter;
-          filter = 1'b1;
+          st_d = StFilter;
+          filter = 1'b 1;
 
           // Send notification event to SW
         end else if (cmd_8th) begin
-          cmd_info_latch = 1'b1;
+          cmd_info_latch = 1'b 1;
 
           // Divert to multiple states.
           //
@@ -1004,11 +1005,11 @@ module spi_passthrough
           if (cmd_info_d.addr_en) begin
             st_d = StAddress;
 
-            addr_set = 1'b1;
+            addr_set = 1'b 1;
           end else if (cmd_info_d.dummy_en) begin
             st_d = StHighZ;
 
-            dummy_set = 1'b1;
+            dummy_set = 1'b 1;
             dummycnt_d = cmd_info_d.dummy_size;
           end else if (cmd_info_d.payload_en != 0) begin
             // Any input/output payload
@@ -1024,8 +1025,8 @@ module spi_passthrough
       StFilter: begin
         // Command is filtered. Wait until reset(CSb) comes.
         st_d = StFilter;
-        host_s_en_inclk = 4'h0;  // explicit
-        device_s_en_inclk = 4'h0;
+        host_s_en_inclk   = 4'h 0; // explicit
+        device_s_en_inclk = 4'h 0;
       end
 
       StWait: begin
@@ -1034,7 +1035,7 @@ module spi_passthrough
 
         // output enable for host
         host_s_en_inclk = cmd_info.payload_en;
-        device_s_en_inclk = 4'h0;
+        device_s_en_inclk = 4'h 0;
       end
 
       StDriving: begin
@@ -1042,13 +1043,13 @@ module spi_passthrough
         st_d = StDriving;
 
         // Output enable for device
-        host_s_en_inclk = 4'h0;  // explicit
+        host_s_en_inclk   = 4'h 0; // explicit
         device_s_en_inclk = cmd_info.payload_en;
       end
 
       StHighZ: begin
-        host_s_en_inclk   = 4'h0;  // explicit
-        device_s_en_inclk = 4'h0;  // float
+        host_s_en_inclk   = 4'h 0; // explicit
+        device_s_en_inclk = 4'h 0; // float
         if (dummycnt == '0) begin
           // Assume payload_en not 0
           st_d = (cmd_info.payload_dir == PayloadOut) ? StWait : StDriving;
@@ -1061,13 +1062,13 @@ module spi_passthrough
           if (mailbox_hit) begin
             // In Address phase, mailbox region hits. Then Passthrough filteres
             // the command and deligates the control to ReadCmd submodule.
-            st_d   = StFilter;
+            st_d = StFilter;
 
-            filter = 1'b1;
+            filter = 1'b 1;
           end else if (cmd_info.dummy_en) begin
             st_d = StHighZ;
 
-            dummy_set = 1'b1;
+            dummy_set = 1'b 1;
             dummycnt_d = cmd_info.dummy_size;
           end else if (cmd_info.payload_en != 0) begin
             st_d = (cmd_info.payload_dir == PayloadOut) ? StWait : StDriving;
@@ -1092,4 +1093,4 @@ module spi_passthrough
   `ASSERT(MailboxHitConflictAddrCnt_A, mailbox_hit_i |-> (addrcnt != 0))
 
 
-endmodule : spi_passthrough
+endmodule: spi_passthrough

@@ -9,9 +9,9 @@
 // specific language governing permissions and limitations under the License.
 
 module tc_clk_and2 (
-    input  logic clk0_i,
-    input  logic clk1_i,
-    output logic clk_o
+  input  logic clk0_i,
+  input  logic clk1_i,
+  output logic clk_o
 );
 
   assign clk_o = clk0_i & clk1_i;
@@ -19,8 +19,8 @@ module tc_clk_and2 (
 endmodule
 
 module tc_clk_buffer (
-    input  logic clk_i,
-    output logic clk_o
+  input  logic clk_i,
+  output logic clk_o
 );
 
   assign clk_o = clk_i;
@@ -29,17 +29,17 @@ endmodule
 
 // Description: Behavioral model of an integrated clock-gating cell (ICG)
 module tc_clk_gating #(
-    /// This paramaeter is a hint for tool/technology specific mappings of this
-    /// tech_cell. It indicates wether this particular clk gate instance is
-    /// required for functional correctness or just instantiated for power
-    /// savings. If IS_FUNCTIONAL == 0, technology specific mappings might
-    /// replace this cell with a feedthrough connection without any gating.
-    parameter bit IS_FUNCTIONAL = 1'b1
-) (
-    input  logic clk_i,
-    input  logic en_i,
-    input  logic test_en_i,
-    output logic clk_o
+  /// This paramaeter is a hint for tool/technology specific mappings of this
+  /// tech_cell. It indicates wether this particular clk gate instance is
+  /// required for functional correctness or just instantiated for power
+  /// savings. If IS_FUNCTIONAL == 0, technology specific mappings might
+  /// replace this cell with a feedthrough connection without any gating.
+  parameter bit IS_FUNCTIONAL = 1'b1
+)(
+   input  logic clk_i,
+   input  logic en_i,
+   input  logic test_en_i,
+   output logic clk_o
 );
 
   logic clk_en;
@@ -54,8 +54,8 @@ module tc_clk_gating #(
 endmodule
 
 module tc_clk_inverter (
-    input  logic clk_i,
-    output logic clk_o
+  input  logic clk_i,
+  output logic clk_o
 );
 
   assign clk_o = ~clk_i;
@@ -73,10 +73,10 @@ endmodule
 // between arbitrary input clocks without introducing glitches, have a look at
 // the clk_mux_glitch_free cell in the pulp-platform/common_cells repository.
 module tc_clk_mux2 (
-    input  logic clk0_i,
-    input  logic clk1_i,
-    input  logic clk_sel_i,
-    output logic clk_o
+  input  logic clk0_i,
+  input  logic clk1_i,
+  input  logic clk_sel_i,
+  output logic clk_o
 );
 
   assign clk_o = (clk_sel_i) ? clk1_i : clk0_i;
@@ -84,9 +84,9 @@ module tc_clk_mux2 (
 endmodule
 
 module tc_clk_xor2 (
-    input  logic clk0_i,
-    input  logic clk1_i,
-    output logic clk_o
+  input  logic clk0_i,
+  input  logic clk1_i,
+  output logic clk_o
 );
 
   assign clk_o = clk0_i ^ clk1_i;
@@ -105,17 +105,17 @@ endmodule
 
 `ifndef SYNTHESIS
 module tc_clk_delay #(
-    parameter int unsigned Delay = 300ps
+  parameter int unsigned Delay = 300ps
 ) (
-    input  logic in_i,
-    output logic out_o
+  input  logic in_i,
+  output logic out_o
 );
 
-  // pragma translate_off
+// pragma translate_off
 `ifndef VERILATOR
   assign #(Delay) out_o = in_i;
 `endif
-  // pragma translate_on
+// pragma translate_on
 
 endmodule
 `endif

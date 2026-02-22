@@ -15,25 +15,25 @@
 
 /// Register bus to SRAM interface.
 module reg_to_mem #(
-    parameter int unsigned AW = 0,
-    parameter int unsigned DW = 0,
-    parameter type req_t = logic,
-    parameter type rsp_t = logic
+  parameter int unsigned AW = 0,
+  parameter int unsigned DW = 0,
+  parameter type req_t = logic,
+  parameter type rsp_t = logic
 ) (
-    input  logic            clk_i,
-    input  logic            rst_ni,
-    input  req_t            reg_req_i,
-    output rsp_t            reg_rsp_o,
-    // SRAM out
-    output logic            req_o,
-    input  logic            gnt_i,
-    output logic            we_o,
-    output logic [  AW-1:0] addr_o,
-    output logic [  DW-1:0] wdata_o,
-    output logic [DW/8-1:0] wstrb_o,
-    input  logic [  DW-1:0] rdata_i,
-    input  logic            rvalid_i,
-    input  logic            rerror_i
+  input  logic               clk_i,
+  input  logic               rst_ni,
+  input  req_t               reg_req_i,
+  output rsp_t               reg_rsp_o,
+  // SRAM out
+  output logic               req_o,
+  input  logic               gnt_i,
+  output logic               we_o,
+  output logic [AW-1:0]      addr_o,
+  output logic [DW-1:0]      wdata_o,
+  output logic [DW/8-1:0]    wstrb_o,
+  input  logic [DW-1:0]      rdata_i,
+  input  logic               rvalid_i,
+  input  logic               rerror_i
 );
 
   logic wait_read_d, wait_read_q;

@@ -10,4 +10,4 @@ package prim_rom_pkg;
     logic [3:0] cfg;
   } rom_cfg_t;
 
-endpackage  // prim_rom_pkg
+endpackage // prim_rom_pkg

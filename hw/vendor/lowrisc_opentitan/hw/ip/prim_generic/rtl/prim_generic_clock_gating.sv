@@ -8,15 +8,15 @@
 // synchronizer before en_i).
 
 module prim_generic_clock_gating #(
-    parameter bit NoFpgaGate = 1'b0  // this parameter has no function in generic
+  parameter bit NoFpgaGate = 1'b0 // this parameter has no function in generic
 ) (
-    input        clk_i,
-    input        en_i,
-    input        test_en_i,
-    output logic clk_o
+  input        clk_i,
+  input        en_i,
+  input        test_en_i,
+  output logic clk_o
 );
 
-  logic en_latch  /* verilator clock_enable */;
+  logic en_latch /* verilator clock_enable */;
   always_latch begin
     if (!clk_i) begin
       en_latch = en_i | test_en_i;

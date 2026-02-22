@@ -4,8 +4,8 @@
 //
 // Implements functional coverage for uart_core.sv sub-module.
 interface uart_core_cov_if (
-    input logic tx_enable,
-    input logic rx_enable
+  input logic tx_enable,
+  input logic rx_enable
 );
 
   // This interface is bound to `uart_core` which is 1 level underneath `uart` which is the DUT top

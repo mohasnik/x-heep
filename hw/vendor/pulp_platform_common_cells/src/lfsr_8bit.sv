@@ -17,14 +17,14 @@
 
 /// 8 bit Linear Feedback Shift register
 module lfsr_8bit #(
-    parameter logic        [7:0] SEED  = 8'b0,
-    parameter int unsigned       WIDTH = 8
+  parameter logic        [7:0] SEED  = 8'b0,
+  parameter int unsigned       WIDTH = 8
 ) (
-    input  logic                     clk_i,
-    input  logic                     rst_ni,
-    input  logic                     en_i,
-    output logic [        WIDTH-1:0] refill_way_oh,
-    output logic [$clog2(WIDTH)-1:0] refill_way_bin
+  input  logic                     clk_i,
+  input  logic                     rst_ni,
+  input  logic                     en_i,
+  output logic [        WIDTH-1:0] refill_way_oh,
+  output logic [$clog2(WIDTH)-1:0] refill_way_bin
 );
 
   localparam int unsigned LogWidth = $clog2(WIDTH);
@@ -36,13 +36,13 @@ module lfsr_8bit #(
     automatic logic shift_in;
     shift_in = !(shift_q[7] ^ shift_q[3] ^ shift_q[2] ^ shift_q[1]);
 
-    shift_d  = shift_q;
+    shift_d = shift_q;
 
     if (en_i) shift_d = {shift_q[6:0], shift_in};
 
     // output assignment
     refill_way_oh = 'b0;
-    refill_way_oh[shift_q[LogWidth-1:0]] = 1'b1;
+    refill_way_oh[shift_q[LogWidth - 1:0]] = 1'b1;
     refill_way_bin = shift_q;
   end
 
@@ -54,18 +54,8 @@ module lfsr_8bit #(
     end
   end
 
-<<<<<<< HEAD
-`ifndef VERILATOR
-  //pragma translate_off
-  initial begin
-    assert (WIDTH <= 8)
-    else $fatal(1, "WIDTH needs to be less than 8 because of the 8-bit LFSR");
-  end
-  //pragma translate_on
-=======
 `ifndef COMMON_CELLS_ASSERTS_OFF
   `ASSERT_INIT(width_gt_8, WIDTH <= 8, "WIDTH needs to be less than 8 because of the 8-bit LFSR")
->>>>>>> main
 `endif
 
 endmodule

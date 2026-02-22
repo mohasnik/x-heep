@@ -19,15 +19,13 @@ class uart_tx_ovrd_vseq extends uart_smoke_vseq;
 
     // disable monitor as monitor can't handle this
     cfg.m_uart_agent_cfg.en_tx_monitor = 0;
-    repeat ($urandom_range(
-        1, 5
-    )) begin
+    repeat ($urandom_range(1, 5)) begin
       `DV_CHECK_STD_RANDOMIZE_FATAL(en_ovrd)
       `DV_CHECK_STD_RANDOMIZE_FATAL(txval)
       `DV_CHECK_MEMBER_RANDOMIZE_FATAL(dly_to_next_trans)
 
       if (en_ovrd) exp = txval;
-      else exp = 1;
+      else         exp = 1;
       csr_wr(.ptr(ral.ovrd), .value({txval, en_ovrd}));
       cfg.clk_rst_vif.wait_clks(1);
       if (!cfg.under_reset) `DV_CHECK_EQ(cfg.m_uart_agent_cfg.vif.uart_tx, exp)

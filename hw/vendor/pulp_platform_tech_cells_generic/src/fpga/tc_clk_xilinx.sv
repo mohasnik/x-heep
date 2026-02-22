@@ -11,9 +11,9 @@
 // Cells to be used for Xilinx FPGA mappings
 
 module tc_clk_and2 (
-    input  logic clk0_i,
-    input  logic clk1_i,
-    output logic clk_o
+  input  logic clk0_i,
+  input  logic clk1_i,
+  output logic clk_o
 );
 
   assign clk_o = clk0_i & clk1_i;
@@ -21,8 +21,8 @@ module tc_clk_and2 (
 endmodule
 
 module tc_clk_buffer (
-    input  logic clk_i,
-    output logic clk_o
+  input  logic clk_i,
+  output logic clk_o
 );
 
   assign clk_o = clk_i;
@@ -30,13 +30,6 @@ module tc_clk_buffer (
 endmodule
 
 // Disable clock gating on FPGA as it behaves differently than expected
-<<<<<<< HEAD
-module tc_clk_gating (
-    input  logic clk_i,
-    input  logic en_i,
-    input  logic test_en_i,
-    output logic clk_o
-=======
 module tc_clk_gating #(
   /// This paramaeter is a hint for tool/technology specific mappings of this
   /// tech_cell. It indicates wether this particular clk gate instance is
@@ -49,7 +42,6 @@ module tc_clk_gating #(
    input  logic en_i,
    input  logic test_en_i,
    output logic clk_o
->>>>>>> main
 );
 
   assign clk_o = clk_i;
@@ -57,8 +49,8 @@ module tc_clk_gating #(
 endmodule
 
 module tc_clk_inverter (
-    input  logic clk_i,
-    output logic clk_o
+  input  logic clk_i,
+  output logic clk_o
 );
 
   assign clk_o = ~clk_i;
@@ -66,25 +58,25 @@ module tc_clk_inverter (
 endmodule
 
 module tc_clk_mux2 (
-    input  logic clk0_i,
-    input  logic clk1_i,
-    input  logic clk_sel_i,
-    output logic clk_o
+  input  logic clk0_i,
+  input  logic clk1_i,
+  input  logic clk_sel_i,
+  output logic clk_o
 );
 
   BUFGMUX i_BUFGMUX (
-      .S (clk_sel_i),
-      .I0(clk0_i),
-      .I1(clk1_i),
-      .O (clk_o)
+    .S  ( clk_sel_i ),
+    .I0 ( clk0_i    ),
+    .I1 ( clk1_i    ),
+    .O  ( clk_o     )
   );
 
 endmodule
 
 module tc_clk_xor2 (
-    input  logic clk0_i,
-    input  logic clk1_i,
-    output logic clk_o
+  input  logic clk0_i,
+  input  logic clk1_i,
+  output logic clk_o
 );
 
   assign clk_o = clk0_i ^ clk1_i;

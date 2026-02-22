@@ -30,54 +30,55 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module cv32e40x_debug_triggers
-  import cv32e40x_pkg::*;
+import cv32e40x_pkg::*;
 #(
-    parameter int     DBG_NUM_TRIGGERS = 1,
-    parameter a_ext_e A_EXT            = A_NONE
-) (
-    input logic clk,
-    input logic rst_n,
+  parameter int     DBG_NUM_TRIGGERS = 1,
+  parameter a_ext_e A_EXT = A_NONE
+)
+(
+  input  logic       clk,
+  input  logic       rst_n,
 
-    // CSR inputs write inputs
-    input logic [31:0] csr_wdata_i,
-    input logic        tselect_we_i,
-    input logic        tdata1_we_i,
-    input logic        tdata2_we_i,
-    input logic        tdata3_we_i,
-    input logic        tinfo_we_i,
-    input logic        tcontrol_we_i,
+  // CSR inputs write inputs
+  input  logic [31:0] csr_wdata_i,
+  input  logic        tselect_we_i,
+  input  logic        tdata1_we_i,
+  input  logic        tdata2_we_i,
+  input  logic        tdata3_we_i,
+  input  logic        tinfo_we_i,
+  input  logic        tcontrol_we_i,
 
-    // CSR read data outputs
-    output logic [31:0] tselect_rdata_o,
-    output logic [31:0] tdata1_rdata_o,
-    output logic [31:0] tdata2_rdata_o,
-    output logic [31:0] tdata3_rdata_o,
-    output logic [31:0] tinfo_rdata_o,
-    output logic [31:0] tcontrol_rdata_o,
+  // CSR read data outputs
+  output logic [31:0] tselect_rdata_o,
+  output logic [31:0] tdata1_rdata_o,
+  output logic [31:0] tdata2_rdata_o,
+  output logic [31:0] tdata3_rdata_o,
+  output logic [31:0] tinfo_rdata_o,
+  output logic [31:0] tcontrol_rdata_o,
 
-    // IF stage inputs
-    input logic     [31:0] pc_if_i,
-    input logic            ptr_in_if_i,
-    input privlvl_t        priv_lvl_if_i,
+  // IF stage inputs
+  input  logic [31:0] pc_if_i,
+  input  logic        ptr_in_if_i,
+  input  privlvl_t    priv_lvl_if_i,
 
-    // EX stage / LSU inputs
-    input logic               lsu_valid_ex_i,
-    input logic        [31:0] lsu_addr_ex_i,
-    input logic               lsu_we_ex_i,
-    input logic        [ 3:0] lsu_be_ex_i,
-    input privlvl_t           priv_lvl_ex_i,
-    input lsu_atomic_e        lsu_atomic_ex_i,
+  // EX stage / LSU inputs
+  input  logic        lsu_valid_ex_i,
+  input  logic [31:0] lsu_addr_ex_i,
+  input  logic        lsu_we_ex_i,
+  input  logic [3:0]  lsu_be_ex_i,
+  input  privlvl_t    priv_lvl_ex_i,
+  input  lsu_atomic_e lsu_atomic_ex_i,
 
-    // WB stage inputs
-    input privlvl_t priv_lvl_wb_i,
+  // WB stage inputs
+  input  privlvl_t    priv_lvl_wb_i,
 
-    // Controller inputs
-    input ctrl_fsm_t ctrl_fsm_i,
+  // Controller inputs
+  input ctrl_fsm_t    ctrl_fsm_i,
 
-    // Trigger match outputs
-    output logic trigger_match_if_o,  // Instruction address match
-    output logic trigger_match_ex_o,  // Load/Store address match
-    output logic etrigger_wb_o        // Exception trigger match
+  // Trigger match outputs
+  output logic        trigger_match_if_o,  // Instruction address match
+  output logic        trigger_match_ex_o,  // Load/Store address match
+  output logic        etrigger_wb_o        // Exception trigger match
 );
 
   // CSR write data
@@ -96,7 +97,7 @@ module cv32e40x_debug_triggers
 
 
   // Signal for or'ing unused signals for easier lint
-  logic        unused_signals;
+  logic unused_signals;
 
 
 
@@ -126,17 +127,17 @@ module cv32e40x_debug_triggers
       // LSU address match signals
       logic [DBG_NUM_TRIGGERS-1 : 0] lsu_addr_match_en;
       logic [DBG_NUM_TRIGGERS-1 : 0] lsu_addr_match;
-      logic [3:0] lsu_byte_addr_match[DBG_NUM_TRIGGERS-1:0];
+      logic [3:0]                    lsu_byte_addr_match[DBG_NUM_TRIGGERS-1:0];
 
       // Enable matching based on privilege level per trigger
       logic [DBG_NUM_TRIGGERS-1 : 0] priv_lvl_match_en_if;
       logic [DBG_NUM_TRIGGERS-1 : 0] priv_lvl_match_en_ex;
       logic [DBG_NUM_TRIGGERS-1 : 0] priv_lvl_match_en_wb;
 
-      logic [1:0] lsu_addr_low_lsb;  // Lower two bits of the lowest accessed address
-      logic [1:0] lsu_addr_high_lsb;  // Lower two bits of the highest accessed address
-      logic [31:0] lsu_addr_low;  // The lowest accessed address of an LSU transaction
-      logic [31:0] lsu_addr_high;  // The highest accessed address of an LSU transaction
+      logic [1:0]  lsu_addr_low_lsb;  // Lower two bits of the lowest accessed address
+      logic [1:0]  lsu_addr_high_lsb; // Lower two bits of the highest accessed address
+      logic [31:0] lsu_addr_low;      // The lowest accessed address of an LSU transaction
+      logic [31:0] lsu_addr_high;     // The highest accessed address of an LSU transaction
 
       // Exception trigger code match
       logic [31:0] exception_match[DBG_NUM_TRIGGERS-1:0];
@@ -152,48 +153,44 @@ module cv32e40x_debug_triggers
           if (csr_wdata_i[TDATA1_TTYPE_HIGH:TDATA1_TTYPE_LOW] == TTYPE_MCONTROL) begin
             // Mcontrol supports any value in tdata2, no need to check tdata2 before writing tdata1
             tdata1_n = {
-              TTYPE_MCONTROL,  // type    : address/data match
-              1'b1,  // dmode   : access from D mode only
-              6'b000000,  // maskmax  : hardwired to zero
-              1'b0,  // hit     : hardwired to zero
-              1'b0,  // select  : hardwired to zero, only address matching
-              1'b0,  // timing  : hardwired to zero, only 'before' timing
-              2'b00,  // sizelo  : hardwired to zero, match any size
-              4'b0001,  // action  : enter debug on match
-              1'b0,  // chain   : hardwired to zero
-              mcontrol2_6_match_resolve(
-                csr_wdata_i[MCONTROL2_6_MATCH_HIGH:MCONTROL2_6_MATCH_LOW]
-              ),  // match, WARL(0,2,3) 10:7
-              csr_wdata_i[6],  // m       : match in machine mode
-              1'b0,  //         : hardwired to zero
-              1'b0,  // s       : hardwired to zer0
-              mcontrol2_6_u_resolve(csr_wdata_i[MCONTROL2_6_U]),  // zero, U 3
-              csr_wdata_i[2],  // EXECUTE 2
-              csr_wdata_i[1],  // STORE 1
-              csr_wdata_i[0]  // LOAD 0
+                        TTYPE_MCONTROL,        // type    : address/data match
+                        1'b1,                  // dmode   : access from D mode only
+                        6'b000000,             // maskmax  : hardwired to zero
+                        1'b0,                  // hit     : hardwired to zero
+                        1'b0,                  // select  : hardwired to zero, only address matching
+                        1'b0,                  // timing  : hardwired to zero, only 'before' timing
+                        2'b00,                 // sizelo  : hardwired to zero, match any size
+                        4'b0001,               // action  : enter debug on match
+                        1'b0,                  // chain   : hardwired to zero
+                        mcontrol2_6_match_resolve(csr_wdata_i[MCONTROL2_6_MATCH_HIGH:MCONTROL2_6_MATCH_LOW]), // match, WARL(0,2,3) 10:7
+                        csr_wdata_i[6],        // m       : match in machine mode
+                        1'b0,                  //         : hardwired to zero
+                        1'b0,                  // s       : hardwired to zer0
+                        mcontrol2_6_u_resolve(csr_wdata_i[MCONTROL2_6_U]),     // zero, U 3
+                        csr_wdata_i[2],        // EXECUTE 2
+                        csr_wdata_i[1],        // STORE 1
+                        csr_wdata_i[0]         // LOAD 0
             };
           end else if (csr_wdata_i[TDATA1_TTYPE_HIGH:TDATA1_TTYPE_LOW] == TTYPE_MCONTROL6) begin
             // Mcontrol6 supports any value in tdata2, no need to check tdata2 before writing tdata1
             tdata1_n = {
-              TTYPE_MCONTROL6,  // type    : address/data match
-              1'b1,  // dmode   : access from D mode only
-              2'b00,  // zero  26:25
-              3'b000,  // zero, vs, vu, hit 24:22
-              1'b0,  // zero, select 21
-              1'b0,  // zero, timing 20
-              4'b0000,  // zero, size (match any size) 19:16
-              4'b0001,  // action, WARL(1), enter debug 15:12
-              1'b0,  // zero, chain 11
-              mcontrol2_6_match_resolve(
-                csr_wdata_i[MCONTROL2_6_MATCH_HIGH:MCONTROL2_6_MATCH_LOW]
-              ),  // match, WARL(0,2,3) 10:7
-              csr_wdata_i[6],  // M  6
-              1'b0,  // zero 5
-              1'b0,  // zero, S 4
-              mcontrol2_6_u_resolve(csr_wdata_i[MCONTROL2_6_U]),  // zero, U 3
-              csr_wdata_i[2],  // EXECUTE 2
-              csr_wdata_i[1],  // STORE 1
-              csr_wdata_i[0]  // LOAD 0
+                        TTYPE_MCONTROL6,       // type    : address/data match
+                        1'b1,                  // dmode   : access from D mode only
+                        2'b00,                 // zero  26:25
+                        3'b000,                // zero, vs, vu, hit 24:22
+                        1'b0,                  // zero, select 21
+                        1'b0,                  // zero, timing 20
+                        4'b0000,               // zero, size (match any size) 19:16
+                        4'b0001,               // action, WARL(1), enter debug 15:12
+                        1'b0,                  // zero, chain 11
+                        mcontrol2_6_match_resolve(csr_wdata_i[MCONTROL2_6_MATCH_HIGH:MCONTROL2_6_MATCH_LOW]), // match, WARL(0,2,3) 10:7
+                        csr_wdata_i[6],        // M  6
+                        1'b0,                  // zero 5
+                        1'b0,                  // zero, S 4
+                        mcontrol2_6_u_resolve(csr_wdata_i[MCONTROL2_6_U]),     // zero, U 3
+                        csr_wdata_i[2],        // EXECUTE 2
+                        csr_wdata_i[1],        // STORE 1
+                        csr_wdata_i[0]         // LOAD 0
             };
           end else if (csr_wdata_i[TDATA1_TTYPE_HIGH:TDATA1_TTYPE_LOW] == TTYPE_ETRIGGER) begin
             // Etrigger can only support a subset of possible values in tdata2, only update tdata1 if
@@ -205,18 +202,18 @@ module cv32e40x_debug_triggers
               tdata1_n = {TTYPE_DISABLED, 1'b1, {27{1'b0}}};
             end else begin
               tdata1_n = {
-                TTYPE_ETRIGGER,  // type  : exception trigger
-                1'b1,  // dmode : access from D mode only 27
-                1'b0,  // hit   : WARL(0) 26
-                13'h0,  // zero  : tied to zero 25:13
-                1'b0,  // vs    : WARL(0) 12
-                1'b0,  // vu    : WARL(0) 11
-                1'b0,  // zero  : tied to zero 10
-                csr_wdata_i[9],  // m     : Match in machine mode 9
-                1'b0,  // zero  : tied to zero 8
-                1'b0,  // s     : WARL(0) 7
-                etrigger_u_resolve(csr_wdata_i[ETRIGGER_U]),  // u     : Match in user mode 6
-                6'b000001  // action : WARL(1), enter debug on match
+                          TTYPE_ETRIGGER,        // type  : exception trigger
+                          1'b1,                  // dmode : access from D mode only 27
+                          1'b0,                  // hit   : WARL(0) 26
+                          13'h0,                 // zero  : tied to zero 25:13
+                          1'b0,                  // vs    : WARL(0) 12
+                          1'b0,                  // vu    : WARL(0) 11
+                          1'b0,                  // zero  : tied to zero 10
+                          csr_wdata_i[9],        // m     : Match in machine mode 9
+                          1'b0,                  // zero  : tied to zero 8
+                          1'b0,                  // s     : WARL(0) 7
+                          etrigger_u_resolve(csr_wdata_i[ETRIGGER_U]), // u     : Match in user mode 6
+                          6'b000001              // action : WARL(1), enter debug on match
               };
             end
           end else if (csr_wdata_i[TDATA1_TTYPE_HIGH:TDATA1_TTYPE_LOW] == TTYPE_DISABLED) begin
@@ -226,7 +223,7 @@ module cv32e40x_debug_triggers
             // No legal trigger type, set disabled trigger type 0xF
             tdata1_n = {TTYPE_DISABLED, 1'b1, {27{1'b0}}};
           end
-        end  // tdata1_we_i
+        end // tdata1_we_i
 
         // tdata2
         if (tdata2_we_i) begin
@@ -239,11 +236,11 @@ module cv32e40x_debug_triggers
             // Exception trigger, only allow implemented exception codes to be used
             tdata2_n = csr_wdata_i & ETRIGGER_TDATA2_MASK;
           end
-        end  // tdata2_we_i
+        end // tdata2_we_i
 
-        tdata3_n   = tdata3_rdata_o;  // Read only
-        tinfo_n    = tinfo_rdata_o;  // Read only
-        tcontrol_n = tcontrol_rdata_o;  // Read only
+        tdata3_n      = tdata3_rdata_o;   // Read only
+        tinfo_n       = tinfo_rdata_o;    // Read only
+        tcontrol_n    = tcontrol_rdata_o; // Read only
       end
 
       // Calculate highest and lowest value of address[1:0] based on lsu_be_ex_i
@@ -251,25 +248,25 @@ module cv32e40x_debug_triggers
         lsu_addr_high_lsb = 2'b00;
         lsu_addr_low_lsb  = 2'b00;
         // Find highest accessed byte
-        for (int b = 0; b < 4; b++) begin : gen_high_byte_checks
+        for (int b=0; b<4; b++) begin : gen_high_byte_checks
           if (lsu_be_ex_i[b]) begin
             lsu_addr_high_lsb = 2'(b);
-          end  // if
-        end  // for
+          end // if
+        end // for
 
         // Find lowest accessed byte
-        for (int b = 3; b >= 0; b--) begin : gen_low_byte_checks
+        for (int b=3; b>=0; b--) begin : gen_low_byte_checks
           if (lsu_be_ex_i[b]) begin
             lsu_addr_low_lsb = 2'(b);
-          end  // if
-        end  // for
-      end  // always
+          end // if
+        end // for
+      end // always
 
       assign lsu_addr_high = {lsu_addr_ex_i[31:2], lsu_addr_high_lsb};
-      assign lsu_addr_low  = {lsu_addr_ex_i[31:2], lsu_addr_low_lsb};
+      assign lsu_addr_low =  {lsu_addr_ex_i[31:2], lsu_addr_low_lsb};
 
       // Generate DBG_NUM_TRIGGERS instances of tdata1, tdata2 and match checks
-      for (genvar idx = 0; idx < DBG_NUM_TRIGGERS; idx++) begin : tmatch_csr
+      for (genvar idx=0; idx<DBG_NUM_TRIGGERS; idx++) begin : tmatch_csr
 
         ////////////////////////////////////
         // Instruction address match (IF)
@@ -314,7 +311,7 @@ module cv32e40x_debug_triggers
 
         // Check if any accessed byte matches the lower two bits of tdata2
         always_comb begin
-          for (int b = 0; b < 4; b++) begin
+          for (int b=0; b<4; b++) begin
             if (lsu_be_ex_i[b] && (2'(b) == tdata2_rdata[idx][1:0])) begin
               lsu_byte_addr_match[idx][b] = 1'b1;
             end else begin
@@ -350,7 +347,7 @@ module cv32e40x_debug_triggers
 
         always_comb begin
           exception_match[idx] = 32'd0;
-          for (int i = 0; i < 32; i++) begin
+          for (int i=0; i<32; i++) begin
             exception_match[idx][i] = tdata2_rdata[idx][i] && ctrl_fsm_i.exception_in_wb && (ctrl_fsm_i.exception_cause_wb == 11'(i));
           end
         end
@@ -363,26 +360,32 @@ module cv32e40x_debug_triggers
 
 
 
-        cv32e40x_csr #(
-            .WIDTH     (32),
-            .RESETVALUE(TDATA1_RST_VAL)
-        ) tdata1_csr_i (
-            .clk      (clk),
-            .rst_n    (rst_n),
-            .wr_data_i(tdata1_n),
-            .wr_en_i  (tdata1_we_int[idx]),
-            .rd_data_o(tdata1_q[idx])
+        cv32e40x_csr
+        #(
+          .WIDTH      (32),
+          .RESETVALUE (TDATA1_RST_VAL)
+        )
+        tdata1_csr_i
+        (
+          .clk                ( clk                   ),
+          .rst_n              ( rst_n                 ),
+          .wr_data_i          ( tdata1_n              ),
+          .wr_en_i            ( tdata1_we_int[idx]    ),
+          .rd_data_o          ( tdata1_q[idx]         )
         );
 
-        cv32e40x_csr #(
-            .WIDTH     (32),
-            .RESETVALUE(32'd0)
-        ) tdata2_csr_i (
-            .clk      (clk),
-            .rst_n    (rst_n),
-            .wr_data_i(tdata2_n),
-            .wr_en_i  (tdata2_we_int[idx]),
-            .rd_data_o(tdata2_q[idx])
+        cv32e40x_csr
+        #(
+          .WIDTH      (32),
+          .RESETVALUE (32'd0)
+        )
+        tdata2_csr_i
+        (
+          .clk                ( clk                   ),
+          .rst_n              ( rst_n                 ),
+          .wr_data_i          ( tdata2_n              ),
+          .wr_en_i            ( tdata2_we_int[idx]    ),
+          .rd_data_o          ( tdata2_q[idx]         )
         );
 
         // Set write enables
@@ -390,20 +393,23 @@ module cv32e40x_debug_triggers
         assign tdata2_we_int[idx] = tdata2_we_i && (tselect_rdata_o == idx);
 
         // Assign read data
-        assign tdata1_rdata[idx]  = tdata1_q[idx];
-        assign tdata2_rdata[idx]  = tdata2_q[idx];
-      end  // for
+        assign tdata1_rdata[idx] = tdata1_q[idx];
+        assign tdata2_rdata[idx] = tdata2_q[idx];
+      end // for
 
       // CSR instance for tselect
-      cv32e40x_csr #(
-          .WIDTH     (32),
-          .RESETVALUE(32'd0)
-      ) tselect_csr_i (
-          .clk      (clk),
-          .rst_n    (rst_n),
-          .wr_data_i(tselect_n),
-          .wr_en_i  (tselect_we_i),
-          .rd_data_o(tselect_q)
+      cv32e40x_csr
+      #(
+        .WIDTH      (32),
+        .RESETVALUE (32'd0)
+      )
+      tselect_csr_i
+      (
+        .clk                ( clk                   ),
+        .rst_n              ( rst_n                 ),
+        .wr_data_i          ( tselect_n             ),
+        .wr_en_i            ( tselect_we_i          ),
+        .rd_data_o          ( tselect_q             )
       );
 
       // Assign CSR read data outputs
@@ -412,8 +418,8 @@ module cv32e40x_debug_triggers
         tdata2_rdata_o = tdata2_rdata[0];
 
         // Iterate through triggers and set tdata1/tdata2 rdata for the currently selected trigger
-        for (int i = 0; i < DBG_NUM_TRIGGERS; i++) begin
-          if (tselect_rdata_o == i) begin
+        for (int i=0; i<DBG_NUM_TRIGGERS; i++) begin
+          if(tselect_rdata_o == i) begin
             tdata1_rdata_o = tdata1_rdata[i];
             tdata2_rdata_o = tdata2_rdata[i];
           end
@@ -426,12 +432,12 @@ module cv32e40x_debug_triggers
         tdata1_we_r = tdata1_we_i || tselect_we_i;
         tdata2_we_r = tdata2_we_i || tselect_we_i;
 
-        tdata1_n_r  = tdata1_n;
-        tdata2_n_r  = tdata2_n;
+        tdata1_n_r = tdata1_n;
+        tdata2_n_r = tdata2_n;
 
         if (tselect_we_i) begin
-          for (int i = 0; i < DBG_NUM_TRIGGERS; i++) begin
-            if (tselect_n == i) begin
+          for (int i=0; i<DBG_NUM_TRIGGERS; i++) begin
+            if(tselect_n == i) begin
               tdata1_n_r = tdata1_rdata[i];
               tdata2_n_r = tdata2_rdata[i];
             end
@@ -440,9 +446,9 @@ module cv32e40x_debug_triggers
       end
 
 
-      assign tdata3_rdata_o = 32'h00000000;
-      assign tselect_rdata_o = tselect_q;
-      assign tinfo_rdata_o = 32'h00008064;  // Supported types 0x2, 0x5, 0x6 and 0xF
+      assign tdata3_rdata_o   = 32'h00000000;
+      assign tselect_rdata_o  = tselect_q;
+      assign tinfo_rdata_o    = 32'h00008064; // Supported types 0x2, 0x5, 0x6 and 0xF
       assign tcontrol_rdata_o = 32'h00000000;
 
       // Set trigger match for IF

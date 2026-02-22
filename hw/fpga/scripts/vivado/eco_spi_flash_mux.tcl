@@ -5,12 +5,12 @@ if {$keep_sel_pin eq ""} {
 }
 set SEL [lindex [get_nets -quiet -of_objects $keep_sel_pin] 0]
 
-set X_IOBUF_SD0 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_0_i/xilinx_iobuf_i"}] 0]
-set X_IOBUF_SD1 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_1_i/xilinx_iobuf_i"}] 0]
-set X_IOBUF_SD2 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_2_i/xilinx_iobuf_i"}] 0]
-set X_IOBUF_SD3 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sd_3_i/xilinx_iobuf_i"}] 0]
-set X_IOBUF_SCK [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_sck_i/xilinx_iobuf_i"}] 0]
-set X_IOBUF_CS  [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/pad_spi_flash_cs_0_i/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD0 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/u_pad_spi_flash_sd_0/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD1 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/u_pad_spi_flash_sd_1/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD2 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/u_pad_spi_flash_sd_2/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SD3 [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/u_pad_spi_flash_sd_3/xilinx_iobuf_i"}] 0]
+set X_IOBUF_SCK [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/u_pad_spi_flash_sck/xilinx_iobuf_i"}] 0]
+set X_IOBUF_CS  [lindex [get_cells -quiet -hier -filter {NAME =~ "*pad_ring_i/u_pad_spi_flash_cs_0/xilinx_iobuf_i"}] 0]
 
 set X_SD0_I_PIN [get_pins -quiet -of_objects $X_IOBUF_SD0 -filter {REF_PIN_NAME=="I"}]
 set X_SD0_T_PIN [get_pins -quiet -of_objects $X_IOBUF_SD0 -filter {REF_PIN_NAME=="T"}]

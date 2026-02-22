@@ -12,8 +12,8 @@
 //              Mainly shifters at the moment.
 
 module pulp_level_shifter_in (
-    input  logic in_i,
-    output logic out_o
+  input  logic in_i,
+  output logic out_o
 );
 
   assign out_o = in_i;
@@ -21,9 +21,9 @@ module pulp_level_shifter_in (
 endmodule
 
 module pulp_level_shifter_in_clamp (
-    input  logic in_i,
-    output logic out_o,
-    input  logic clamp_i
+  input  logic in_i,
+  output logic out_o,
+  input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b0 : in_i;
@@ -31,8 +31,8 @@ module pulp_level_shifter_in_clamp (
 endmodule
 
 module pulp_level_shifter_inout (
-    input  logic data_i,
-    output logic data_o
+  input  logic data_i,
+  output logic data_o
 );
 
   assign data_o = data_i;
@@ -40,8 +40,8 @@ module pulp_level_shifter_inout (
 endmodule
 
 module pulp_level_shifter_out (
-    input  logic in_i,
-    output logic out_o
+  input  logic in_i,
+  output logic out_o
 );
 
   assign out_o = in_i;
@@ -49,9 +49,9 @@ module pulp_level_shifter_out (
 endmodule
 
 module pulp_level_shifter_out_clamp (
-    input  logic in_i,
-    output logic out_o,
-    input  logic clamp_i
+  input  logic in_i,
+  output logic out_o,
+  input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b0 : in_i;
@@ -59,8 +59,8 @@ module pulp_level_shifter_out_clamp (
 endmodule
 
 module pulp_power_gating (
-    input  logic sleep_i,
-    output logic sleepout_o
+  input  logic sleep_i,
+  output logic sleepout_o
 );
 
   assign sleepout_o = sleep_i;
@@ -68,9 +68,9 @@ module pulp_power_gating (
 endmodule
 
 module pulp_isolation_0 (
-    input  logic data_i,
-    input  logic ena_i,
-    output logic data_o
+  input  logic data_i,
+  input  logic ena_i,
+  output logic data_o
 );
 
   assign data_o = ena_i ? data_i : 1'b0;
@@ -78,9 +78,9 @@ module pulp_isolation_0 (
 endmodule
 
 module pulp_isolation_1 (
-    input  logic data_i,
-    input  logic ena_i,
-    output logic data_o
+  input  logic data_i,
+  input  logic ena_i,
+  output logic data_o
 );
 
   assign data_o = ena_i ? data_i : 1'b1;

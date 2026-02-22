@@ -23,72 +23,69 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_mpu_sva
-  import cv32e40x_pkg::*;
-  import uvm_pkg::*;
-#(
-    parameter int              PMA_NUM_REGIONS                      = 0,
-    parameter pma_cfg_t        PMA_CFG        [PMA_NUM_REGIONS-1:0] = '{default: PMA_R_DEFAULT},
-    parameter bit              IS_INSTR_SIDE                        = 0,
-    parameter type             CORE_RESP_TYPE                       = inst_resp_t,
-    parameter type             CORE_REQ_TYPE                        = obi_inst_req_t,
-    parameter a_ext_e          A_EXT                                = A_NONE,
-    parameter bit              DEBUG                                = 1,
-    parameter logic     [31:0] DM_REGION_START                      = 32'hF0000000,
-    parameter logic     [31:0] DM_REGION_END                        = 32'hF0003FFF
-) (
-    input logic clk,
-    input logic rst_n,
+module cv32e40x_mpu_sva import cv32e40x_pkg::*; import uvm_pkg::*;
+  #(  parameter int          PMA_NUM_REGIONS              = 0,
+      parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1:0] = '{default:PMA_R_DEFAULT},
+      parameter bit          IS_INSTR_SIDE = 0,
+      parameter type         CORE_RESP_TYPE = inst_resp_t,
+      parameter type         CORE_REQ_TYPE  = obi_inst_req_t,
+      parameter a_ext_e      A_EXT = A_NONE,
+      parameter bit          DEBUG = 1,
+      parameter logic [31:0] DM_REGION_START = 32'hF0000000,
+      parameter logic [31:0] DM_REGION_END   = 32'hF0003FFF)
+  (
+   input logic        clk,
+   input logic        rst_n,
 
-    input logic instr_fetch_access,
-    input logic atomic_access_i,
-    input logic misaligned_access_i,
-    input logic bus_trans_bufferable,
-    input logic bus_trans_cacheable,
+   input logic        instr_fetch_access,
+   input logic        atomic_access_i,
+   input logic        misaligned_access_i,
+   input logic        bus_trans_bufferable,
+   input logic        bus_trans_cacheable,
 
-    // PMA signals
-    input logic            pma_err,
-    input logic     [31:0] pma_addr,
-    input pma_cfg_t        pma_cfg,
-    input logic            pma_dbg,
+   // PMA signals
+   input logic        pma_err,
+   input logic [31:0] pma_addr,
+   input pma_cfg_t    pma_cfg,
+   input logic        pma_dbg,
 
-    // Core OBI signals
-    input logic [ 1:0] obi_memtype,
-    input logic [31:0] obi_addr,
-    input logic        obi_req,
-    input logic        obi_gnt,
-    input logic        obi_dbg,
+   // Core OBI signals
+   input logic [ 1:0] obi_memtype,
+   input logic [31:0] obi_addr,
+   input logic        obi_req,
+   input logic        obi_gnt,
+   input logic        obi_dbg,
 
-    input obi_if_state_e obi_if_state,
+   input obi_if_state_e obi_if_state,
 
-    // Interface towards bus interface
-    input logic bus_trans_ready_i,
-    input logic bus_trans_valid_o,
+   // Interface towards bus interface
+   input logic        bus_trans_ready_i,
+   input logic        bus_trans_valid_o,
 
-    input logic bus_resp_valid_i,
+   input logic        bus_resp_valid_i,
 
-    // Write buffer signals
-    input write_buffer_state_e write_buffer_state,
-    input logic                write_buffer_valid_o,
-    input logic                write_buffer_txn_bufferable,
-    input logic                write_buffer_txn_cacheable,
+   // Write buffer signals
+   input write_buffer_state_e write_buffer_state,
+   input logic        write_buffer_valid_o,
+   input logic        write_buffer_txn_bufferable,
+   input logic        write_buffer_txn_cacheable,
 
-    // Interface towards core
-    input logic         core_trans_valid_i,
-    input logic         core_trans_ready_o,
-    input CORE_REQ_TYPE core_trans_i,
-    input logic         core_trans_pushpop_i,
+   // Interface towards core
+   input logic         core_trans_valid_i,
+   input logic         core_trans_ready_o,
+   input CORE_REQ_TYPE core_trans_i,
+   input logic         core_trans_pushpop_i,
 
-    input logic core_resp_valid_o,
+   input logic        core_resp_valid_o,
 
-    input mpu_status_e mpu_status,
-    input logic        mpu_err_trans_valid,
-    input logic        mpu_block_core,
-    input logic        mpu_block_bus,
-    input mpu_state_e  state_q,
-    input logic        mpu_err,
-    input logic        load_access
-);
+   input              mpu_status_e mpu_status,
+   input logic        mpu_err_trans_valid,
+   input logic        mpu_block_core,
+   input logic        mpu_block_bus,
+   input              mpu_state_e state_q,
+   input logic        mpu_err,
+   input logic        load_access
+   );
 
   // PMA assertions helper signals
 
@@ -111,10 +108,11 @@ module cv32e40x_mpu_sva
   always_ff @(posedge clk, negedge rst_n) begin
     if (!rst_n) begin
       was_obi_reqnognt <= 0;
-      was_obi_memtype  <= 0;
-    end else begin
+      was_obi_memtype <= 0;
+    end
+    else begin
       was_obi_reqnognt <= obi_req && !obi_gnt;
-      was_obi_memtype  <= obi_memtype;
+      was_obi_memtype <= obi_memtype;
     end
   end
 
@@ -154,7 +152,7 @@ module cv32e40x_mpu_sva
     for (int i = 0; i < PMA_NUM_REGIONS; i++) begin
       if ((pma_cfg == PMA_CFG[i]) && (pma_cfg != PMA_R_DEFAULT)) begin
         is_pma_matched = 1;
-        pma_match_num  = i;
+        pma_match_num = i;
         break;
       end
     end
@@ -167,81 +165,74 @@ module cv32e40x_mpu_sva
       end
     end
   end
-`ifndef FORMAL
-  cov_pma_matchnone :
-  cover property (@(posedge clk) disable iff (!rst_n) (!is_pma_matched));
-  cov_pma_matchfirst :
-  cover property (@(posedge clk) disable iff (!rst_n) (is_pma_matched && (pma_match_num == 0)));
-  cov_pma_matchother :
-  cover property (@(posedge clk) disable iff (!rst_n) (is_pma_matched && (pma_match_num > 0)));
-`endif
+  `ifndef FORMAL
+    cov_pma_matchnone : cover property (@(posedge clk) disable iff (!rst_n) (!is_pma_matched));
+    cov_pma_matchfirst : cover property (@(posedge clk) disable iff (!rst_n) (is_pma_matched && (pma_match_num == 0)));
+    cov_pma_matchother : cover property (@(posedge clk) disable iff (!rst_n) (is_pma_matched && (pma_match_num > 0)));
+  `endif
 
 
   // Checks for illegal PMA region configuration
 
   always_comb begin
     if (PMA_NUM_REGIONS != 0) begin
-      a_pma_valid_config :
-      assert (PMA_NUM_REGIONS == $size(PMA_CFG))
-      else `uvm_error("mpu", "PMA_CFG must contain PMA_NUM_REGION entries");
+      a_pma_valid_config : assert (PMA_NUM_REGIONS == $size(PMA_CFG))
+        else `uvm_error("mpu", "PMA_CFG must contain PMA_NUM_REGION entries");
     end
   end
 
-  generate
-    for (genvar i = 0; i < PMA_NUM_REGIONS; i++) begin : a_pma_no_illegal_configs
-      always_comb begin
+  generate for (genvar i = 0; i < PMA_NUM_REGIONS; i++)
+    begin : a_pma_no_illegal_configs
+    always_comb begin
         if (PMA_CFG[i].main == 1'b1) begin
-          a_main_atomic :
-          assert (PMA_CFG[i].atomic == 1'b1)
-          else
-            `uvm_error("mpu", "PMA regions configured as main must also support atomic operations");
+          a_main_atomic : assert (PMA_CFG[i].atomic == 1'b1)
+            else `uvm_error("mpu", "PMA regions configured as main must also support atomic operations");
         end
         if (PMA_CFG[i].main == 1'b0) begin
-          a_io_noncacheable :
-          assert (PMA_CFG[i].cacheable == 1'b0)
-          else `uvm_error("mpu", "PMA regions configured as I/O cannot be defined as cacheable");
+          a_io_noncacheable : assert (PMA_CFG[i].cacheable == 1'b0)
+            else `uvm_error("mpu", "PMA regions configured as I/O cannot be defined as cacheable");
         end
       end
     end
   endgenerate
 
   a_pma_valid_num_regions :
-  assert property (@(posedge clk) disable iff (!rst_n)
+    assert property (@(posedge clk) disable iff (!rst_n)
                      (0 <= PMA_NUM_REGIONS) && (PMA_NUM_REGIONS <= 16))
-  else `uvm_error("mpu", "PMA number of regions is badly configured")
+      else `uvm_error("mpu", "PMA number of regions is badly configured")
 
   // Region matching
   generate
     if (PMA_NUM_REGIONS) begin
       a_pma_match_bounds :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          is_pma_matched |-> (is_lobound_ok && is_hibound_ok))
-      else `uvm_error("mpu", "PMA region match doesn't fit bounds")
+          else `uvm_error("mpu", "PMA region match doesn't fit bounds")
       a_pma_match_lowest :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          is_pma_matched |-> (pma_match_num == pma_lowest_match))
-      else `uvm_error("mpu", "PMA region match wasn't lowest")
+          else `uvm_error("mpu", "PMA region match wasn't lowest")
       a_pma_match_index :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          is_pma_matched |-> ((0 <= pma_match_num) && (pma_match_num < 16)))
-      else `uvm_error("mpu", "illegal cfg index")
+          else `uvm_error("mpu", "illegal cfg index")
     end else begin
       a_pma_match_unreachable :
-      assert property (@(posedge clk) disable iff (!rst_n) is_pma_matched == 0)
-      else `uvm_error("mpu", "No PMA regions defined, PMA should not match any address")
+        assert property (@(posedge clk) disable iff (!rst_n)
+          is_pma_matched == 0)
+        else `uvm_error("mpu", "No PMA regions defined, PMA should not match any address")
     end
   endgenerate
 
   // RTL vs SVA expectations
-  pma_cfg_t pma_expected_cfg;
-  logic     pma_expected_err;
-  logic     pma_expected_misaligned_err;
+  pma_cfg_t    pma_expected_cfg;
+  logic        pma_expected_err;
+  logic        pma_expected_misaligned_err;
   always_comb begin
     pma_expected_cfg = NO_PMA_R_DEFAULT;
     if (PMA_NUM_REGIONS) begin
-      pma_expected_cfg = is_pma_dbg_matched ?
-      '{main    : 1'b1, default: '0}
-      : is_pma_matched ? PMA_CFG[pma_lowest_match] : PMA_R_DEFAULT;
+      pma_expected_cfg = is_pma_dbg_matched ? '{main    : 1'b1, default : '0} :
+                         is_pma_matched     ? PMA_CFG[pma_lowest_match]       : PMA_R_DEFAULT;
 
     end
   end
@@ -253,49 +244,49 @@ module cv32e40x_mpu_sva
   assign pma_expected_misaligned_err = (misaligned_access_i && atomic_access_i);
 
   a_pma_expect_cfg :
-  assert property (@(posedge clk) disable iff (!rst_n) pma_cfg == pma_expected_cfg)
-  else `uvm_error("mpu", "RTL cfg don't match SVA expectations")
+    assert property (@(posedge clk) disable iff (!rst_n) pma_cfg == pma_expected_cfg)
+      else `uvm_error("mpu", "RTL cfg don't match SVA expectations")
 
   generate
     if (bufferable_in_config() && !IS_INSTR_SIDE) begin
-      a_pma_expect_bufferable :
+    a_pma_expect_bufferable :
       assert property (@(posedge clk) disable iff (!rst_n) bus_trans_bufferable |-> !load_access && !atomic_access_i && pma_expected_cfg.bufferable)
-      else `uvm_error("mpu", "expected different bufferable flag")
+        else `uvm_error("mpu", "expected different bufferable flag")
     end else begin
-      a_pma_no_expect_bufferable :
+    a_pma_no_expect_bufferable :
       assert property (@(posedge clk) disable iff (!rst_n) bus_trans_bufferable == '0)
-      else `uvm_error("mpu", "expected different bufferable flag")
+        else `uvm_error("mpu", "expected different bufferable flag")
     end
   endgenerate
 
   a_pma_expect_cacheable :
-  assert property (@(posedge clk) disable iff (!rst_n) bus_trans_cacheable == pma_expected_cfg.cacheable)
-  else `uvm_error("mpu", "expected different cacheable flag")
+    assert property (@(posedge clk) disable iff (!rst_n) bus_trans_cacheable == pma_expected_cfg.cacheable)
+      else `uvm_error("mpu", "expected different cacheable flag")
 
   a_pma_expect_err :
-  assert property (@(posedge clk) disable iff (!rst_n) pma_err == pma_expected_err)
-  else `uvm_error("mpu", "expected different err flag")
+    assert property (@(posedge clk) disable iff (!rst_n) pma_err == pma_expected_err)
+      else `uvm_error("mpu", "expected different err flag")
 
   // Bufferable
   generate
     if (bufferable_in_config() && !IS_INSTR_SIDE) begin
       a_pma_obi_bufon :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                         obi_memtype[0] |-> (bus_trans_bufferable) ||
                                            (write_buffer_txn_bufferable && write_buffer_valid_o))
-      else `uvm_error("mpu", "obi should have had bufferable flag")
+          else `uvm_error("mpu", "obi should have had bufferable flag")
     end else begin
       a_pma_obi_bufon_unreachable :
-      assert property (@(posedge clk) disable iff (!rst_n) !obi_memtype[0])
-      else
-        `uvm_error("mpu",
-                   "obi should never have bufferable flag with no bufferable pma regions or on instruction side")
-    end
+        assert property (@(posedge clk) disable iff (!rst_n)
+                         !obi_memtype[0])
+          else `uvm_error("mpu", "obi should never have bufferable flag with no bufferable pma regions or on instruction side")
+   end
   endgenerate
 
   a_pma_obi_bufoff :
-  assert property (@(posedge clk) disable iff (!rst_n) !obi_memtype[0] |-> !bus_trans_bufferable)
-  else `uvm_error("mpu", "obi should not have had bufferable flag")
+    assert property (@(posedge clk) disable iff (!rst_n)
+                    !obi_memtype[0] |-> !bus_trans_bufferable)
+      else `uvm_error("mpu", "obi should not have had bufferable flag")
 
   // Cacheable
   logic obicache_expected;
@@ -306,53 +297,56 @@ module cv32e40x_mpu_sva
   generate
     if (cacheable_in_config()) begin
       a_pma_obi_cacheon :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          obi_memtype[1] |-> (obicache_expected && !obicache_excuse) ||
                                             (write_buffer_txn_cacheable && write_buffer_valid_o))
-      else `uvm_error("mpu", "obi should have had cacheable flag")
+          else `uvm_error("mpu", "obi should have had cacheable flag")
     end else begin
       a_pma_obi_cacheon_unreachable :
-      assert property (@(posedge clk) disable iff (!rst_n) !obi_memtype[1])
-      else `uvm_error("mpu", "obi should not have had cacheable flag")
+        assert property (@(posedge clk) disable iff (!rst_n)
+                         !obi_memtype[1])
+          else `uvm_error("mpu", "obi should not have had cacheable flag")
     end
   endgenerate
 
   a_pma_obi_cacheoff :
-  assert property (@(posedge clk) disable iff (!rst_n)
+    assert property (@(posedge clk) disable iff (!rst_n)
                      !obi_memtype[1] |-> !(obicache_expected && !obicache_excuse) ||
                                          (!write_buffer_txn_cacheable && write_buffer_valid_o))
-  else `uvm_error("mpu", "obi should not have had cacheable flag")
+      else `uvm_error("mpu", "obi should not have had cacheable flag")
 
 
   // OBI req vs PMA err
   a_pma_obi_reqallowed :
-  assert property (@(posedge clk) disable iff (!rst_n) obi_req |->
-  // If we have an address match, there must be no PMA error
-  (!pma_err && is_addr_match) ||
-  // or a transaction from the write buffer is causing obi_req
-  // (a different transaction could cause pma_err in the same cycle)
-  (!IS_INSTR_SIDE && (write_buffer_state && write_buffer_valid_o)) ||
-  // or we are already outputting a obi_req but a new address comes in which may cause a pma_err
-  (IS_INSTR_SIDE && (!is_addr_match && (obi_if_state == REGISTERED))) ||
-  // or we get an address match, but was already outputting the same address (no pma_err)
-  // but a change in debug mode causes the new transaction the same address to fail
-  (IS_INSTR_SIDE && (is_addr_match && (obi_if_state == REGISTERED) && (!pma_dbg && obi_dbg))))
-  else `uvm_error("mpu", "obi made request to pma-forbidden region")
+    assert property (@(posedge clk) disable iff (!rst_n)
+                     obi_req
+                     |->
+                     // If we have an address match, there must be no PMA error
+                     (!pma_err && is_addr_match) ||
+                     // or a transaction from the write buffer is causing obi_req
+                     // (a different transaction could cause pma_err in the same cycle)
+                     (!IS_INSTR_SIDE && (write_buffer_state && write_buffer_valid_o)) ||
+                     // or we are already outputting a obi_req but a new address comes in which may cause a pma_err
+                     (IS_INSTR_SIDE && (!is_addr_match && (obi_if_state == REGISTERED))) ||
+                     // or we get an address match, but was already outputting the same address (no pma_err)
+                     // but a change in debug mode causes the new transaction the same address to fail
+                     (IS_INSTR_SIDE && (is_addr_match && (obi_if_state == REGISTERED) && (!pma_dbg && obi_dbg))))
+      else `uvm_error("mpu", "obi made request to pma-forbidden region")
 
   generate
     if (PMA_NUM_REGIONS) begin
       a_pma_obi_reqdenied :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          pma_err
                          |-> !obi_req ||
-                             (was_obi_waiting && $past(
-          obi_req
-      )) || (write_buffer_state && write_buffer_valid_o))
-      else `uvm_error("mpu", "pma error should forbid obi req")
+                             (was_obi_waiting && $past(obi_req)) ||
+                             (write_buffer_state && write_buffer_valid_o))
+          else `uvm_error("mpu", "pma error should forbid obi req")
     end else begin
       a_pma_obi_reqdenied :
-      assert property (@(posedge clk) disable iff (!rst_n) !pma_err)
-      else `uvm_error("mpu", "pma deconfigured, should not trigger error")
+        assert property (@(posedge clk) disable iff (!rst_n)
+                        !pma_err)
+        else `uvm_error("mpu", "pma deconfigured, should not trigger error")
     end
   endgenerate
 
@@ -366,51 +360,52 @@ module cv32e40x_mpu_sva
     cp_atomic: coverpoint atomic_access_i;
     cp_addr: coverpoint pma_addr[31:2] {
       bins min = {0};
-      bins max = {30'h3FFF_FFFF};
-      bins range[3] = {[1 : 30'h3FFF_FFFe]};
+      bins max = {30'h 3FFF_FFFF};
+      bins range[3] = {[1 : 30'h 3FFF_FFFe]};
       illegal_bins il = default;
-    }
+      }
 
     x_err_instr: cross cp_err, cp_instr;
     x_err_bufferable: cross cp_err, cp_bufferable;
     x_err_cacheable: cross cp_err, cp_cacheable;
     x_err_atomic: cross cp_err, cp_atomic;
   endgroup
-`ifndef FORMAL
-  cg_pma cgpma = new;
-`endif
+  `ifndef FORMAL
+    cg_pma cgpma = new;
+  `endif
 
-`ifndef FORMAL
-  cov_pma_nondefault :
-  cover property (@(posedge clk) disable iff (!rst_n)
+  `ifndef FORMAL
+    cov_pma_nondefault :
+      cover property (@(posedge clk) disable iff (!rst_n)
         (pma_cfg != PMA_R_DEFAULT) && bus_trans_valid_o);
-`endif
+  `endif
 
   // MPU FSM and bus interface should never assert trans valid at the same time
   a_mpu_bus_mpu_err_valid :
-  assert property (@(posedge clk) disable iff (!rst_n) (!(bus_resp_valid_i && mpu_err_trans_valid)))
-  else `uvm_error("mpu", "MPU FSM and bus interface response collision")
+    assert property (@(posedge clk) disable iff (!rst_n)
+                     (! (bus_resp_valid_i && mpu_err_trans_valid) ))
+      else `uvm_error("mpu", "MPU FSM and bus interface response collision")
 
   generate
     if (PMA_NUM_REGIONS) begin
       // Should only give MPU error response during mpu_err_trans_valid
       a_mpu_status_no_obi_rvalid :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          (mpu_status != MPU_OK) |-> (mpu_err_trans_valid) )
-      else `uvm_error("mpu", "MPU error status wile not mpu_err_trans_valid")
+          else `uvm_error("mpu", "MPU error status wile not mpu_err_trans_valid")
 
       // Should only block core side upon when waiting for MPU error response
       a_mpu_block_core_iff_wait :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          (mpu_block_core) |-> (state_q != MPU_IDLE) )
-      else `uvm_error("mpu", "MPU blocking core side when not needed")
+          else `uvm_error("mpu", "MPU blocking core side when not needed")
 
       // Should only block OBI side upon MPU error
       a_mpu_block_bus_iff_err :
-      assert property (@(posedge clk) disable iff (!rst_n)
+        assert property (@(posedge clk) disable iff (!rst_n)
                          (mpu_block_bus) |-> (mpu_err || (state_q != MPU_IDLE)) )
-      else `uvm_error("mpu", "MPU blocking OBI side when not needed")
-    end
+          else `uvm_error("mpu", "MPU blocking OBI side when not needed")
+        end
   endgenerate
 
 
@@ -426,31 +421,33 @@ module cv32e40x_mpu_sva
   endgenerate
 
 
-  if (A_EXT != A_NONE) begin
-    if (DEBUG) begin
-      // Check that PMA sets correct attribution for non-atomic accesses DM during debug
-      // main, non-cacheable, non-bufferable, non-atomics
-      a_dm_region_atomic_dbg :
-      assert property (@(posedge clk) disable iff (!rst_n)
+if (A_EXT != A_NONE) begin
+  if (DEBUG) begin
+    // Check that PMA sets correct attribution for non-atomic accesses DM during debug
+    // main, non-cacheable, non-bufferable, non-atomics
+    a_dm_region_atomic_dbg:
+    assert property (@(posedge clk) disable iff (!rst_n)
                       is_pma_dbg_matched &&
                       (|atop)
                       |->
                       pma_err &&               // No atomics allowed to DM region
-      !bus_trans_cacheable && !bus_trans_bufferable)
-      else `uvm_error("mpu", "Wrong attributes for non-atomic access to DM during debug mode")
-    end  // DEBUG
+                      !bus_trans_cacheable &&
+                      !bus_trans_bufferable)
+          else `uvm_error("mpu", "Wrong attributes for non-atomic access to DM during debug mode")
+  end // DEBUG
 
-  end
+end
 
-  if (DEBUG) begin
-    a_dm_region_nonatomic_dbg :
-    assert property (@(posedge clk) disable iff (!rst_n)
+if (DEBUG) begin
+  a_dm_region_nonatomic_dbg:
+  assert property (@(posedge clk) disable iff (!rst_n)
                   is_pma_dbg_matched &&
                   !(|atop)
                   |->
                   !pma_err &&               // Always 'main' while accessing DM in debug mode
-    !bus_trans_cacheable && !bus_trans_bufferable)
-    else `uvm_error("mpu", "Wrong attributes for non-atomic access to DM during debug mode")
-  end
+                  !bus_trans_cacheable &&
+                  !bus_trans_bufferable)
+        else `uvm_error("mpu", "Wrong attributes for non-atomic access to DM during debug mode")
+end
 endmodule : cv32e40x_mpu_sva
 

@@ -13,8 +13,8 @@
 
 
 module tc_pwr_level_shifter_in (
-    input  logic in_i,
-    output logic out_o
+  input  logic in_i,
+  output logic out_o
 );
 
   assign out_o = in_i;
@@ -22,9 +22,9 @@ module tc_pwr_level_shifter_in (
 endmodule
 
 module tc_pwr_level_shifter_in_clamp_lo (
-    input  logic in_i,
-    output logic out_o,
-    input  logic clamp_i
+  input  logic in_i,
+  output logic out_o,
+  input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b0 : in_i;
@@ -32,9 +32,9 @@ module tc_pwr_level_shifter_in_clamp_lo (
 endmodule
 
 module tc_pwr_level_shifter_in_clamp_hi (
-    input  logic in_i,
-    output logic out_o,
-    input  logic clamp_i
+  input  logic in_i,
+  output logic out_o,
+  input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b1 : in_i;
@@ -42,8 +42,8 @@ module tc_pwr_level_shifter_in_clamp_hi (
 endmodule
 
 module tc_pwr_level_shifter_out (
-    input  logic in_i,
-    output logic out_o
+  input  logic in_i,
+  output logic out_o
 );
 
   assign out_o = in_i;
@@ -51,9 +51,9 @@ module tc_pwr_level_shifter_out (
 endmodule
 
 module tc_pwr_level_shifter_out_clamp_lo (
-    input  logic in_i,
-    output logic out_o,
-    input  logic clamp_i
+  input  logic in_i,
+  output logic out_o,
+  input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b0 : in_i;
@@ -61,9 +61,9 @@ module tc_pwr_level_shifter_out_clamp_lo (
 endmodule
 
 module tc_pwr_level_shifter_out_clamp_hi (
-    input  logic in_i,
-    output logic out_o,
-    input  logic clamp_i
+  input  logic in_i,
+  output logic out_o,
+  input  logic clamp_i
 );
 
   assign out_o = clamp_i ? 1'b1 : in_i;
@@ -71,8 +71,8 @@ module tc_pwr_level_shifter_out_clamp_hi (
 endmodule
 
 module tc_pwr_power_gating (
-    input  logic sleep_i,
-    output logic sleepout_o
+  input  logic sleep_i,
+  output logic sleepout_o
 );
 
   assign sleepout_o = sleep_i;
@@ -80,9 +80,9 @@ module tc_pwr_power_gating (
 endmodule
 
 module tc_pwr_isolation_lo (
-    input  logic data_i,
-    input  logic ena_i,
-    output logic data_o
+  input  logic data_i,
+  input  logic ena_i,
+  output logic data_o
 );
 
   assign data_o = ena_i ? data_i : 1'b0;
@@ -90,9 +90,9 @@ module tc_pwr_isolation_lo (
 endmodule
 
 module tc_pwr_isolation_hi (
-    input  logic data_i,
-    input  logic ena_i,
-    output logic data_o
+  input  logic data_i,
+  input  logic ena_i,
+  output logic data_o
 );
 
   assign data_o = ena_i ? data_i : 1'b1;

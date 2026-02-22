@@ -21,19 +21,19 @@
 
 module cv32e40x_div_sva
   import uvm_pkg::*;
-(
-    input logic clk,
-    input logic rst_n,
+  (
+   input logic  clk,
+   input logic  rst_n,
+   
+   input logic  valid_i,
+   input logic  ready_o,
 
-    input logic valid_i,
-    input logic ready_o,
+   input logic  ready_i,
+   input logic  valid_o,
 
-    input logic ready_i,
-    input logic valid_o,
-
-    input logic data_ind_timing_i
+   input logic  data_ind_timing_i
 );
-
+  
   logic [5:0] cycle_count;
 
   // Division cycle counter
@@ -41,7 +41,8 @@ module cv32e40x_div_sva
     if (valid_i && $past(ready_o)) begin
       // Division accpted, reset counter
       cycle_count <= '0;
-    end else begin
+    end
+    else begin
       cycle_count <= cycle_count + 1'b1;
     end
   end
@@ -56,13 +57,15 @@ module cv32e40x_div_sva
                      ($rose(valid_o) && data_ind_timing_i |-> cycle_count == 33))
       else `uvm_error("div", "Data independent cycle count failed")
   */
-  a_ready_o :
-  assert property (@(posedge clk) disable iff (!rst_n) (valid_o && ready_i |-> ready_o))
-  else `uvm_error("div", "ready_o not set in the same cycle as output is accepted")
+  a_ready_o :  
+    assert property (@(posedge clk) disable iff (!rst_n)
+                     (valid_o && ready_i |-> ready_o))
+      else `uvm_error("div", "ready_o not set in the same cycle as output is accepted")
 
   a_valid_o :
-  assert property (@(posedge clk) disable iff (!rst_n) (valid_o |-> valid_i))
-  else `uvm_error("div", "valid_o=1 when valid_i=0")
-
-endmodule  // cv32e40x_div_sva
+    assert property (@(posedge clk) disable iff (!rst_n)
+                     (valid_o |-> valid_i))
+      else `uvm_error("div", "valid_o=1 when valid_i=0")
+    
+endmodule // cv32e40x_div_sva
 

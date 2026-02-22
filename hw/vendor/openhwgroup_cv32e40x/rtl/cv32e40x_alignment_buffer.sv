@@ -21,48 +21,48 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_alignment_buffer
-  import cv32e40x_pkg::*;
+module cv32e40x_alignment_buffer import cv32e40x_pkg::*;
 #(
-    parameter int unsigned ALBUF_DEPTH     = 3,
-    parameter int unsigned ALBUF_CNT_WIDTH = $clog2(ALBUF_DEPTH)
-) (
-    input logic clk,
-    input logic rst_n,
+  parameter int unsigned ALBUF_DEPTH     = 3,
+  parameter int unsigned ALBUF_CNT_WIDTH = $clog2(ALBUF_DEPTH)
+)
+(
+  input  logic           clk,
+  input  logic           rst_n,
 
-    // Controller fsm inputs
-    input ctrl_fsm_t ctrl_fsm_i,
+  // Controller fsm inputs
+  input  ctrl_fsm_t      ctrl_fsm_i,
 
-    // Branch control
-    input  logic [31:0] branch_addr_i,
-    output logic        prefetch_busy_o,
-    output logic        one_txn_pend_n,
+  // Branch control
+  input  logic [31:0]    branch_addr_i,
+  output logic           prefetch_busy_o,
+  output logic           one_txn_pend_n,
 
-    // Interface to prefetcher
-    output logic            fetch_valid_o,
-    input  logic            fetch_ready_i,
-    output logic            fetch_branch_o,
-    output logic     [31:0] fetch_branch_addr_o,
-    output logic            fetch_ptr_access_o,
-    input  logic            fetch_ptr_access_i,
-    output privlvl_t        fetch_priv_lvl_o,
-    input  privlvl_t        fetch_priv_lvl_i,
+  // Interface to prefetcher
+  output logic           fetch_valid_o,
+  input  logic           fetch_ready_i,
+  output logic           fetch_branch_o,
+  output logic [31:0]    fetch_branch_addr_o,
+  output logic           fetch_ptr_access_o,
+  input  logic           fetch_ptr_access_i,
+  output privlvl_t       fetch_priv_lvl_o,
+  input  privlvl_t       fetch_priv_lvl_i,
 
-    // Resp interface
-    input logic       resp_valid_i,
-    input inst_resp_t resp_i,
+  // Resp interface
+  input  logic           resp_valid_i,
+  input  inst_resp_t     resp_i,
 
 
-    // Interface to if_stage
-    output logic instr_valid_o,
-    input logic instr_ready_i,
-    output inst_resp_t instr_instr_o,
-    output logic [31:0] instr_addr_o,
-    output privlvl_t instr_priv_lvl_o,
-    output logic instr_is_clic_ptr_o,  // True CLIC pointer after taking a CLIC SHV interrupt
-    output logic instr_is_mret_ptr_o,  // CLIC pointer due to restarting pointer fetch during mret
-    output logic instr_is_tbljmp_ptr_o,
-    output logic [ALBUF_CNT_WIDTH-1:0] outstnd_cnt_q_o
+  // Interface to if_stage
+  output logic                       instr_valid_o,
+  input  logic                       instr_ready_i,
+  output inst_resp_t                 instr_instr_o,
+  output logic [31:0]                instr_addr_o,
+  output privlvl_t                   instr_priv_lvl_o,
+  output logic                       instr_is_clic_ptr_o, // True CLIC pointer after taking a CLIC SHV interrupt
+  output logic                       instr_is_mret_ptr_o, // CLIC pointer due to restarting pointer fetch during mret
+  output logic                       instr_is_tbljmp_ptr_o,
+  output logic [ALBUF_CNT_WIDTH-1:0] outstnd_cnt_q_o
 );
 
   // Counter for number of instructions in the FIFO
@@ -129,13 +129,13 @@ module cv32e40x_alignment_buffer
   assign fetch_valid_o = (ctrl_fsm_i.instr_req )                                     &&
                          (outstanding_cnt_q < 2)                                     &&
                          !(ptr_fetch_accepted_q && !ctrl_fsm_i.pc_set)               && // No fetch until next pc_set after accepted pointer fetches
-      (((instr_cnt_q - pop_q) == 'd0)                             ||
+                         (((instr_cnt_q - pop_q) == 'd0)                             ||
                          ((instr_cnt_q - pop_q) == 'd1 && outstanding_cnt_q == 2'd0) ||
                          ctrl_fsm_i.pc_set);
 
 
   // Busy if we expect any responses, or we have an active fetch_valid_o
-  assign prefetch_busy_o = (outstanding_cnt_q != 3'b000) || fetch_valid_o;
+  assign prefetch_busy_o = (outstanding_cnt_q != 3'b000)|| fetch_valid_o;
 
   // Indicate that there will be one pending transaction in the next cycle
   assign one_txn_pend_n = outstanding_cnt_n == ALBUF_CNT_WIDTH'(1);
@@ -147,13 +147,8 @@ module cv32e40x_alignment_buffer
   //////////////////
   // FIFO signals //
   //////////////////
-<<<<<<< HEAD
-  inst_resp_t [0:ALBUF_DEPTH-1] resp_q;
-  logic [0:ALBUF_DEPTH-1] valid_n, valid_int, valid_q;
-=======
   inst_resp_t [ALBUF_DEPTH-1:0]  resp_q;
   logic [ALBUF_DEPTH-1:0]        valid_n,   valid_int,   valid_q;
->>>>>>> main
   inst_resp_t resp_n;
 
   // Read/write pointer for FIFO
@@ -161,18 +156,18 @@ module cv32e40x_alignment_buffer
   logic [ALBUF_CNT_WIDTH-1:0] rptr2;
   logic [ALBUF_CNT_WIDTH-1:0] wptr, wptr_n;
 
-  logic [31:0] addr_n, addr_q, addr_incr;
-  logic [31:0] instr, instr_unaligned;
-  logic valid, valid_unaligned_uncompressed;
+  logic             [31:0]  addr_n, addr_q, addr_incr;
+  logic             [31:0]  instr, instr_unaligned;
+  logic                     valid, valid_unaligned_uncompressed;
 
-  logic aligned_is_compressed, unaligned_is_compressed;
+  logic                     aligned_is_compressed, unaligned_is_compressed;
 
   // Aligned instructions will either be fully in index 0 or incoming data
   // This also applies for the bus_error and mpu_status
-  assign instr = (valid_q[rptr]) ? resp_q[rptr].bus_resp.rdata : resp_i.bus_resp.rdata;
-  assign bus_err = (valid_q[rptr]) ? resp_q[rptr].bus_resp.err : resp_i.bus_resp.err;
-  assign mpu_status = (valid_q[rptr]) ? resp_q[rptr].mpu_status : resp_i.mpu_status;
-  assign align_status = (valid_q[rptr]) ? resp_q[rptr].align_status : resp_i.align_status;
+  assign instr        = (valid_q[rptr]) ? resp_q[rptr].bus_resp.rdata : resp_i.bus_resp.rdata;
+  assign bus_err      = (valid_q[rptr]) ? resp_q[rptr].bus_resp.err   : resp_i.bus_resp.err;
+  assign mpu_status   = (valid_q[rptr]) ? resp_q[rptr].mpu_status     : resp_i.mpu_status;
+  assign align_status = (valid_q[rptr]) ? resp_q[rptr].align_status   : resp_i.align_status;
 
 
   // Unaligned instructions will either be split across index 0 and 1, or index 0 and incoming data
@@ -201,11 +196,11 @@ module cv32e40x_alignment_buffer
     align_status_unaligned = ALIGN_OK;
     bus_err_unaligned = 1'b0;
     // There is valid data in q1 (valid q0 is implied)
-    if (valid_q[rptr2]) begin
+    if(valid_q[rptr2]) begin
       // Not compressed, need two sources
-      if (!unaligned_is_compressed) begin
+      if(!unaligned_is_compressed) begin
         // If any entry is not ok, we have an instr_fault
-        if ((resp_q[rptr2].mpu_status != MPU_OK) || (resp_q[rptr].mpu_status != MPU_OK)) begin
+        if((resp_q[rptr2].mpu_status != MPU_OK) || (resp_q[rptr].mpu_status != MPU_OK)) begin
           mpu_status_unaligned = MPU_RE_FAULT;
         end
 
@@ -226,15 +221,15 @@ module cv32e40x_alignment_buffer
       end
     end else begin
       // There is no data in q1, check q0
-      if (valid_q[rptr]) begin
-        if (!unaligned_is_compressed) begin
+      if(valid_q[rptr]) begin
+        if(!unaligned_is_compressed) begin
           // There is unaligned data in q0 and is it not compressed
           // use q0 and incoming data
-          if ((resp_q[rptr].mpu_status != MPU_OK) || (resp_i.mpu_status != MPU_OK)) begin
+          if((resp_q[rptr].mpu_status != MPU_OK) || (resp_i.mpu_status != MPU_OK)) begin
             mpu_status_unaligned = MPU_RE_FAULT;
           end
 
-          if ((resp_q[rptr].align_status != ALIGN_OK) || (resp_i.align_status != ALIGN_OK)) begin
+          if((resp_q[rptr].align_status != ALIGN_OK) || (resp_i.align_status != ALIGN_OK)) begin
             align_status_unaligned = ALIGN_RE_ERR;
           end
 
@@ -258,12 +253,13 @@ module cv32e40x_alignment_buffer
 
 
   // Output instructions to the if stage
-  always_comb begin
+  always_comb
+  begin
     instr_instr_o.bus_resp.rdata = instr;
     instr_instr_o.bus_resp.err   = bus_err;
     instr_instr_o.mpu_status     = mpu_status;
     instr_instr_o.align_status   = align_status;
-    instr_valid_o                = 1'b0;
+    instr_valid_o = 1'b0;
 
     // Invalidate output if we get killed
     if (ctrl_fsm_i.kill_if) begin
@@ -300,28 +296,30 @@ module cv32e40x_alignment_buffer
   // FIFO management
   //////////////////////////////////////////////////////////////////////////////
 
-  always_comb begin
-    resp_n    = resp_q[wptr];
-    valid_int = valid_q;
-    wptr_n    = wptr;
+  always_comb
+  begin
+    resp_n     = resp_q[wptr];
+    valid_int  = valid_q;
+    wptr_n     = wptr;
     // Write response and update valid bit and write pointer
     if (resp_valid_gated) begin
       // Increase write pointer, wrap to zero if at last entry
-      wptr_n = wptr < (ALBUF_DEPTH - 1) ? wptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
+      wptr_n   = wptr < (ALBUF_DEPTH-1) ? wptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
       // Set fifo and valid write data
-      resp_n = resp_i;
+      resp_n   = resp_i;
       valid_int[wptr] = 1'b1;
-    end  // resp_valid_gated
-  end  // always_comb
+    end // resp_valid_gated
+  end // always_comb
 
   // Calculate address increment
   assign addr_incr = {addr_q[31:2], 2'b00} + 32'h4;
 
   // Update address, read pointer and valid bits
-  always_comb begin
-    addr_n  = addr_q;
-    valid_n = valid_int;
-    rptr_n  = rptr;
+  always_comb
+  begin
+    addr_n     = addr_q;
+    valid_n    = valid_int;
+    rptr_n     = rptr;
     // Next values for address, valid bits and read pointer
     if (addr_q[1]) begin
       // unaligned case
@@ -333,7 +331,7 @@ module cv32e40x_alignment_buffer
       end
 
       // Advance FIFO one step, wrap if at last entry
-      rptr_n = rptr < (ALBUF_DEPTH - 1) ? rptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
+      rptr_n = rptr < (ALBUF_DEPTH-1) ? rptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
     end else begin
       // aligned case
       if (aligned_is_compressed) begin
@@ -345,7 +343,7 @@ module cv32e40x_alignment_buffer
         addr_n = {addr_incr[31:2], 2'b00};
 
         // Advance FIFO one step, wrap if at last entry
-        rptr_n = rptr < (ALBUF_DEPTH - 1) ? rptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
+        rptr_n = rptr < (ALBUF_DEPTH-1) ? rptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
       end
     end
 
@@ -358,18 +356,18 @@ module cv32e40x_alignment_buffer
   end
 
   // rptr2 will always be one higher than rptr
-  assign rptr2 = (rptr < (ALBUF_DEPTH - 1)) ? rptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
+  assign rptr2 = (rptr < (ALBUF_DEPTH-1)) ? rptr + ALBUF_CNT_WIDTH'(1) : ALBUF_CNT_WIDTH'(0);
 
   // Counting instructions in FIFO
   always_comb begin
     instr_cnt_n = instr_cnt_q;
     n_flush_branch = outstanding_cnt_q;
 
-    if (ctrl_fsm_i.kill_if) begin
+    if(ctrl_fsm_i.kill_if) begin
       // FIFO content is invalidated when IF is killed
       instr_cnt_n = 'd0;
 
-      if (resp_valid_i) begin
+      if(resp_valid_i) begin
         n_flush_branch = outstanding_cnt_q - 2'd1;
       end
     end else begin
@@ -382,23 +380,21 @@ module cv32e40x_alignment_buffer
 
   // Counting number of outstanding transactions
   assign outstanding_count_up   = fetch_valid_o && fetch_ready_i;    // Increment upon accepted transfer request
-  assign outstanding_count_down = resp_valid_i;  // Decrement upon accepted transfer response
+  assign outstanding_count_down = resp_valid_i;                   // Decrement upon accepted transfer response
 
   always_comb begin
     outstanding_cnt_n = outstanding_cnt_q;
-    case ({
-      outstanding_count_up, outstanding_count_down
-    })
-      2'b00: begin
+    case ({outstanding_count_up, outstanding_count_down})
+      2'b00 : begin
         outstanding_cnt_n = outstanding_cnt_q;
       end
-      2'b01: begin
+      2'b01 : begin
         outstanding_cnt_n = outstanding_cnt_q - 1'b1;
       end
-      2'b10: begin
+      2'b10 : begin
         outstanding_cnt_n = outstanding_cnt_q + 1'b1;
       end
-      2'b11: begin
+      2'b11 : begin
         outstanding_cnt_n = outstanding_cnt_q;
       end
       default;
@@ -417,21 +413,21 @@ module cv32e40x_alignment_buffer
     // On a branch we need to know if it is aligned or not
     // the complete flag will be special cased for unaligned branches
     // as aligned=0 and complete=1 can only happen in that case
-    if (ctrl_fsm_i.pc_set) begin
-      aligned_n  = !branch_addr_i[1];
+    if(ctrl_fsm_i.pc_set) begin
+      aligned_n = !branch_addr_i[1];
       complete_n = branch_addr_i[1];
     end else begin
       // Valid response
-      if (resp_valid_gated) begin
+      if(resp_valid_gated) begin
         // We are on an aligned address
-        if (aligned_q) begin
+        if(aligned_q) begin
           // uncompressed in rdata
-          if (resp_i.bus_resp.rdata[1:0] == 2'b11) begin
+          if(resp_i.bus_resp.rdata[1:0] == 2'b11) begin
             n_incoming_ins = 2'd1;
             // Still aligned and complete, no need to update
           end else begin
             // compressed in lower part, check next halfword
-            if (resp_i.bus_resp.rdata[17:16] == 2'b11) begin
+            if(resp_i.bus_resp.rdata[17:16] == 2'b11) begin
               // Upper half is uncompressed, not complete
               // 1 complete insn
               n_incoming_ins = 2'd1;
@@ -446,14 +442,14 @@ module cv32e40x_alignment_buffer
               complete_n = 1'b1;
             end
           end
-          // We are on ann unaligned address
+        // We are on ann unaligned address
         end else begin
           // Unaligned and complete_q==1 can only happen
           // for unaligned branches, signalling that lower
           // 16 bits can be discarded
-          if (complete_q) begin
+          if(complete_q) begin
             // Uncompressed unaligned
-            if (resp_i.bus_resp.rdata[17:16] == 2'b11) begin
+            if(resp_i.bus_resp.rdata[17:16] == 2'b11) begin
               // No complete ins in data
               n_incoming_ins = 2'd0;
               // Still unaligned
@@ -473,7 +469,7 @@ module cv32e40x_alignment_buffer
             // Incomplete. Check upper 16 bits for content
             // Implied that lower 16 bits contain the MSBs
             // of an uncompressed instruction
-            if (resp_i.bus_resp.rdata[17:16] == 2'b11) begin
+            if(resp_i.bus_resp.rdata[17:16] == 2'b11) begin
               // Upper 16 is uncompressed
               // 1 complete insn in word
               n_incoming_ins = 2'd1;
@@ -487,26 +483,27 @@ module cv32e40x_alignment_buffer
               n_incoming_ins = 2'd2;
               aligned_n = 1'b1;
               complete_n = 1'b1;
-            end  // rdata[17:16]
-          end  // complete_q
-        end  // aligned_q
-      end  // resp_valid_gated
-    end  // branch
-  end  // comb
+            end // rdata[17:16]
+          end // complete_q
+        end // aligned_q
+      end // resp_valid_gated
+    end // branch
+  end // comb
 
 
   // number of resps to flush
-  always_comb begin
+  always_comb
+  begin
     // Default value
     n_flush_n = n_flush_q;
 
     // On a branch, the counter logic will calculate
     // the number of words to flush
-    if (ctrl_fsm_i.pc_set) begin
+    if(ctrl_fsm_i.pc_set) begin
       n_flush_n = n_flush_branch;
     end else begin
       // Decrement flush counter on valid inputs
-      if (resp_valid_i && (n_flush_q > 0)) begin
+      if(resp_valid_i && (n_flush_q > 0)) begin
         n_flush_n = n_flush_q - 2'b01;
       end
     end
@@ -515,24 +512,28 @@ module cv32e40x_alignment_buffer
   // registers
   //////////////////////////////////////////////////////////////////////////////
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (rst_n == 1'b0) begin
-      addr_q               <= '0;
-      resp_q               <= INST_RESP_RESET_VAL;
-      valid_q              <= '0;
-      aligned_q            <= 1'b0;
-      complete_q           <= 1'b0;
-      n_flush_q            <= 'd0;
-      instr_cnt_q          <= 'd0;
-      outstanding_cnt_q    <= 'd0;
-      rptr                 <= 'd0;
-      wptr                 <= 'd0;
-      pop_q                <= 1'b0;
-      is_clic_ptr_q        <= 1'b0;
-      is_mret_ptr_q        <= 1'b0;
-      is_tbljmp_ptr_q      <= 1'b0;
-      ptr_fetch_accepted_q <= 1'b0;
-    end else begin
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if(rst_n == 1'b0)
+    begin
+      addr_q            <= '0;
+      resp_q            <= INST_RESP_RESET_VAL;
+      valid_q           <= '0;
+      aligned_q         <= 1'b0;
+      complete_q        <= 1'b0;
+      n_flush_q         <= 'd0;
+      instr_cnt_q       <= 'd0;
+      outstanding_cnt_q <= 'd0;
+      rptr              <= 'd0;
+      wptr              <= 'd0;
+      pop_q             <= 1'b0;
+      is_clic_ptr_q     <= 1'b0;
+      is_mret_ptr_q     <= 1'b0;
+      is_tbljmp_ptr_q   <= 1'b0;
+      ptr_fetch_accepted_q  <= 1'b0;
+    end
+    else
+    begin
       // on a kill signal from outside we invalidate the content of the FIFO
       // completely and start from an empty state
       if (ctrl_fsm_i.kill_if) begin
@@ -544,7 +545,7 @@ module cv32e40x_alignment_buffer
         end
 
         // Update valid bits on both bus resp and instruction output
-        if ((instr_valid_o && instr_ready_i) || resp_valid_gated) begin
+        if((instr_valid_o && instr_ready_i) || resp_valid_gated) begin
           valid_q <= valid_n;
         end
       end
@@ -568,21 +569,21 @@ module cv32e40x_alignment_buffer
         end
 
         // Update address and read pointer when we emit an instruction
-        if (instr_valid_o && instr_ready_i) begin
-          addr_q          <= addr_n;
-          rptr            <= rptr_n;
+        if(instr_valid_o && instr_ready_i) begin
+          addr_q <= addr_n;
+          rptr   <= rptr_n;
 
           // Clear pointer flags when pointers are consumed.
-          is_clic_ptr_q   <= 1'b0;
-          is_mret_ptr_q   <= 1'b0;
-          is_tbljmp_ptr_q <= 1'b0;
+          is_clic_ptr_q     <= 1'b0;
+          is_mret_ptr_q     <= 1'b0;
+          is_tbljmp_ptr_q   <= 1'b0;
         end
       end
 
-      if (fetch_valid_o && fetch_ready_i && fetch_ptr_access_i) begin
+      if(fetch_valid_o && fetch_ready_i && fetch_ptr_access_i) begin
         ptr_fetch_accepted_q <= 1'b1;
       end else begin
-        if (ctrl_fsm_i.pc_set) begin
+        if(ctrl_fsm_i.pc_set) begin
           ptr_fetch_accepted_q <= 1'b0;
         end
       end
@@ -604,10 +605,10 @@ module cv32e40x_alignment_buffer
   assign instr_addr_o = addr_q;
 
   // Signal that result is a CLIC pointer
-  assign instr_is_clic_ptr_o = is_clic_ptr_q;
+  assign instr_is_clic_ptr_o   = is_clic_ptr_q;
 
   // Signal that result is an mret pointer
-  assign instr_is_mret_ptr_o = is_mret_ptr_q;
+  assign instr_is_mret_ptr_o   = is_mret_ptr_q;
 
   // Signal that result is a table jump pointer
   assign instr_is_tbljmp_ptr_o = is_tbljmp_ptr_q;

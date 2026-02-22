@@ -26,71 +26,73 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_clic_int_controller
-  import cv32e40x_pkg::*;
+module cv32e40x_clic_int_controller import cv32e40x_pkg::*;
 #(
-    parameter int unsigned CLIC_ID_WIDTH = 5
-) (
-    input logic clk,
-    input logic rst_n,
+  parameter int unsigned CLIC_ID_WIDTH = 5
+)
+(
+  input  logic                       clk,
+  input  logic                       rst_n,
 
-    // CLIC interface
-    input logic clic_irq_i,  // CLIC interrupt pending
-    input logic [CLIC_ID_WIDTH-1:0] clic_irq_id_i,  // ID of pending interrupt
-    input logic [7:0] clic_irq_level_i,  // Level of pending interrupt
-    input  logic [1:0]                 clic_irq_priv_i,           // Privilege level of pending interrupt (always machine mode) (not used)
-    input logic clic_irq_shv_i,  // Is pending interrupt vectored?
+  // CLIC interface
+  input  logic                       clic_irq_i,                // CLIC interrupt pending
+  input  logic [CLIC_ID_WIDTH-1:0] clic_irq_id_i,               // ID of pending interrupt
+  input  logic [7:0]                 clic_irq_level_i,          // Level of pending interrupt
+  input  logic [1:0]                 clic_irq_priv_i,           // Privilege level of pending interrupt (always machine mode) (not used)
+  input  logic                       clic_irq_shv_i,            // Is pending interrupt vectored?
 
-    // To controller
-    output logic       irq_req_ctrl_o,
-    output logic [9:0] irq_id_ctrl_o,     // Max width - unused bits are tied off
-    output logic       irq_wu_ctrl_o,
-    output logic       irq_clic_shv_o,
-    output logic [7:0] irq_clic_level_o,
-    output logic [1:0] irq_clic_priv_o,
+  // To controller
+  output logic                       irq_req_ctrl_o,
+  output logic [9:0]                 irq_id_ctrl_o,             // Max width - unused bits are tied off
+  output logic                       irq_wu_ctrl_o,
+  output logic                       irq_clic_shv_o,
+  output logic [7:0]                 irq_clic_level_o,
+  output logic [1:0]                 irq_clic_priv_o,
 
-    // From cs_registers
-    input mstatus_t          mstatus_i,     // Current mstatus from CSR
-    input logic        [7:0] mintthresh_i,  // Current interrupt threshold from CSR
-    input mintstatus_t       mintstatus_i,  // Current mintstatus from CSR
-    input mcause_t           mcause_i,      // Current mcause from CSR
-    input privlvl_t          priv_lvl_i,    // Current privilege level of core
+  // From cs_registers
+  input  mstatus_t                   mstatus_i,                 // Current mstatus from CSR
+  input  logic [7:0]                 mintthresh_i,              // Current interrupt threshold from CSR
+  input  mintstatus_t                mintstatus_i,              // Current mintstatus from CSR
+  input  mcause_t                    mcause_i,                  // Current mcause from CSR
+  input  privlvl_t                   priv_lvl_i,                // Current privilege level of core
 
-    // To cs_registers
-    output logic mnxti_irq_pending_o,  // An interrupt is available to the mnxti CSR read
-    output logic [CLIC_ID_WIDTH-1:0] mnxti_irq_id_o,  // The id of the availble mnxti interrupt
-    output logic [7:0] mnxti_irq_level_o  // Level of the available interrupt
+  // To cs_registers
+  output logic                       mnxti_irq_pending_o,       // An interrupt is available to the mnxti CSR read
+  output logic [CLIC_ID_WIDTH-1:0]   mnxti_irq_id_o,            // The id of the availble mnxti interrupt
+  output logic [7:0]                 mnxti_irq_level_o          // Level of the available interrupt
 );
 
-  logic                     global_irq_enable;
-  logic [              7:0] effective_irq_level;  // Effective interrupt level
+  logic                       global_irq_enable;
+  logic  [7:0]                effective_irq_level;              // Effective interrupt level
 
   // Flops for breaking timing path to instruction interface
-  logic                     clic_irq_q;
-  logic [CLIC_ID_WIDTH-1:0] clic_irq_id_q;
-  logic [              7:0] clic_irq_level_q;
-  logic                     clic_irq_shv_q;
+  logic                       clic_irq_q;
+  logic [CLIC_ID_WIDTH-1:0]   clic_irq_id_q;
+  logic [7:0]                 clic_irq_level_q;
+  logic                       clic_irq_shv_q;
 
-  logic                     unused_signals;
+  logic                       unused_signals;
 
   // Register interrupt input (on gated clock). The wake-up logic will
   // observe clic_irq_i as well, but in all other places clic_irq_q will be used to
   // avoid timing paths from clic_irq_i to instr_*_o
 
-  always_ff @(posedge clk, negedge rst_n) begin
+  always_ff @(posedge clk, negedge rst_n)
+  begin
     if (rst_n == 1'b0) begin
-      clic_irq_q <= 1'b0;
+      clic_irq_q  <= 1'b0;
     end else begin
-      clic_irq_q <= clic_irq_i;
+      clic_irq_q  <= clic_irq_i;
     end
   end
 
   // Flop all irq inputs to break timing paths through the controller.
-  always_ff @(posedge clk, negedge rst_n) begin
+  always_ff @(posedge clk, negedge rst_n)
+  begin
     if (rst_n == 1'b0) begin
-      clic_irq_id_q    <= '0;
-      clic_irq_level_q <= '0;
-      clic_irq_shv_q   <= 1'b0;
+      clic_irq_id_q     <= '0;
+      clic_irq_level_q  <= '0;
+      clic_irq_shv_q    <= 1'b0;
     end else begin
       if (clic_irq_i) begin
         clic_irq_id_q    <= clic_irq_id_i;
@@ -159,7 +161,7 @@ module cv32e40x_clic_int_controller
   // for use in the function pointer and CSR side effects.
   // Using native CLIC_ID_WIDTH for cleaner pointer concatenation in cs_registers.
 
-  assign mnxti_irq_id_o = clic_irq_id_q;
+  assign mnxti_irq_id_o    = clic_irq_id_q;
   assign mnxti_irq_level_o = clic_irq_level_q;
 
   // Unused signals

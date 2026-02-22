@@ -5,19 +5,17 @@
 // ---------------------------------------------
 // Xbar environment class
 // ---------------------------------------------
-class xbar_env extends dv_base_env #(
-    .CFG_T              (xbar_env_cfg),
-    .VIRTUAL_SEQUENCER_T(xbar_virtual_sequencer),
-    .SCOREBOARD_T       (xbar_scoreboard),
-    .COV_T              (xbar_env_cov)
-);
+class xbar_env extends dv_base_env#(.CFG_T              (xbar_env_cfg),
+                                    .VIRTUAL_SEQUENCER_T(xbar_virtual_sequencer),
+                                    .SCOREBOARD_T       (xbar_scoreboard),
+                                    .COV_T              (xbar_env_cov));
 
-  tl_agent host_agent  [];
-  tl_agent device_agent[];
+  tl_agent          host_agent[];
+  tl_agent          device_agent[];
 
   `uvm_component_utils(xbar_env)
 
-  function new(string name, uvm_component parent);
+  function new (string name, uvm_component parent);
     super.new(name, parent);
   endfunction : new
 
@@ -26,18 +24,18 @@ class xbar_env extends dv_base_env #(
     // Connect TileLink host and device agents
     host_agent = new[cfg.num_hosts];
     foreach (host_agent[i]) begin
-      host_agent[i] =
-          tl_agent::type_id::create($sformatf("%0s_agent", xbar_hosts[i].host_name), this);
-      uvm_config_db#(tl_agent_cfg)::set(this, $sformatf("*%0s*", xbar_hosts[i].host_name), "cfg",
-                                        cfg.host_agent_cfg[i]);
+      host_agent[i] = tl_agent::type_id::create(
+                      $sformatf("%0s_agent", xbar_hosts[i].host_name), this);
+      uvm_config_db#(tl_agent_cfg)::set(this,
+        $sformatf("*%0s*", xbar_hosts[i].host_name),"cfg", cfg.host_agent_cfg[i]);
       cfg.host_agent_cfg[i].en_cov = cfg.en_cov;
     end
     device_agent = new[cfg.num_devices];
     foreach (device_agent[i]) begin
-      device_agent[i] =
-          tl_agent::type_id::create($sformatf("%0s_agent", xbar_devices[i].device_name), this);
-      uvm_config_db#(tl_agent_cfg)::set(this, $sformatf("*%0s*", xbar_devices[i].device_name),
-                                        "cfg", cfg.device_agent_cfg[i]);
+      device_agent[i] = tl_agent::type_id::create(
+                      $sformatf("%0s_agent", xbar_devices[i].device_name), this);
+      uvm_config_db#(tl_agent_cfg)::set(this,
+        $sformatf("*%0s*", xbar_devices[i].device_name), "cfg", cfg.device_agent_cfg[i]);
       cfg.device_agent_cfg[i].en_cov = cfg.en_cov;
     end
 
@@ -60,9 +58,9 @@ class xbar_env extends dv_base_env #(
       scoreboard.add_item_port({"d_chan_", xbar_devices[i].device_name}, scoreboard_pkg::kSrcPort);
 
       scoreboard.add_item_queue({"a_chan_", xbar_devices[i].device_name},
-                                scoreboard_pkg::kOutOfOrderCheck);
+                         scoreboard_pkg::kOutOfOrderCheck);
       scoreboard.add_item_queue({"d_chan_", xbar_devices[i].device_name},
-                                scoreboard_pkg::kOutOfOrderCheck);
+                         scoreboard_pkg::kOutOfOrderCheck);
     end
   endfunction : build_phase
 
@@ -70,7 +68,7 @@ class xbar_env extends dv_base_env #(
     super.connect_phase(phase);
     // Connect virtual sequencer
     if (cfg.is_active) begin
-      virtual_sequencer.host_seqr   = new[cfg.num_hosts];
+      virtual_sequencer.host_seqr = new[cfg.num_hosts];
       virtual_sequencer.device_seqr = new[cfg.num_devices];
       foreach (host_agent[i]) begin
         virtual_sequencer.host_seqr[i] = host_agent[i].sequencer;

@@ -14,11 +14,11 @@
 
 
 module fpu_ss_predecoder #(
-    parameter int NumInstr = 1
+    parameter int                       NumInstr               = 1
 ) (
-    input  fpu_ss_pkg::acc_prd_req_t   prd_req_i,
-    output fpu_ss_pkg::acc_prd_rsp_t   prd_rsp_o,
-    input  fpu_ss_pkg::offload_instr_t OffloadInstr[NumInstr]
+    input  fpu_ss_pkg::acc_prd_req_t prd_req_i,
+    output fpu_ss_pkg::acc_prd_rsp_t prd_rsp_o,
+    input  fpu_ss_pkg::offload_instr_t  OffloadInstr[NumInstr]
 );
 
   import fpu_ss_pkg::*;
@@ -44,11 +44,11 @@ module fpu_ss_predecoder #(
     prd_rsp_o.p_is_mem_op = '0;
     prd_rsp_o.p_use_rs    = '0;
     for (int unsigned i = 0; i < NumInstr; i++) begin
-      prd_rsp_o.p_accept |= instr_rsp[i].p_accept;
+      prd_rsp_o.p_accept    |= instr_rsp[i].p_accept;
       prd_rsp_o.p_writeback |= instr_rsp[i].p_writeback;
       prd_rsp_o.p_is_mem_op |= instr_rsp[i].p_is_mem_op;
-      prd_rsp_o.p_use_rs |= instr_rsp[i].p_use_rs;
+      prd_rsp_o.p_use_rs    |= instr_rsp[i].p_use_rs;
     end
   end
 
-endmodule  // fpu_ss_predecoder
+endmodule // fpu_ss_predecoder

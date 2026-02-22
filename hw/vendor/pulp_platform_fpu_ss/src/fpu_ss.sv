@@ -47,7 +47,7 @@
 //              Davide Schiavone <davide@openhwgroup.org>
 
 module fpu_ss
-  import fpu_ss_pkg::*;
+    import fpu_ss_pkg::*;
 #(
     parameter                                 PULP_ZFINX         = 0,
     parameter                                 INPUT_BUFFER_DEPTH = 0,
@@ -63,183 +63,185 @@ module fpu_ss
     input logic rst_ni,
 
     // Compressed Interface
-    input logic x_compressed_valid_i,
+    input  logic x_compressed_valid_i,
     output logic x_compressed_ready_o,
-    input x_compressed_req_t x_compressed_req_i,
+    input  x_compressed_req_t x_compressed_req_i,
     output x_compressed_resp_t x_compressed_resp_o,
 
     // Issue Interface
-    input logic x_issue_valid_i,
+    input  logic x_issue_valid_i,
     output logic x_issue_ready_o,
-    input x_issue_req_t x_issue_req_i,
+    input  x_issue_req_t x_issue_req_i,
     output x_issue_resp_t x_issue_resp_o,
 
     // Commit Interface
-    input logic x_commit_valid_i,
-    input x_commit_t x_commit_i,
+    input  logic x_commit_valid_i,
+    input  x_commit_t x_commit_i,
 
     // Memory Eequest/Response Interface
     output logic x_mem_valid_o,
-    input logic x_mem_ready_i,
+    input  logic x_mem_ready_i,
     output x_mem_req_t x_mem_req_o,
-    input x_mem_resp_t x_mem_resp_i,
+    input  x_mem_resp_t x_mem_resp_i,
 
     // Memory Result Interface
-    input logic x_mem_result_valid_i,
-    input x_mem_result_t x_mem_result_i,
+    input  logic x_mem_result_valid_i,
+    input  x_mem_result_t x_mem_result_i,
 
     // Result Interface
     output logic x_result_valid_o,
-    input logic x_result_ready_i,
+    input  logic x_result_ready_i,
     output x_result_t x_result_o
 );
 
   // predecoder parameter
   localparam int unsigned NUM_INSTR                   = PULP_ZFINX ? fpu_ss_prd_zfinx_pkg::NumInstr: fpu_ss_prd_f_pkg::NumInstr;
-  offload_instr_t OFFLOAD_INSTR[NUM_INSTR];
+  offload_instr_t OFFLOAD_INSTR [NUM_INSTR];
 
   generate
     for (genvar i = 0; i < NUM_INSTR; i++) begin : gen_offload_cast
       if (PULP_ZFINX) begin
-        assign OFFLOAD_INSTR[i] = offload_instr_t'(fpu_ss_prd_zfinx_pkg::OffloadInstr[i]);
+        assign OFFLOAD_INSTR[i] =
+            offload_instr_t'(fpu_ss_prd_zfinx_pkg::OffloadInstr[i]);
       end else begin
-        assign OFFLOAD_INSTR[i] = offload_instr_t'(fpu_ss_prd_f_pkg::OffloadInstr[i]);
+        assign OFFLOAD_INSTR[i] =
+            offload_instr_t'(fpu_ss_prd_f_pkg::OffloadInstr[i]);
       end
     end
   endgenerate
 
   // compressed predecoder signals
-  comp_prd_req_t                       comp_prd_req;
-  comp_prd_rsp_t                       comp_prd_rsp;
+  comp_prd_req_t                                  comp_prd_req;
+  comp_prd_rsp_t                                  comp_prd_rsp;
 
   // predecoder signals
-  acc_prd_req_t                        prd_req;
-  acc_prd_rsp_t                        prd_rsp;
-  logic                                in_buf_push_ready;
+  acc_prd_req_t                                   prd_req;
+  acc_prd_rsp_t                                   prd_rsp;
+  logic                                           in_buf_push_ready;
 
   // issue_interface
-  logic                                x_issue_ready;
+  logic                                           x_issue_ready;
 
   // input stream fifo signals
-  offloaded_data_t                     in_buf_push_data;
-  offloaded_data_t                     in_buf_pop_data;
-  logic                                in_buf_push_valid;
-  logic                                in_buf_pop_valid;
-  logic                                in_buf_pop_ready;
+  offloaded_data_t                                in_buf_push_data;
+  offloaded_data_t                                in_buf_pop_data;
+  logic                                           in_buf_push_valid;
+  logic                                           in_buf_pop_valid;
+  logic                                           in_buf_pop_ready;
 
   // decoder signals
-  fpnew_pkg::operation_e               fpu_op;
-  op_select_e             [ 2:0]       op_select_dec;
-  op_select_e             [ 2:0]       op_select;
-  fpnew_pkg::roundmode_e               fpu_rnd_mode;
-  logic                                set_dyn_rm;
-  fpnew_pkg::fp_format_e               src_fmt;
-  fpnew_pkg::fp_format_e               dst_fmt;
-  fpnew_pkg::int_format_e              int_fmt;
-  logic                                rd_is_fp;
-  logic                                csr_instr;
-  logic                                vectorial_op;
-  logic                                op_mode;
-  logic                                use_fpu;
-  logic                                is_store;
-  logic                                is_load;
-  ls_size_e                            ls_size;
+  fpnew_pkg::operation_e                          fpu_op;
+  op_select_e                  [       2:0      ] op_select_dec;
+  op_select_e                  [       2:0      ] op_select;
+  fpnew_pkg::roundmode_e                          fpu_rnd_mode;
+  logic                                           set_dyn_rm;
+  fpnew_pkg::fp_format_e                          src_fmt;
+  fpnew_pkg::fp_format_e                          dst_fmt;
+  fpnew_pkg::int_format_e                         int_fmt;
+  logic                                           rd_is_fp;
+  logic                                           csr_instr;
+  logic                                           vectorial_op;
+  logic                                           op_mode;
+  logic                                           use_fpu;
+  logic                                           is_store;
+  logic                                           is_load;
+  ls_size_e                                       ls_size;
 
   // forwarding and dependency
-  logic                   [ 2:0]       fpu_fwd;
-  logic                   [ 2:0]       lsu_fwd;
-  logic                                dep_rs;
-  logic                                dep_rd;
+  logic                          [ 2:0]           fpu_fwd;
+  logic                          [ 2:0]           lsu_fwd;
+  logic                                           dep_rs;
+  logic                                           dep_rd;
 
   // instruction data, operands and adresses
-  logic                   [31:0]       instr;
-  logic                   [ 2:0][31:0] fpu_operands_dec;
-  logic                   [ 2:0][31:0] fpu_operands;
-  logic                   [ 2:0][31:0] int_operands;
-  logic                   [ 2:0][31:0] fpr_operands;
-  logic                   [ 4:0]       rs1;
-  logic                   [ 4:0]       rs2;
-  logic                   [ 4:0]       rs3;
-  logic                   [ 4:0]       rd;
-  logic                   [31:0]       offset;
-  logic                   [ 2:0][ 4:0] fpr_raddr;
-  logic                   [ 4:0]       fpr_wb_addr;
-  logic                   [31:0]       fpr_wb_data;
-  logic                                fpr_we;
+  logic                          [31:0]           instr;
+  logic                          [ 2:0]   [31:0]  fpu_operands_dec;
+  logic                          [ 2:0]   [31:0]  fpu_operands;
+  logic                          [ 2:0]   [31:0]  int_operands;
+  logic                          [ 2:0]   [31:0]  fpr_operands;
+  logic                          [ 4:0]           rs1;
+  logic                          [ 4:0]           rs2;
+  logic                          [ 4:0]           rs3;
+  logic                          [ 4:0]           rd;
+  logic                          [31:0]           offset;
+  logic                          [ 2:0]   [ 4:0]  fpr_raddr;
+  logic                          [ 4:0]           fpr_wb_addr;
+  logic                          [31:0]           fpr_wb_data;
+  logic                                           fpr_we;
 
   // memory buffer signals
-  logic                                mem_push_valid;
-  logic                                mem_push_ready;
-  logic                                mem_pop_valid;
-  logic                                mem_pop_ready;
-  mem_metadata_t                       mem_push_data;
-  mem_metadata_t                       mem_pop_data;
+  logic                                           mem_push_valid;
+  logic                                           mem_push_ready;
+  logic                                           mem_pop_valid;
+  logic                                           mem_pop_ready;
+  mem_metadata_t                                  mem_push_data;
+  mem_metadata_t                                  mem_pop_data;
 
   // CSR
-  logic                                csr_wb;
-  logic                   [31:0]       csr_rdata;
-  logic                   [ 4:0]       csr_wb_addr;
-  logic                   [ 3:0]       csr_wb_id;
-  logic                   [ 2:0]       frm;
+  logic                                           csr_wb;
+  logic                          [31:0]           csr_rdata;
+  logic                          [ 4:0]           csr_wb_addr;
+  logic                          [ 3:0]           csr_wb_id;
+  logic                          [ 2:0]           frm;
 
   // FPnew signals
-  fpu_tag_t                            fpu_tag_in;
-  fpu_tag_t                            fpu_tag_out;
-  logic                                fpu_in_valid;
-  logic                                fpu_in_ready;
-  logic                                fpu_out_valid;
-  logic                                fpu_out_ready;
-  logic                   [31:0]       fpu_result;
-  logic                                fpu_busy;
-  fpnew_pkg::status_t                  fpu_status;
+  fpu_tag_t                                       fpu_tag_in;
+  fpu_tag_t                                       fpu_tag_out;
+  logic                                           fpu_in_valid;
+  logic                                           fpu_in_ready;
+  logic                                           fpu_out_valid;
+  logic                                           fpu_out_ready;
+  logic                          [31:0]           fpu_result;
+  logic                                           fpu_busy;
+  fpnew_pkg::status_t                             fpu_status;
 
   // compressed interface signal assignments
-  assign x_compressed_ready_o        = x_compressed_valid_i;
-  assign comp_prd_req.comp_instr     = x_compressed_req_i.instr;
-  assign x_compressed_resp_o.instr   = comp_prd_rsp.decomp_instr;
-  assign x_compressed_resp_o.accept  = comp_prd_rsp.accept;
+  assign x_compressed_ready_o = x_compressed_valid_i;
+  assign comp_prd_req.comp_instr = x_compressed_req_i.instr;
+  assign x_compressed_resp_o.instr = comp_prd_rsp.decomp_instr;
+  assign x_compressed_resp_o.accept = comp_prd_rsp.accept;
 
   // issue interface signal assignment
-  assign prd_req.q_instr_data        = x_issue_req_i.instr;
-  assign x_issue_resp_o.accept       = prd_rsp.p_accept;
-  assign x_issue_resp_o.writeback    = prd_rsp.p_writeback;
-  assign x_issue_resp_o.dualwrite    = '0;
-  assign x_issue_resp_o.dualread     = '0;
-  assign x_issue_resp_o.loadstore    = prd_rsp.p_is_mem_op;
-  assign x_issue_resp_o.ecswrite     = '0;
-  assign x_issue_resp_o.exc          = '0;
+  assign prd_req.q_instr_data = x_issue_req_i.instr;
+  assign x_issue_resp_o.accept = prd_rsp.p_accept;
+  assign x_issue_resp_o.writeback = prd_rsp.p_writeback;
+  assign x_issue_resp_o.dualwrite = '0;
+  assign x_issue_resp_o.dualread  = '0;
+  assign x_issue_resp_o.loadstore = prd_rsp.p_is_mem_op;
+  assign x_issue_resp_o.ecswrite = '0;
+  assign x_issue_resp_o.exc = '0;
 
   // input buffer signal assignment
-  assign in_buf_push_valid           = x_issue_valid_i & x_issue_ready_o & x_issue_resp_o.accept;
-  assign in_buf_push_data.rs         = x_issue_req_i.rs;
+  assign in_buf_push_valid = x_issue_valid_i & x_issue_ready_o & x_issue_resp_o.accept;
+  assign in_buf_push_data.rs = x_issue_req_i.rs;
   assign in_buf_push_data.instr_data = x_issue_req_i.instr;
-  assign in_buf_push_data.id         = x_issue_req_i.id;
-  assign in_buf_push_data.mode       = x_issue_req_i.mode;
+  assign in_buf_push_data.id = x_issue_req_i.id;
+  assign in_buf_push_data.mode = x_issue_req_i.mode;
 
   // instr, operand and address signal assignment
-  assign instr                       = in_buf_pop_data.instr_data;
-  assign int_operands[0]             = in_buf_pop_data.rs[0];
-  assign int_operands[1]             = in_buf_pop_data.rs[1];
-  assign int_operands[2]             = in_buf_pop_data.rs[2];
-  assign rs1                         = instr[19:15];
-  assign rs2                         = instr[24:20];
-  assign rs3                         = instr[31:27];
-  assign rd                          = instr[11:7];
+  assign instr = in_buf_pop_data.instr_data;
+  assign int_operands[0] = in_buf_pop_data.rs[0];
+  assign int_operands[1] = in_buf_pop_data.rs[1];
+  assign int_operands[2] = in_buf_pop_data.rs[2];
+  assign rs1 = instr[19:15];
+  assign rs2 = instr[24:20];
+  assign rs3 = instr[31:27];
+  assign rd  = instr[11:7];
 
   // FPnew tag
-  assign fpu_tag_in.addr             = rd;
-  assign fpu_tag_in.rd_is_fp         = rd_is_fp;
-  assign fpu_tag_in.id               = in_buf_pop_data.id;
+  assign fpu_tag_in.addr = rd;
+  assign fpu_tag_in.rd_is_fp = rd_is_fp;
+  assign fpu_tag_in.id = in_buf_pop_data.id;
 
   // memory instruction buffer assignment
-  assign mem_push_data.id            = in_buf_pop_data.id;
-  assign mem_push_data.rd            = rd;
-  assign mem_push_data.we            = is_load;
+  assign mem_push_data.id   = in_buf_pop_data.id;
+  assign mem_push_data.rd   = rd;
+  assign mem_push_data.we   = is_load;
 
   // memory request signal assignments
-  assign x_mem_req_o.mode            = in_buf_pop_data.mode;
-  assign x_mem_req_o.size            = instr[14:12];
-  assign x_mem_req_o.id              = in_buf_pop_data.id;
+  assign x_mem_req_o.mode   = in_buf_pop_data.mode;
+  assign x_mem_req_o.size   = instr[14:12];
+  assign x_mem_req_o.id     = in_buf_pop_data.id;
 
   always_comb begin
     x_mem_req_o.wdata = fpr_operands[1];
@@ -269,7 +271,8 @@ module fpu_ss
   // ---------------------
   // Compressed Predecoder
   // ---------------------
-  fpu_ss_compressed_predecoder fpu_ss_compressed_predecoder_i (
+  fpu_ss_compressed_predecoder fpu_ss_compressed_predecoder_i
+    (
       .prd_req_i(comp_prd_req),
       .prd_rsp_o(comp_prd_rsp)
   );
@@ -374,18 +377,18 @@ module fpu_ss
       .clk_i (clk_i),
       .rst_ni(rst_ni),
 
-      .instr_i           (instr),
-      .csr_data_i        (int_operands[0]),
-      .fpu_status_i      (fpu_status),
-      .in_buf_pop_valid_i(in_buf_pop_valid),
-      .fpu_out_valid_i   (fpu_out_valid),
-      .csr_id_i          (in_buf_pop_data.id),
-      .csr_rdata_o       (csr_rdata),
-      .frm_o             (frm),
-      .csr_wb_o          (csr_wb),
-      .csr_wb_addr_o     (csr_wb_addr),
-      .csr_wb_id_o       (csr_wb_id),
-      .csr_instr_o       (csr_instr)
+      .instr_i            (instr),
+      .csr_data_i         (int_operands[0]),
+      .fpu_status_i       (fpu_status),
+      .in_buf_pop_valid_i (in_buf_pop_valid),
+      .fpu_out_valid_i    (fpu_out_valid),
+      .csr_id_i           (in_buf_pop_data.id),
+      .csr_rdata_o        (csr_rdata),
+      .frm_o              (frm),
+      .csr_wb_o           (csr_wb),
+      .csr_wb_addr_o      (csr_wb_addr),
+      .csr_wb_id_o        (csr_wb_id),
+      .csr_instr_o        (csr_instr)
   );
 
   // ------------------------
@@ -402,27 +405,27 @@ module fpu_ss
       .rst_ni(rst_ni),
 
       // Predecoder
-      .in_buf_push_ready_i(in_buf_push_ready),
-      .prd_rsp_use_rs_i(prd_rsp.p_use_rs),
+      .in_buf_push_ready_i (in_buf_push_ready),
+      .prd_rsp_use_rs_i (prd_rsp.p_use_rs),
 
       // Issue Interface
-      .x_issue_req_rs_valid_i(x_issue_req_i.rs_valid),
-      .x_issue_ready_o(x_issue_ready),
+      .x_issue_req_rs_valid_i (x_issue_req_i.rs_valid),
+      .x_issue_ready_o  (x_issue_ready),
 
       // Commit Interface
-      .x_commit_valid_i(x_commit_valid_i),
-      .x_commit_i      (x_commit_i),
+      .x_commit_valid_i (x_commit_valid_i),
+      .x_commit_i       (x_commit_i),
 
       // Input Buffer
-      .in_buf_pop_valid_i(in_buf_pop_valid),
-      .in_buf_pop_ready_o(in_buf_pop_ready),
+      .in_buf_pop_valid_i (in_buf_pop_valid),
+      .in_buf_pop_ready_o (in_buf_pop_ready),
 
       // Register
       .rd_is_fp_i(fpu_tag_out.rd_is_fp),
       .fpr_wb_addr_i(fpr_wb_addr),
       .rd_i(rd),
       .fpr_we_o(fpr_we),
-      .fpu_out_id_i(fpu_tag_out.id),
+      .fpu_out_id_i (fpu_tag_out.id),
 
       // Dependency Check and Forwarding
       .rd_in_is_fp_i(rd_is_fp),
@@ -441,29 +444,29 @@ module fpu_ss
       .is_store_i(is_store),
 
       // Memory Request/Repsonse Interface
-      .x_mem_valid_o   (x_mem_valid_o),
-      .x_mem_ready_i   (x_mem_ready_i),
-      .x_mem_req_id_i  (x_mem_req_o.id),
-      .x_mem_req_we_o  (x_mem_req_o.we),
-      .x_mem_req_spec_o(x_mem_req_o.spec),
-      .x_mem_req_last_o(x_mem_req_o.last),
+      .x_mem_valid_o    (x_mem_valid_o),
+      .x_mem_ready_i    (x_mem_ready_i),
+      .x_mem_req_id_i   (x_mem_req_o.id),
+      .x_mem_req_we_o   (x_mem_req_o.we),
+      .x_mem_req_spec_o (x_mem_req_o.spec),
+      .x_mem_req_last_o (x_mem_req_o.last),
 
       // Memory Buffer
-      .mem_push_valid_o(mem_push_valid),
-      .mem_push_ready_i(mem_push_ready),
-      .mem_pop_ready_o (mem_pop_ready),
-      .mem_pop_data_i  (mem_pop_data),
+      .mem_push_valid_o (mem_push_valid),
+      .mem_push_ready_i (mem_push_ready),
+      .mem_pop_ready_o  (mem_pop_ready),
+      .mem_pop_data_i   (mem_pop_data),
 
       // Memory Result Interface
       .x_mem_result_valid_i(x_mem_result_valid_i),
 
       // FPnew
-      .fpu_in_valid_o (fpu_in_valid),
-      .fpu_in_ready_i (fpu_in_ready),
-      .use_fpu_i      (use_fpu),
-      .fpu_in_id_i    (in_buf_pop_data.id),
-      .fpu_out_valid_i(fpu_out_valid),
-      .fpu_out_ready_o(fpu_out_ready),
+      .fpu_in_valid_o  (fpu_in_valid),
+      .fpu_in_ready_i  (fpu_in_ready),
+      .use_fpu_i       (use_fpu),
+      .fpu_in_id_i     (in_buf_pop_data.id),
+      .fpu_out_valid_i (fpu_out_valid),
+      .fpu_out_ready_o (fpu_out_ready),
 
       // Result Interface
       .x_result_ready_i(x_result_ready_i),
@@ -519,7 +522,7 @@ module fpu_ss
       end
 
       fpu_ss_regfile fpu_ss_regfile_i (
-          .clk_i (clk_i),
+          .clk_i(clk_i),
           .rst_ni(rst_ni),
 
           .raddr_i(fpr_raddr),
@@ -652,7 +655,7 @@ module fpu_ss
   //  Result Interface Signals
   // -------------------------
   assign x_result_o.exc     = 1'b0;  // no errors can occur for now
-  assign x_result_o.exccode = '0;  // no errors can occur for now
+  assign x_result_o.exccode = '0; // no errors can occur for now
 
   always_comb begin
     x_result_o.data = fpu_result;

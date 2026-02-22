@@ -8,29 +8,29 @@
  * Arithmetic logic unit
  */
 module cve2_alu #(
-    parameter cve2_pkg::rv32b_e RV32B = cve2_pkg::RV32BNone
+  parameter cve2_pkg::rv32b_e RV32B = cve2_pkg::RV32BNone
 ) (
-    input cve2_pkg::alu_op_e        operator_i,
-    input logic              [31:0] operand_a_i,
-    input logic              [31:0] operand_b_i,
+  input  cve2_pkg::alu_op_e operator_i,
+  input  logic [31:0]       operand_a_i,
+  input  logic [31:0]       operand_b_i,
 
-    input logic instr_first_cycle_i,
+  input  logic              instr_first_cycle_i,
 
-    input logic [32:0] multdiv_operand_a_i,
-    input logic [32:0] multdiv_operand_b_i,
+  input  logic [32:0]       multdiv_operand_a_i,
+  input  logic [32:0]       multdiv_operand_b_i,
 
-    input logic multdiv_sel_i,
+  input  logic              multdiv_sel_i,
 
-    input  logic [31:0] imd_val_q_i [2],
-    output logic [31:0] imd_val_d_o [2],
-    output logic [ 1:0] imd_val_we_o,
+  input  logic [31:0]       imd_val_q_i[2],
+  output logic [31:0]       imd_val_d_o[2],
+  output logic [1:0]        imd_val_we_o,
 
-    output logic [31:0] adder_result_o,
-    output logic [33:0] adder_result_ext_o,
+  output logic [31:0]       adder_result_o,
+  output logic [33:0]       adder_result_ext_o,
 
-    output logic [31:0] result_o,
-    output logic        comparison_result_o,
-    output logic        is_equal_result_o
+  output logic [31:0]       result_o,
+  output logic              comparison_result_o,
+  output logic              is_equal_result_o
 );
   import cve2_pkg::*;
 
@@ -46,10 +46,10 @@ module cve2_alu #(
   // Adder //
   ///////////
 
-  logic adder_op_a_shift1;
-  logic adder_op_a_shift2;
-  logic adder_op_a_shift3;
-  logic adder_op_b_negate;
+  logic        adder_op_a_shift1;
+  logic        adder_op_a_shift2;
+  logic        adder_op_a_shift3;
+  logic        adder_op_b_negate;
   logic [32:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
 
@@ -63,34 +63,37 @@ module cve2_alu #(
       ALU_SUB,
 
       // Comparator OPs
-      ALU_EQ, ALU_NE, ALU_GE, ALU_GEU, ALU_LT, ALU_LTU, ALU_SLT, ALU_SLTU,
+      ALU_EQ,   ALU_NE,
+      ALU_GE,   ALU_GEU,
+      ALU_LT,   ALU_LTU,
+      ALU_SLT,  ALU_SLTU,
 
       // MinMax OPs (RV32B Ops)
-      ALU_MIN, ALU_MINU, ALU_MAX, ALU_MAXU:
-      adder_op_b_negate = 1'b1;
+      ALU_MIN,  ALU_MINU,
+      ALU_MAX,  ALU_MAXU: adder_op_b_negate = 1'b1;
 
       // Address Calculation OPs (RV32B Ops)
       ALU_SH1ADD: if (RV32B != RV32BNone) adder_op_a_shift1 = 1'b1;
       ALU_SH2ADD: if (RV32B != RV32BNone) adder_op_a_shift2 = 1'b1;
       ALU_SH3ADD: if (RV32B != RV32BNone) adder_op_a_shift3 = 1'b1;
 
-      default: ;
+      default:;
     endcase
   end
 
   // prepare operand a
   always_comb begin
-    unique case (1'b1)
+    unique case(1'b1)
       multdiv_sel_i:     adder_in_a = multdiv_operand_a_i;
-      adder_op_a_shift1: adder_in_a = {operand_a_i[30:0], 2'b01};
-      adder_op_a_shift2: adder_in_a = {operand_a_i[29:0], 3'b001};
-      adder_op_a_shift3: adder_in_a = {operand_a_i[28:0], 4'b0001};
-      default:           adder_in_a = {operand_a_i, 1'b1};
+      adder_op_a_shift1: adder_in_a = {operand_a_i[30:0],2'b01};
+      adder_op_a_shift2: adder_in_a = {operand_a_i[29:0],3'b001};
+      adder_op_a_shift3: adder_in_a = {operand_a_i[28:0],4'b0001};
+      default:           adder_in_a = {operand_a_i,1'b1};
     endcase
   end
 
   // prepare operand b
-  assign operand_b_neg = {operand_b_i, 1'b0} ^ {33{1'b1}};
+  assign operand_b_neg = {operand_b_i,1'b0} ^ {33{1'b1}};
   always_comb begin
     unique case (1'b1)
       multdiv_sel_i:     adder_in_b = multdiv_operand_b_i;
@@ -116,10 +119,12 @@ module cve2_alu #(
 
   always_comb begin
     unique case (operator_i)
-      ALU_GE, ALU_LT, ALU_SLT,
+      ALU_GE,
+      ALU_LT,
+      ALU_SLT,
       // RV32B only
-      ALU_MIN, ALU_MAX:
-      cmp_signed = 1'b1;
+      ALU_MIN,
+      ALU_MAX: cmp_signed = 1'b1;
 
       default: cmp_signed = 1'b0;
     endcase
@@ -154,12 +159,13 @@ module cve2_alu #(
 
   always_comb begin
     unique case (operator_i)
-      ALU_EQ: cmp_result = is_equal;
-      ALU_NE: cmp_result = ~is_equal;
-      ALU_GE, ALU_GEU, ALU_MAX, ALU_MAXU: cmp_result = is_greater_equal;  // RV32B only
-      ALU_LT, ALU_LTU, ALU_MIN, ALU_MINU,  //RV32B only
-      ALU_SLT, ALU_SLTU:
-      cmp_result = ~is_greater_equal;
+      ALU_EQ:             cmp_result =  is_equal;
+      ALU_NE:             cmp_result = ~is_equal;
+      ALU_GE,   ALU_GEU,
+      ALU_MAX,  ALU_MAXU: cmp_result = is_greater_equal; // RV32B only
+      ALU_LT,   ALU_LTU,
+      ALU_MIN,  ALU_MINU, //RV32B only
+      ALU_SLT,  ALU_SLTU: cmp_result = ~is_greater_equal;
 
       default: cmp_result = is_equal;
     endcase
@@ -234,13 +240,13 @@ module cve2_alu #(
   // ===============
   // The shifter structure is shared to compute bfp_mask << bfp_off.
 
-  logic               shift_left;
-  logic               shift_ones;
-  logic               shift_arith;
-  logic               shift_funnel;
-  logic               shift_sbmode;
-  logic        [ 5:0] shift_amt;
-  logic        [ 5:0] shift_amt_compl;  // complementary shift amount (32 - shift_amt)
+  logic       shift_left;
+  logic       shift_ones;
+  logic       shift_arith;
+  logic       shift_funnel;
+  logic       shift_sbmode;
+  logic [5:0] shift_amt;
+  logic [5:0] shift_amt_compl; // complementary shift amount (32 - shift_amt)
 
   logic        [31:0] shift_operand;
   logic signed [32:0] shift_result_ext_signed;
@@ -250,17 +256,17 @@ module cve2_alu #(
   logic        [31:0] shift_result_rev;
 
   // zbf
-  logic               bfp_op;
-  logic        [ 4:0] bfp_len;
-  logic        [ 4:0] bfp_off;
-  logic        [31:0] bfp_mask;
-  logic        [31:0] bfp_mask_rev;
-  logic        [31:0] bfp_result;
+  logic bfp_op;
+  logic [4:0]  bfp_len;
+  logic [4:0]  bfp_off;
+  logic [31:0] bfp_mask;
+  logic [31:0] bfp_mask_rev;
+  logic [31:0] bfp_result;
 
   // bfp: shares the shifter structure to compute bfp_mask << bfp_off
-  assign bfp_op   = (RV32B != RV32BNone) ? (operator_i == ALU_BFP) : 1'b0;
-  assign bfp_len  = {~(|operand_b_i[27:24]), operand_b_i[27:24]};  // len = 0 encodes for len = 16
-  assign bfp_off  = operand_b_i[20:16];
+  assign bfp_op = (RV32B != RV32BNone) ? (operator_i == ALU_BFP) : 1'b0;
+  assign bfp_len = {~(|operand_b_i[27:24]), operand_b_i[27:24]}; // len = 0 encodes for len = 16
+  assign bfp_off = operand_b_i[20:16];
   assign bfp_mask = (RV32B != RV32BNone) ? ~(32'hffff_ffff << bfp_len) : '0;
   for (genvar i = 0; i < 32; i++) begin : gen_rev_bfp_mask
     assign bfp_mask_rev[i] = bfp_mask[31-i];
@@ -303,11 +309,9 @@ module cve2_alu #(
       ALU_BFP: shift_left = (RV32B != RV32BNone) ? 1'b1 : 1'b0;
       ALU_ROL: shift_left = (RV32B != RV32BNone) ? instr_first_cycle_i : 0;
       ALU_ROR: shift_left = (RV32B != RV32BNone) ? ~instr_first_cycle_i : 0;
-      ALU_FSL:
-      shift_left = (RV32B != RV32BNone) ?
+      ALU_FSL: shift_left = (RV32B != RV32BNone) ?
         (shift_amt[5] ? ~instr_first_cycle_i : instr_first_cycle_i) : 1'b0;
-      ALU_FSR:
-      shift_left = (RV32B != RV32BNone) ?
+      ALU_FSR: shift_left = (RV32B != RV32BNone) ?
           (shift_amt[5] ? instr_first_cycle_i : ~instr_first_cycle_i) : 1'b0;
       default: shift_left = 1'b0;
     endcase
@@ -316,7 +320,7 @@ module cve2_alu #(
     end
   end
 
-  assign shift_arith = (operator_i == ALU_SRA);
+  assign shift_arith  = (operator_i == ALU_SRA);
   assign shift_ones   = (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) ?
       (operator_i == ALU_SLO) | (operator_i == ALU_SRO) : 1'b0;
   assign shift_funnel = (RV32B != RV32BNone) ?
@@ -340,7 +344,7 @@ module cve2_alu #(
         $signed({shift_ones | (shift_arith & shift_operand[31]), shift_operand}) >>> shift_amt[4:0];
     shift_result_ext = $unsigned(shift_result_ext_signed);
 
-    shift_result = shift_result_ext[31:0];
+    shift_result            = shift_result_ext[31:0];
     unused_shift_result_ext = shift_result_ext[32];
 
     for (int unsigned i = 0; i < 32; i++) begin
@@ -368,19 +372,21 @@ module cve2_alu #(
   always_comb begin
     unique case (operator_i)
       // Logic-with-negate OPs (RV32B Ops)
-      ALU_XNOR, ALU_ORN, ALU_ANDN: bwlogic_op_b_negate = (RV32B != RV32BNone) ? 1'b1 : 1'b0;
+      ALU_XNOR,
+      ALU_ORN,
+      ALU_ANDN: bwlogic_op_b_negate = (RV32B != RV32BNone) ? 1'b1 : 1'b0;
       ALU_CMIX: bwlogic_op_b_negate = (RV32B != RV32BNone) ? ~instr_first_cycle_i : 1'b0;
-      default: bwlogic_op_b_negate = 1'b0;
+      default:  bwlogic_op_b_negate = 1'b0;
     endcase
   end
 
   assign bwlogic_operand_b = bwlogic_op_b_negate ? operand_b_neg[32:1] : operand_b_i;
 
-  assign bwlogic_or_result = operand_a_i | bwlogic_operand_b;
+  assign bwlogic_or_result  = operand_a_i | bwlogic_operand_b;
   assign bwlogic_and_result = operand_a_i & bwlogic_operand_b;
   assign bwlogic_xor_result = operand_a_i ^ bwlogic_operand_b;
 
-  assign bwlogic_or = (operator_i == ALU_OR) | (operator_i == ALU_ORN);
+  assign bwlogic_or  = (operator_i == ALU_OR)  | (operator_i == ALU_ORN);
   assign bwlogic_and = (operator_i == ALU_AND) | (operator_i == ALU_ANDN);
 
   always_comb begin
@@ -391,7 +397,7 @@ module cve2_alu #(
     endcase
   end
 
-  logic [ 5:0] bitcnt_result;
+  logic [5:0]  bitcnt_result;
   logic [31:0] minmax_result;
   logic [31:0] pack_result;
   logic [31:0] sext_result;
@@ -422,15 +428,15 @@ module cve2_alu #(
     logic [31:0] bitcnt_bits;
     logic [31:0] bitcnt_mask_op;
     logic [31:0] bitcnt_bit_mask;
-    logic [ 5:0] bitcnt_partial       [32];
+    logic [ 5:0] bitcnt_partial [32];
     logic [31:0] bitcnt_partial_lsb_d;
     logic [31:0] bitcnt_partial_msb_d;
 
 
-    assign bitcnt_ctz     = operator_i == ALU_CTZ;
-    assign bitcnt_clz     = operator_i == ALU_CLZ;
-    assign bitcnt_cz      = bitcnt_ctz | bitcnt_clz;
-    assign bitcnt_result  = bitcnt_partial[31];
+    assign bitcnt_ctz    = operator_i == ALU_CTZ;
+    assign bitcnt_clz    = operator_i == ALU_CLZ;
+    assign bitcnt_cz     = bitcnt_ctz | bitcnt_clz;
+    assign bitcnt_result = bitcnt_partial[31];
 
     // Bit-mask generation for clz and ctz:
     // The bit mask is generated by spreading the lowest-order set bit in the operand to all
@@ -452,9 +458,9 @@ module cve2_alu #(
 
     always_comb begin
       case (1'b1)
-        zbe_op:    bitcnt_bits = operand_b_i;
-        bitcnt_cz: bitcnt_bits = bitcnt_bit_mask & ~bitcnt_mask_op;  // clz / ctz
-        default:   bitcnt_bits = operand_a_i;  // cpop
+        zbe_op:      bitcnt_bits = operand_b_i;
+        bitcnt_cz:   bitcnt_bits = bitcnt_bit_mask & ~bitcnt_mask_op; // clz / ctz
+        default:     bitcnt_bits = operand_a_i; // cpop
       endcase
     end
 
@@ -579,7 +585,7 @@ module cve2_alu #(
         ALU_BSET: singlebit_result = operand_a_i | shift_result;
         ALU_BCLR: singlebit_result = operand_a_i & ~shift_result;
         ALU_BINV: singlebit_result = operand_a_i ^ shift_result;
-        default:  singlebit_result = {31'h0, shift_result[0]};  // ALU_BEXT
+        default:  singlebit_result = {31'h0, shift_result[0]}; // ALU_BEXT
       endcase
     end
 
@@ -646,34 +652,18 @@ module cve2_alu #(
       // Shuffle / Unshuffle //
       /////////////////////////
 
-      localparam logic [31:0] SHUFFLE_MASK_L[4] = '{
-          32'h00ff_0000,
-          32'h0f00_0f00,
-          32'h3030_3030,
-          32'h4444_4444
-      };
-      localparam logic [31:0] SHUFFLE_MASK_R[4] = '{
-          32'h0000_ff00,
-          32'h00f0_00f0,
-          32'h0c0c_0c0c,
-          32'h2222_2222
-      };
+      localparam logic [31:0] SHUFFLE_MASK_L [4] =
+          '{32'h00ff_0000, 32'h0f00_0f00, 32'h3030_3030, 32'h4444_4444};
+      localparam logic [31:0] SHUFFLE_MASK_R [4] =
+          '{32'h0000_ff00, 32'h00f0_00f0, 32'h0c0c_0c0c, 32'h2222_2222};
 
-      localparam logic [31:0] FLIP_MASK_L[4] = '{
-          32'h2200_1100,
-          32'h0044_0000,
-          32'h4411_0000,
-          32'h1100_0000
-      };
-      localparam logic [31:0] FLIP_MASK_R[4] = '{
-          32'h0088_0044,
-          32'h0000_2200,
-          32'h0000_8822,
-          32'h0000_0088
-      };
+      localparam logic [31:0] FLIP_MASK_L [4] =
+          '{32'h2200_1100, 32'h0044_0000, 32'h4411_0000, 32'h1100_0000};
+      localparam logic [31:0] FLIP_MASK_R [4] =
+          '{32'h0088_0044, 32'h0000_2200, 32'h0000_8822, 32'h0000_0088};
 
-      logic [31:0] SHUFFLE_MASK_NOT[4];
-      for (genvar i = 0; i < 4; i++) begin : gen_shuffle_mask_not
+      logic [31:0] SHUFFLE_MASK_NOT [4];
+      for(genvar i = 0; i < 4; i++) begin : gen_shuffle_mask_not
         assign SHUFFLE_MASK_NOT[i] = ~(SHUFFLE_MASK_L[i] | SHUFFLE_MASK_R[i]);
       end
 
@@ -750,35 +740,35 @@ module cve2_alu #(
       // Generate selector indices and valid signals.
       // - sel_n[x] indicates which nibble of operand_a_i is selected for output nibble x.
       // - vld_n[x] indicates if the selection is valid.
-      logic [7:0][2:0] sel_n;  // nibbles
-      logic [7:0]      vld_n;  // nibbles
-      logic [3:0][1:0] sel_b;  // bytes
-      logic [3:0]      vld_b;  // bytes
-      logic [1:0][0:0] sel_h;  // half words
-      logic [1:0]      vld_h;  // half words
+      logic  [7:0][2:0] sel_n; // nibbles
+      logic  [7:0]      vld_n; // nibbles
+      logic  [3:0][1:0] sel_b; // bytes
+      logic  [3:0]      vld_b; // bytes
+      logic  [1:0][0:0] sel_h; // half words
+      logic  [1:0]      vld_h; // half words
 
       // Per nibble, 3 bits are needed for the selection. Other bits must be zero.
       // sel_n bit mask: 32'b0111_0111_0111_0111_0111_0111_0111_0111
       // vld_n bit mask: 32'b1000_1000_1000_1000_1000_1000_1000_1000
       for (genvar i = 0; i < 8; i++) begin : gen_sel_vld_n
-        assign sel_n[i] = operand_b_i[i*4+:3];
-        assign vld_n[i] = ~|operand_b_i[i*4+3+:1];
+        assign sel_n[i] =   operand_b_i[i*4     +: 3];
+        assign vld_n[i] = ~|operand_b_i[i*4 + 3 +: 1];
       end
 
       // Per byte, 2 bits are needed for the selection. Other bits must be zero.
       // sel_b bit mask: 32'b0000_0011_0000_0011_0000_0011_0000_0011
       // vld_b bit mask: 32'b1111_1100_1111_1100_1111_1100_1111_1100
       for (genvar i = 0; i < 4; i++) begin : gen_sel_vld_b
-        assign sel_b[i] = operand_b_i[i*8+:2];
-        assign vld_b[i] = ~|operand_b_i[i*8+2+:6];
+        assign sel_b[i] =   operand_b_i[i*8     +: 2];
+        assign vld_b[i] = ~|operand_b_i[i*8 + 2 +: 6];
       end
 
       // Per half word, 1 bit is needed for the selection only. All other bits must be zero.
       // sel_h bit mask: 32'b0000_0000_0000_0001_0000_0000_0000_0001
       // vld_h bit mask: 32'b1111_1111_1111_1110_1111_1111_1111_1110
       for (genvar i = 0; i < 2; i++) begin : gen_sel_vld_h
-        assign sel_h[i] = operand_b_i[i*16+:1];
-        assign vld_h[i] = ~|operand_b_i[i*16+1+:15];
+        assign sel_h[i] =   operand_b_i[i*16     +: 1];
+        assign vld_h[i] = ~|operand_b_i[i*16 + 1 +: 15];
       end
 
       // Convert selector indices and valid signals to control the nibble-based
@@ -796,20 +786,20 @@ module cve2_alu #(
           ALU_XPERM_B: begin
             // Convert byte to nibble indicies.
             for (int b = 0; b < 4; b++) begin
-              sel[b*2+0]  = {sel_b[b], 1'b0};
-              sel[b*2+1]  = {sel_b[b], 1'b1};
-              vld[b*2+:2] = {2{vld_b[b]}};
+              sel[b*2 +  0] =   {sel_b[b], 1'b0};
+              sel[b*2 +  1] =   {sel_b[b], 1'b1};
+              vld[b*2 +: 2] = {2{vld_b[b]}};
             end
           end
 
           ALU_XPERM_H: begin
             // Convert half-word to nibble indices.
             for (int h = 0; h < 2; h++) begin
-              sel[h*4+0]  = {sel_h[h], 2'b00};
-              sel[h*4+1]  = {sel_h[h], 2'b01};
-              sel[h*4+2]  = {sel_h[h], 2'b10};
-              sel[h*4+3]  = {sel_h[h], 2'b11};
-              vld[h*4+:4] = {4{vld_h[h]}};
+              sel[h*4 +  0] =   {sel_h[h], 2'b00};
+              sel[h*4 +  1] =   {sel_h[h], 2'b01};
+              sel[h*4 +  2] =   {sel_h[h], 2'b10};
+              sel[h*4 +  3] =   {sel_h[h], 2'b11};
+              vld[h*4 +: 4] = {4{vld_h[h]}};
             end
           end
 
@@ -937,7 +927,7 @@ module cve2_alu #(
       assign crc_hmode = (operator_i == ALU_CRC32_H) | (operator_i == ALU_CRC32C_H);
       assign crc_bmode = (operator_i == ALU_CRC32_B) | (operator_i == ALU_CRC32C_B);
 
-      assign crc_poly = crc_cpoly ? CRC32C_POLYNOMIAL : CRC32_POLYNOMIAL;
+      assign crc_poly   = crc_cpoly ? CRC32C_POLYNOMIAL : CRC32_POLYNOMIAL;
       assign crc_mu_rev = crc_cpoly ? CRC32C_MU_REV : CRC32_MU_REV;
 
       always_comb begin
@@ -995,13 +985,13 @@ module cve2_alu #(
         endcase
       end
     end else begin : gen_alu_rvb_not_otearlgrey_full
-      assign shuffle_result   = '0;
-      assign xperm_result     = '0;
-      assign clmul_result     = '0;
+      assign shuffle_result       = '0;
+      assign xperm_result         = '0;
+      assign clmul_result         = '0;
       // support signals
-      assign clmul_result_rev = '0;
-      assign crc_bmode        = '0;
-      assign crc_hmode        = '0;
+      assign clmul_result_rev     = '0;
+      assign crc_bmode            = '0;
+      assign crc_hmode            = '0;
     end
 
     if (RV32B == RV32BFull) begin : gen_alu_rvb_full
@@ -1058,7 +1048,7 @@ module cve2_alu #(
       // & deposit bitmask: 1  0   1  0   1  1   0  1
       // result:            d  0   e  0   f  g   0  h
 
-      logic [5:0] bitcnt_partial_q[32];
+      logic [ 5:0] bitcnt_partial_q [32];
 
       // first cycle
       // Store partial bitcnts
@@ -1083,7 +1073,7 @@ module cve2_alu #(
       end
 
       assign bitcnt_partial_msb_d[30] = bitcnt_partial[31][5];
-      assign bitcnt_partial_msb_d[31] = 1'b0;  // unused
+      assign bitcnt_partial_msb_d[31] = 1'b0; // unused
 
       // Second cycle
       // Load partial bitcnts
@@ -1116,7 +1106,7 @@ module cve2_alu #(
       logic [31:0] butterfly_mask_l[5];
       logic [31:0] butterfly_mask_r[5];
       logic [31:0] butterfly_mask_not[5];
-      logic [31:0] lrotc_stage[5];  // left rotate and complement upon wrap
+      logic [31:0] lrotc_stage [5]; // left rotate and complement upon wrap
 
       // number of bits in local r = 32 / 2**(stage + 1) = 16/2**stage
       `define _N(stg) (16 >> stg)
@@ -1124,50 +1114,27 @@ module cve2_alu #(
       // bcompress / bdecompress control bit generation
       for (genvar stg = 0; stg < 5; stg++) begin : gen_butterfly_ctrl_stage
         // number of segs: 2** stg
-        for (genvar seg = 0; seg < 2 ** stg; seg++) begin : gen_butterfly_ctrl
+        for (genvar seg=0; seg<2**stg; seg++) begin : gen_butterfly_ctrl
 
-          assign lrotc_stage[stg][2*
-              `_N(stg)
-              *(seg+1)-1 : 2*
-              `_N(stg)
-              *seg] = {{
-              `_N(stg)
-              {1'b0}}, {
-              `_N(stg)
-              {1'b1}}} << bitcnt_partial_q[
-              `_N(stg)
-              *(2*seg+1)-1][$clog2(
-                  `_N(stg)
-              ):0];
+          assign lrotc_stage[stg][2*`_N(stg)*(seg+1)-1 : 2*`_N(stg)*seg] =
+              {{`_N(stg){1'b0}},{`_N(stg){1'b1}}} <<
+                bitcnt_partial_q[`_N(stg)*(2*seg+1)-1][$clog2(`_N(stg)):0];
 
-          assign butterfly_mask_l[stg][
-              `_N(stg)
-              *(2*seg+2)-1 :
-              `_N(stg)
-              *(2*seg+1)] = ~lrotc_stage[stg][
-              `_N(stg)
-              *(2*seg+2)-1 :
-              `_N(stg)
-              *(2*seg+1)];
+          assign butterfly_mask_l[stg][`_N(stg)*(2*seg+2)-1 : `_N(stg)*(2*seg+1)]
+                   = ~lrotc_stage[stg][`_N(stg)*(2*seg+2)-1 : `_N(stg)*(2*seg+1)];
 
-          assign butterfly_mask_r[stg][
-              `_N(stg)
-              *(2*seg+1)-1 :
-              `_N(stg)
-              *(2*seg)] = ~lrotc_stage[stg][
-              `_N(stg)
-              *(2*seg+2)-1 :
-              `_N(stg)
-              *(2*seg+1)];
+          assign butterfly_mask_r[stg][`_N(stg)*(2*seg+1)-1 : `_N(stg)*(2*seg)]
+                   = ~lrotc_stage[stg][`_N(stg)*(2*seg+2)-1 : `_N(stg)*(2*seg+1)];
 
-          assign butterfly_mask_l[stg][`_N(stg)*(2*seg+1)-1 : `_N(stg)*(2*seg)] = '0;
+          assign butterfly_mask_l[stg][`_N(stg)*(2*seg+1)-1 : `_N(stg)*(2*seg)]   = '0;
           assign butterfly_mask_r[stg][`_N(stg)*(2*seg+2)-1 : `_N(stg)*(2*seg+1)] = '0;
         end
       end
       `undef _N
 
       for (genvar stg = 0; stg < 5; stg++) begin : gen_butterfly_not
-        assign butterfly_mask_not[stg] = ~(butterfly_mask_l[stg] | butterfly_mask_r[stg]);
+        assign butterfly_mask_not[stg] =
+            ~(butterfly_mask_l[stg] | butterfly_mask_r[stg]);
       end
 
       always_comb begin
@@ -1258,7 +1225,8 @@ module cve2_alu #(
           end
         end
 
-        ALU_FSR, ALU_FSL, ALU_ROL, ALU_ROR: begin
+        ALU_FSR, ALU_FSL,
+        ALU_ROL, ALU_ROR: begin
           if (shift_amt[4:0] == 5'h0) begin
             multicycle_result = shift_amt[5] ? operand_a_i : imd_val_q_i[0];
           end else begin
@@ -1272,7 +1240,9 @@ module cve2_alu #(
           end
         end
 
-        ALU_CRC32_W, ALU_CRC32C_W, ALU_CRC32_H, ALU_CRC32C_H, ALU_CRC32_B, ALU_CRC32C_B: begin
+        ALU_CRC32_W, ALU_CRC32C_W,
+        ALU_CRC32_H, ALU_CRC32C_H,
+        ALU_CRC32_B, ALU_CRC32C_B: begin
           if (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) begin
             unique case (1'b1)
               crc_bmode: multicycle_result = clmul_result_rev ^ (operand_a_i >> 8);
@@ -1320,27 +1290,27 @@ module cve2_alu #(
 
   end else begin : g_no_alu_rvb
     logic [31:0] unused_imd_val_q[2];
-    assign unused_imd_val_q = imd_val_q_i;
+    assign unused_imd_val_q           = imd_val_q_i;
     logic [31:0] unused_butterfly_result;
-    assign unused_butterfly_result = butterfly_result;
+    assign unused_butterfly_result    = butterfly_result;
     logic [31:0] unused_invbutterfly_result;
     assign unused_invbutterfly_result = invbutterfly_result;
     // RV32B result signals
-    assign bitcnt_result              = '0;
-    assign minmax_result              = '0;
-    assign pack_result                = '0;
-    assign sext_result                = '0;
-    assign singlebit_result           = '0;
-    assign rev_result                 = '0;
-    assign shuffle_result             = '0;
-    assign xperm_result               = '0;
-    assign butterfly_result           = '0;
-    assign invbutterfly_result        = '0;
-    assign clmul_result               = '0;
-    assign multicycle_result          = '0;
+    assign bitcnt_result       = '0;
+    assign minmax_result       = '0;
+    assign pack_result         = '0;
+    assign sext_result         = '0;
+    assign singlebit_result    = '0;
+    assign rev_result          = '0;
+    assign shuffle_result      = '0;
+    assign xperm_result        = '0;
+    assign butterfly_result    = '0;
+    assign invbutterfly_result = '0;
+    assign clmul_result        = '0;
+    assign multicycle_result   = '0;
     // RV32B support signals
-    assign imd_val_d_o                = '{default: '0};
-    assign imd_val_we_o               = '{default: '0};
+    assign imd_val_d_o         = '{default: '0};
+    assign imd_val_we_o        = '{default: '0};
   end
 
   ////////////////
@@ -1348,23 +1318,25 @@ module cve2_alu #(
   ////////////////
 
   always_comb begin
-    result_o = '0;
+    result_o   = '0;
 
     unique case (operator_i)
       // Bitwise Logic Operations (negate: RV32B)
-      ALU_XOR, ALU_XNOR, ALU_OR, ALU_ORN, ALU_AND, ALU_ANDN: result_o = bwlogic_result;
+      ALU_XOR,  ALU_XNOR,
+      ALU_OR,   ALU_ORN,
+      ALU_AND,  ALU_ANDN: result_o = bwlogic_result;
 
       // Adder Operations
-      ALU_ADD, ALU_SUB,
+      ALU_ADD,  ALU_SUB,
       // RV32B
-      ALU_SH1ADD, ALU_SH2ADD, ALU_SH3ADD:
-      result_o = adder_result;
+      ALU_SH1ADD, ALU_SH2ADD,
+      ALU_SH3ADD: result_o = adder_result;
 
       // Shift Operations
-      ALU_SLL, ALU_SRL, ALU_SRA,
+      ALU_SLL,  ALU_SRL,
+      ALU_SRA,
       // RV32B
-      ALU_SLO, ALU_SRO:
-      result_o = shift_result;
+      ALU_SLO,  ALU_SRO: result_o = shift_result;
 
       // Shuffle Operations (RV32B)
       ALU_SHFL, ALU_UNSHFL: result_o = shuffle_result;
@@ -1373,33 +1345,41 @@ module cve2_alu #(
       ALU_XPERM_N, ALU_XPERM_B, ALU_XPERM_H: result_o = xperm_result;
 
       // Comparison Operations
-      ALU_EQ, ALU_NE, ALU_GE, ALU_GEU, ALU_LT, ALU_LTU, ALU_SLT, ALU_SLTU:
-      result_o = {31'h0, cmp_result};
+      ALU_EQ,   ALU_NE,
+      ALU_GE,   ALU_GEU,
+      ALU_LT,   ALU_LTU,
+      ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
 
       // MinMax Operations (RV32B)
-      ALU_MIN, ALU_MAX, ALU_MINU, ALU_MAXU: result_o = minmax_result;
+      ALU_MIN,  ALU_MAX,
+      ALU_MINU, ALU_MAXU: result_o = minmax_result;
 
       // Bitcount Operations (RV32B)
-      ALU_CLZ, ALU_CTZ, ALU_CPOP: result_o = {26'h0, bitcnt_result};
+      ALU_CLZ, ALU_CTZ,
+      ALU_CPOP: result_o = {26'h0, bitcnt_result};
 
       // Pack Operations (RV32B)
-      ALU_PACK, ALU_PACKH, ALU_PACKU: result_o = pack_result;
+      ALU_PACK, ALU_PACKH,
+      ALU_PACKU: result_o = pack_result;
 
       // Sign-Extend (RV32B)
       ALU_SEXTB, ALU_SEXTH: result_o = sext_result;
 
       // Ternary Bitmanip Operations (RV32B)
-      ALU_CMIX, ALU_CMOV, ALU_FSL, ALU_FSR,
+      ALU_CMIX, ALU_CMOV,
+      ALU_FSL,  ALU_FSR,
       // Rotate Shift (RV32B)
       ALU_ROL, ALU_ROR,
       // Cyclic Redundancy Checks (RV32B)
-      ALU_CRC32_W, ALU_CRC32C_W, ALU_CRC32_H, ALU_CRC32C_H, ALU_CRC32_B, ALU_CRC32C_B,
+      ALU_CRC32_W, ALU_CRC32C_W,
+      ALU_CRC32_H, ALU_CRC32C_H,
+      ALU_CRC32_B, ALU_CRC32C_B,
       // Bit Compress / Decompress (RV32B)
-      ALU_BCOMPRESS, ALU_BDECOMPRESS:
-      result_o = multicycle_result;
+      ALU_BCOMPRESS, ALU_BDECOMPRESS: result_o = multicycle_result;
 
       // Single-Bit Bitmanip Operations (RV32B)
-      ALU_BSET, ALU_BCLR, ALU_BINV, ALU_BEXT: result_o = singlebit_result;
+      ALU_BSET, ALU_BCLR,
+      ALU_BINV, ALU_BEXT: result_o = singlebit_result;
 
       // General Reverse / Or-combine (RV32B)
       ALU_GREV, ALU_GORC: result_o = rev_result;
@@ -1408,7 +1388,8 @@ module cve2_alu #(
       ALU_BFP: result_o = bfp_result;
 
       // Carry-less Multiply Operations (RV32B)
-      ALU_CLMUL, ALU_CLMULR, ALU_CLMULH: result_o = clmul_result;
+      ALU_CLMUL, ALU_CLMULR,
+      ALU_CLMULH: result_o = clmul_result;
 
       default: ;
     endcase

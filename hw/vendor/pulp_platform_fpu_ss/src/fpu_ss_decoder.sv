@@ -139,7 +139,7 @@ module fpu_ss_decoder #(
         op_select_o[1] = fpu_ss_pkg::RegB;
         src_fmt_o      = fpnew_pkg::FP32;
         dst_fmt_o      = fpnew_pkg::FP32;
-        rd_is_fp_dec   = 1'b0;
+        rd_is_fp_dec     = 1'b0;
       end
       fpu_ss_instr_pkg::FCLASS_S: begin
         fpu_op_o       = fpnew_pkg::CLASSIFY;
@@ -147,14 +147,14 @@ module fpu_ss_decoder #(
         fpu_rnd_mode_o = fpnew_pkg::RNE;
         src_fmt_o      = fpnew_pkg::FP32;
         dst_fmt_o      = fpnew_pkg::FP32;
-        rd_is_fp_dec   = 1'b0;
+        rd_is_fp_dec     = 1'b0;
       end
       fpu_ss_instr_pkg::FCVT_W_S, fpu_ss_instr_pkg::FCVT_WU_S: begin
         fpu_op_o       = fpnew_pkg::F2I;
         op_select_o[0] = fpu_ss_pkg::RegA;
         src_fmt_o      = fpnew_pkg::FP32;
         dst_fmt_o      = fpnew_pkg::FP32;
-        rd_is_fp_dec   = 1'b0;
+        rd_is_fp_dec     = 1'b0;
         if (instr_i inside {fpu_ss_instr_pkg::FCVT_WU_S}) op_mode_o = 1'b1;  // unsigned
       end
       fpu_ss_instr_pkg::FMV_X_W: begin
@@ -164,7 +164,7 @@ module fpu_ss_decoder #(
         dst_fmt_o      = fpnew_pkg::FP32;
         op_mode_o      = 1'b1;  // sign-extend result
         op_select_o[0] = fpu_ss_pkg::RegA;
-        rd_is_fp_dec   = 1'b0;
+        rd_is_fp_dec     = 1'b0;
       end
       // -------------------
       // From int to float
@@ -198,11 +198,11 @@ module fpu_ss_decoder #(
         rd_is_fp_dec = 1'b0;
       end
       default: begin
-        use_fpu_o = 1'b0;
+        use_fpu_o  = 1'b0;
         rd_is_fp_dec = 1'b0;
       end
     endcase
     // fix round mode for vectors and fp16alt
     if (set_dyn_rm_o) fpu_rnd_mode_o = fpu_rnd_mode_i;
   end
-endmodule  // fpu_ss_decoder
+endmodule // fpu_ss_decoder

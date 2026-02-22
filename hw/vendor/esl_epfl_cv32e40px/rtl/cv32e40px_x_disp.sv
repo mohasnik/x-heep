@@ -44,21 +44,21 @@ module cv32e40px_x_disp
     // commit interface
     output logic       x_commit_valid_o,
     output logic [3:0] x_commit_id_o,
-    output logic       x_commit_commit_kill, // hardwired to 0
+    output logic       x_commit_commit_kill,  // hardwired to 0
 
     // memory (request/response) interface
     input  logic       x_mem_valid_i,
     output logic       x_mem_ready_o,
-    input  logic [1:0] x_mem_req_mode_i,      // unused
-    input  logic       x_mem_req_spec_i,      // unused
-    input  logic       x_mem_req_last_i,      // unused
-    output logic       x_mem_resp_exc_o,      // hardwired to 0
+    input  logic [1:0] x_mem_req_mode_i,  // unused
+    input  logic       x_mem_req_spec_i,  // unused
+    input  logic       x_mem_req_last_i,  // unused
+    output logic       x_mem_resp_exc_o,  // hardwired to 0
     output logic [5:0] x_mem_resp_exccode_o,  // hardwired to 0
-    output logic       x_mem_resp_dbg_o,      // hardwired to 0
+    output logic       x_mem_resp_dbg_o,  // hardwired to 0
 
     // memory result interface
     output logic x_mem_result_valid_o,
-    output logic x_mem_result_err_o,    // hardwired to 0
+    output logic x_mem_result_err_o,  // hardwired to 0
 
     // result interface
     input  logic       x_result_valid_i,

@@ -12,13 +12,13 @@
 // Description: Delay (or randomize) AXI-like handshaking
 
 module stream_delay #(
-    parameter bit StallRandom = 0,
-    parameter int FixedDelay = 1,
-    parameter type payload_t = logic,
+    parameter bit   StallRandom = 0,
+    parameter int   FixedDelay  = 1,
+    parameter type  payload_t  = logic,
     parameter logic [15:0] Seed = '0
-) (
-    input logic clk_i,
-    input logic rst_ni,
+)(
+    input  logic     clk_i,
+    input  logic     rst_ni,
 
     input  payload_t payload_i,
     output logic     ready_o,
@@ -29,118 +29,106 @@ module stream_delay #(
     output logic     valid_o
 );
 
-  if (FixedDelay == 0 && !StallRandom) begin : gen_pass_through
-    assign ready_o   = ready_i;
-    assign valid_o   = valid_i;
-    assign payload_o = payload_i;
-  end else begin : gen_delay
+    if (FixedDelay == 0 && !StallRandom) begin : gen_pass_through
+        assign ready_o = ready_i;
+        assign valid_o = valid_i;
+        assign payload_o = payload_i;
+    end else begin : gen_delay
 
-<<<<<<< HEAD
-    localparam int unsigned CounterBits = 4;
-=======
         localparam int unsigned CounterBits = 32;
->>>>>>> main
 
-    typedef enum logic [1:0] {
-      Idle,
-      Valid,
-      Ready
-    } state_e;
+        typedef enum logic [1:0] {
+            Idle, Valid, Ready
+        } state_e;
 
-    state_e state_d, state_q;
+        state_e state_d, state_q;
 
-<<<<<<< HEAD
-    logic                   load;
-    logic [            3:0] count_out;
-    logic                   en;
-=======
         logic       load;
         logic [CounterBits-1:0] count_out;
         logic       en;
->>>>>>> main
 
-    logic [CounterBits-1:0] counter_load;
+        logic [CounterBits-1:0] counter_load;
 
-    assign payload_o = payload_i;
+        assign payload_o = payload_i;
 
-    always_comb begin
-      state_d = state_q;
-      valid_o = 1'b0;
-      ready_o = 1'b0;
-      load    = 1'b0;
-      en      = 1'b0;
+        always_comb begin
+            state_d = state_q;
+            valid_o = 1'b0;
+            ready_o = 1'b0;
+            load    = 1'b0;
+            en      = 1'b0;
 
-      unique case (state_q)
-        Idle: begin
-          if (valid_i) begin
-            load = 1'b1;
-            state_d = Valid;
-            // Just one cycle delay
-            if (FixedDelay == 1 || (StallRandom && counter_load == 1)) begin
-              state_d = Ready;
+            unique case (state_q)
+                Idle: begin
+                    if (valid_i) begin
+                        load = 1'b1;
+                        state_d = Valid;
+                        // Just one cycle delay
+                        if (FixedDelay == 1 || (StallRandom && counter_load == 1)) begin
+                            state_d = Ready;
+                        end
+
+                        if (StallRandom && counter_load == 0) begin
+                            valid_o = 1'b1;
+                            ready_o = ready_i;
+                            if (ready_i) state_d = Idle;
+                            else state_d = Ready;
+                        end
+                    end
+                end
+                Valid: begin
+                    en = 1'b1;
+                    if (count_out == 0) begin
+                        state_d = Ready;
+                    end
+                end
+
+                Ready: begin
+                    valid_o = 1'b1;
+                    ready_o = ready_i;
+                    if (ready_i) state_d = Idle;
+                end
+                default : /* default */;
+            endcase
+
+        end
+
+        if (StallRandom) begin : gen_random_stall
+            lfsr_16bit #(
+              .WIDTH ( 16   ),
+              .SEED  ( Seed )
+            ) i_lfsr_16bit (
+              .clk_i          ( clk_i        ),
+              .rst_ni         ( rst_ni       ),
+              .en_i           ( load         ),
+              .refill_way_oh  (              ),
+              .refill_way_bin ( counter_load )
+            );
+        end else begin : gen_fixed_delay
+            assign counter_load = FixedDelay;
+        end
+
+        counter #(
+            .WIDTH      ( CounterBits )
+        ) i_counter (
+            .clk_i      ( clk_i        ),
+            .rst_ni     ( rst_ni       ),
+            .clear_i    ( 1'b0         ),
+            .en_i       ( en           ),
+            .load_i     ( load         ),
+            .down_i     ( 1'b1         ),
+            .d_i        ( counter_load ),
+            .q_o        ( count_out    ),
+            .overflow_o (              )
+        );
+
+        always_ff @(posedge clk_i or negedge rst_ni) begin
+            if (~rst_ni) begin
+                state_q <= Idle;
+            end else begin
+                state_q <= state_d;
             end
-
-            if (StallRandom && counter_load == 0) begin
-              valid_o = 1'b1;
-              ready_o = ready_i;
-              if (ready_i) state_d = Idle;
-              else state_d = Ready;
-            end
-          end
         end
-        Valid: begin
-          en = 1'b1;
-          if (count_out == 0) begin
-            state_d = Ready;
-          end
-        end
-
-        Ready: begin
-          valid_o = 1'b1;
-          ready_o = ready_i;
-          if (ready_i) state_d = Idle;
-        end
-        default:  /* default */;
-      endcase
-
     end
-
-    if (StallRandom) begin : gen_random_stall
-      lfsr_16bit #(
-          .WIDTH(16),
-          .SEED (Seed)
-      ) i_lfsr_16bit (
-          .clk_i         (clk_i),
-          .rst_ni        (rst_ni),
-          .en_i          (load),
-          .refill_way_oh (),
-          .refill_way_bin(counter_load)
-      );
-    end else begin : gen_fixed_delay
-      assign counter_load = FixedDelay;
-    end
-
-    counter #(
-        .WIDTH(CounterBits)
-    ) i_counter (
-        .clk_i     (clk_i),
-        .rst_ni    (rst_ni),
-        .clear_i   (1'b0),
-        .en_i      (en),
-        .load_i    (load),
-        .down_i    (1'b1),
-        .d_i       (counter_load),
-        .q_o       (count_out),
-        .overflow_o()
-    );
-
-    always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (~rst_ni) begin
-        state_q <= Idle;
-      end else begin
-        state_q <= state_d;
-      end
-    end
-  end
 
 endmodule

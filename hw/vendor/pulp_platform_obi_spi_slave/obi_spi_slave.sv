@@ -99,7 +99,7 @@ module obi_spi_slave #(
   );
 
   spi_slave_controller #(
-      .DUMMY_CYCLES(DUMMY_CYCLES)
+    .DUMMY_CYCLES(DUMMY_CYCLES)
   ) u_slave_sm (
       .sclk              (spi_sclk_i),
       .sys_rstn          (obi_rstn_i),
@@ -124,7 +124,7 @@ module obi_spi_slave #(
   );
 
   spi_slave_dc_fifo #(
-      .DATA_WIDTH(32)
+      .DATA_WIDTH  (32)
   ) u_dcfifo_rx (
       .clk_a  (spi_sclk_i),
       .rstn_a (obi_rstn_i),
@@ -139,7 +139,7 @@ module obi_spi_slave #(
   );
 
   spi_slave_dc_fifo #(
-      .DATA_WIDTH(32)
+      .DATA_WIDTH  (32)
   ) u_dcfifo_tx (
       .clk_a  (obi_clk_i),
       .rstn_a (obi_rstn_i),

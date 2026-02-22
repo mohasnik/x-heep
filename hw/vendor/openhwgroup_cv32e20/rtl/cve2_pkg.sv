@@ -21,11 +21,11 @@ package cve2_pkg;
   } crash_dump_t;
 
   typedef struct packed {
-    logic       dummy_instr_id;
-    logic [4:0] raddr_a;
-    logic [4:0] waddr_a;
-    logic       we_a;
-    logic [4:0] raddr_b;
+    logic        dummy_instr_id;
+    logic [4:0]  raddr_a;
+    logic [4:0]  waddr_a;
+    logic        we_a;
+    logic [4:0]  raddr_b;
   } core2rf_t;
 
   /////////////////////
@@ -200,7 +200,7 @@ package cve2_pkg;
   } csr_op_e;
 
   // Privileged mode
-  typedef enum logic [1:0] {
+  typedef enum logic[1:0] {
     PRIV_LVL_M = 2'b11,
     PRIV_LVL_H = 2'b10,
     PRIV_LVL_S = 2'b01,
@@ -208,10 +208,10 @@ package cve2_pkg;
   } priv_lvl_e;
 
   // Constants for the dcsr.xdebugver fields
-  typedef enum logic [3:0] {
-    XDEBUGVER_NO     = 4'd0,  // no external debug support
-    XDEBUGVER_STD    = 4'd4,  // external debug according to RISC-V debug spec
-    XDEBUGVER_NONSTD = 4'd15  // debug not conforming to RISC-V debug spec
+  typedef enum logic[3:0] {
+    XDEBUGVER_NO     = 4'd0, // no external debug support
+    XDEBUGVER_STD    = 4'd4, // external debug according to RISC-V debug spec
+    XDEBUGVER_NONSTD = 4'd15 // debug not conforming to RISC-V debug spec
   } x_debug_ver_e;
 
   //////////////
@@ -219,10 +219,10 @@ package cve2_pkg;
   //////////////
 
   // Type of instruction present in writeback stage
-  typedef enum logic [1:0] {
-    WB_INSTR_LOAD,   // Instruction is awaiting load data
-    WB_INSTR_STORE,  // Instruction is awaiting store response
-    WB_INSTR_OTHER   // Instruction doesn't fit into above categories
+  typedef enum logic[1:0] {
+    WB_INSTR_LOAD,  // Instruction is awaiting load data
+    WB_INSTR_STORE, // Instruction is awaiting store response
+    WB_INSTR_OTHER  // Instruction doesn't fit into above categories
   } wb_instr_type_e;
 
   //////////////
@@ -230,7 +230,7 @@ package cve2_pkg;
   //////////////
 
   // Operand a selection
-  typedef enum logic [1:0] {
+  typedef enum logic[1:0] {
     OP_A_REG_A,
     OP_A_FWD,
     OP_A_CURRPC,
@@ -264,7 +264,7 @@ package cve2_pkg;
   typedef enum {
     RF_WD_EX,
     RF_WD_CSR,
-    RF_WD_COPROC  // Only used when XInterface = 1
+    RF_WD_COPROC // Only used when XInterface = 1
   } rf_wd_sel_e;
 
   //////////////
@@ -286,7 +286,7 @@ package cve2_pkg;
     EXC_PC_EXC,
     EXC_PC_IRQ,
     EXC_PC_DBD,
-    EXC_PC_DBG_EXC  // Exception while in debug mode
+    EXC_PC_DBG_EXC // Exception while in debug mode
   } exc_pc_sel_e;
 
   // Interrupt requests
@@ -294,7 +294,7 @@ package cve2_pkg;
     logic        irq_software;
     logic        irq_timer;
     logic        irq_external;
-    logic [15:0] irq_fast;      // 16 fast interrupts
+    logic [15:0] irq_fast; // 16 fast interrupts
   } irqs_t;
 
   // Exception cause
@@ -325,18 +325,18 @@ package cve2_pkg;
   } dbg_cause_e;
 
   // PMP constants
-  parameter int unsigned PMP_MAX_REGIONS = 16;
-  parameter int unsigned PMP_CFG_W = 8;
+  parameter int unsigned PMP_MAX_REGIONS      = 16;
+  parameter int unsigned PMP_CFG_W            = 8;
 
   // PMP acces type
-  parameter int unsigned PMP_I = 0;
+  parameter int unsigned PMP_I  = 0;
   parameter int unsigned PMP_I2 = 1;
-  parameter int unsigned PMP_D = 2;
+  parameter int unsigned PMP_D  = 2;
 
   typedef enum logic [1:0] {
-    PMP_ACC_EXEC  = 2'b00,
-    PMP_ACC_WRITE = 2'b01,
-    PMP_ACC_READ  = 2'b10
+    PMP_ACC_EXEC    = 2'b00,
+    PMP_ACC_WRITE   = 2'b01,
+    PMP_ACC_READ    = 2'b10
   } pmp_req_e;
 
   // PMP cfg structures
@@ -357,13 +357,13 @@ package cve2_pkg;
 
   // Machine Security Configuration (ePMP)
   typedef struct packed {
-    logic rlb;   // Rule Locking Bypass
-    logic mmwp;  // Machine Mode Whitelist Policy
-    logic mml;   // Machine Mode Lockdown
+    logic rlb;  // Rule Locking Bypass
+    logic mmwp; // Machine Mode Whitelist Policy
+    logic mml;  // Machine Mode Lockdown
   } pmp_mseccfg_t;
 
   // CSRs
-  typedef enum logic [11:0] {
+  typedef enum logic[11:0] {
     // Machine information
     CSR_MVENDORID  = 12'hF11,
     CSR_MARCHID    = 12'hF12,
@@ -372,22 +372,22 @@ package cve2_pkg;
     CSR_MCONFIGPTR = 12'hF15,
 
     // Machine trap setup
-    CSR_MSTATUS    = 12'h300,
-    CSR_MISA       = 12'h301,
-    CSR_MIE        = 12'h304,
-    CSR_MTVEC      = 12'h305,
-    CSR_MCOUNTEREN = 12'h306,
-    CSR_MSTATUSH   = 12'h310,
+    CSR_MSTATUS   = 12'h300,
+    CSR_MISA      = 12'h301,
+    CSR_MIE       = 12'h304,
+    CSR_MTVEC     = 12'h305,
+    CSR_MCOUNTEREN= 12'h306,
+    CSR_MSTATUSH  = 12'h310,
 
-    CSR_MENVCFG  = 12'h30A,
-    CSR_MENVCFGH = 12'h31A,
+    CSR_MENVCFG   = 12'h30A,
+    CSR_MENVCFGH  = 12'h31A,
 
     // Machine trap handling
-    CSR_MSCRATCH = 12'h340,
-    CSR_MEPC     = 12'h341,
-    CSR_MCAUSE   = 12'h342,
-    CSR_MTVAL    = 12'h343,
-    CSR_MIP      = 12'h344,
+    CSR_MSCRATCH  = 12'h340,
+    CSR_MEPC      = 12'h341,
+    CSR_MCAUSE    = 12'h342,
+    CSR_MTVAL     = 12'h343,
+    CSR_MIP       = 12'h344,
 
     // Physical memory protection
     CSR_PMPCFG0   = 12'h3A0,
@@ -412,24 +412,24 @@ package cve2_pkg;
     CSR_PMPADDR15 = 12'h3BF,
 
     // ePMP control
-    CSR_MSECCFG  = 12'h747,
-    CSR_MSECCFGH = 12'h757,
+    CSR_MSECCFG   = 12'h747,
+    CSR_MSECCFGH  = 12'h757,
 
     // Debug trigger
-    CSR_TSELECT  = 12'h7A0,
-    CSR_TDATA1   = 12'h7A1,
-    CSR_TDATA2   = 12'h7A2,
-    CSR_TDATA3   = 12'h7A3,
-    CSR_MCONTEXT = 12'h7A8,
-    CSR_SCONTEXT = 12'h7AA,
+    CSR_TSELECT   = 12'h7A0,
+    CSR_TDATA1    = 12'h7A1,
+    CSR_TDATA2    = 12'h7A2,
+    CSR_TDATA3    = 12'h7A3,
+    CSR_MCONTEXT  = 12'h7A8,
+    CSR_SCONTEXT  = 12'h7AA,
 
     // Debug/trace
-    CSR_DCSR = 12'h7b0,
-    CSR_DPC  = 12'h7b1,
+    CSR_DCSR      = 12'h7b0,
+    CSR_DPC       = 12'h7b1,
 
     // Debug
-    CSR_DSCRATCH0 = 12'h7b2,  // optional
-    CSR_DSCRATCH1 = 12'h7b3,  // optional
+    CSR_DSCRATCH0 = 12'h7b2, // optional
+    CSR_DSCRATCH1 = 12'h7b3, // optional
 
     // Machine Counter/Timers
     CSR_MCOUNTINHIBIT  = 12'h320,
@@ -529,31 +529,31 @@ package cve2_pkg;
   } csr_num_e;
 
   // CSR pmp-related offsets
-  parameter logic [11:0] CSR_OFF_PMP_CFG = 12'h3A0;  // pmp_cfg  @ 12'h3a0 - 12'h3a3
-  parameter logic [11:0] CSR_OFF_PMP_ADDR = 12'h3B0;  // pmp_addr @ 12'h3b0 - 12'h3bf
+  parameter logic [11:0] CSR_OFF_PMP_CFG  = 12'h3A0; // pmp_cfg  @ 12'h3a0 - 12'h3a3
+  parameter logic [11:0] CSR_OFF_PMP_ADDR = 12'h3B0; // pmp_addr @ 12'h3b0 - 12'h3bf
 
   // CSR status bits
-  parameter int unsigned CSR_MSTATUS_MIE_BIT = 3;
-  parameter int unsigned CSR_MSTATUS_MPIE_BIT = 7;
-  parameter int unsigned CSR_MSTATUS_MPP_BIT_LOW = 11;
+  parameter int unsigned CSR_MSTATUS_MIE_BIT      = 3;
+  parameter int unsigned CSR_MSTATUS_MPIE_BIT     = 7;
+  parameter int unsigned CSR_MSTATUS_MPP_BIT_LOW  = 11;
   parameter int unsigned CSR_MSTATUS_MPP_BIT_HIGH = 12;
-  parameter int unsigned CSR_MSTATUS_MPRV_BIT = 17;
-  parameter int unsigned CSR_MSTATUS_TW_BIT = 21;
+  parameter int unsigned CSR_MSTATUS_MPRV_BIT     = 17;
+  parameter int unsigned CSR_MSTATUS_TW_BIT       = 21;
 
   // CSR machine ISA
-  parameter logic [1:0] CSR_MISA_MXL = 2'd1;  // M-XLEN: XLEN in M-Mode for RV32
+  parameter logic [1:0] CSR_MISA_MXL = 2'd1; // M-XLEN: XLEN in M-Mode for RV32
 
   // CSR interrupt pending/enable bits
-  parameter int unsigned CSR_MSIX_BIT = 3;
-  parameter int unsigned CSR_MTIX_BIT = 7;
-  parameter int unsigned CSR_MEIX_BIT = 11;
-  parameter int unsigned CSR_MFIX_BIT_LOW = 16;
+  parameter int unsigned CSR_MSIX_BIT      = 3;
+  parameter int unsigned CSR_MTIX_BIT      = 7;
+  parameter int unsigned CSR_MEIX_BIT      = 11;
+  parameter int unsigned CSR_MFIX_BIT_LOW  = 16;
   parameter int unsigned CSR_MFIX_BIT_HIGH = 31;
 
   // CSR Machine Security Configuration bits
-  parameter int unsigned CSR_MSECCFG_MML_BIT = 0;
+  parameter int unsigned CSR_MSECCFG_MML_BIT  = 0;
   parameter int unsigned CSR_MSECCFG_MMWP_BIT = 1;
-  parameter int unsigned CSR_MSECCFG_RLB_BIT = 2;
+  parameter int unsigned CSR_MSECCFG_RLB_BIT  = 2;
 
   // Machine Vendor ID - OpenHW JEDEC ID is '2 decimal (bank 13)'
   parameter MVENDORID_OFFSET = 7'h2;  // Final byte without parity bit
@@ -562,7 +562,7 @@ package cve2_pkg;
   // Machine Architecture ID (https://github.com/riscv/riscv-isa-manual/blob/master/marchid.md)
   parameter MARCHID = 32'd35;
 
-  localparam logic [31:0] CSR_MVENDORID_VALUE = {MVENDORID_BANK, MVENDORID_OFFSET};
+  localparam logic [31:0] CSR_MVENDORID_VALUE  = {MVENDORID_BANK, MVENDORID_OFFSET};
   localparam logic [31:0] CSR_MARCHID_VALUE = MARCHID;
 
   // Implementation ID
@@ -576,7 +576,7 @@ package cve2_pkg;
   // alter this to point to their system specific configuration data structure.
   localparam logic [31:0] CSR_MCONFIGPTR_VALUE = 32'b0;
 
-  // RVFI CSR element
+ // RVFI CSR element
   typedef struct packed {
     bit [63:0] rdata;
     bit [63:0] rmask;
@@ -657,15 +657,6 @@ package cve2_pkg;
   } rvfi_csr_t;
 
   // CV-X-IF
-<<<<<<< HEAD
-  parameter int unsigned X_NUM_RS = 2;
-  parameter int unsigned X_ID_WIDTH = 4;
-  parameter int unsigned X_RFR_WIDTH = 32;
-  parameter int unsigned X_RFW_WIDTH = 32;
-  parameter int unsigned X_HARTID_WIDTH = 32;
-  parameter int unsigned X_DUAL_READ = 0;
-  parameter int unsigned X_DUAL_WRITE = 0;
-=======
   parameter int unsigned X_NUM_RS         = 2;
   parameter int unsigned X_ID_WIDTH       = 4;
   parameter int unsigned X_RFR_WIDTH      = 32;
@@ -674,12 +665,11 @@ package cve2_pkg;
   parameter int unsigned X_DUAL_READ      = 0;
   parameter int unsigned X_DUAL_WRITE     = 0;
   parameter int unsigned X_INSTR_INFLIGHT = 2**X_ID_WIDTH;
->>>>>>> main
 
   typedef logic [X_NUM_RS+X_DUAL_READ-1:0] readregflags_t;
-  typedef logic [X_DUAL_WRITE:0] writeregflags_t;
-  typedef logic [X_ID_WIDTH-1:0] id_t;
-  typedef logic [X_HARTID_WIDTH-1:0] hartid_t;
+  typedef logic [X_DUAL_WRITE:0]           writeregflags_t;
+  typedef logic [X_ID_WIDTH-1:0]           id_t;
+  typedef logic [X_HARTID_WIDTH-1:0]       hartid_t;
 
   // Issue Interface
   typedef struct packed {

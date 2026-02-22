@@ -6,12 +6,12 @@
 
 `include "prim_assert.sv"
 
-module prim_msb_extend #(
-    parameter int InWidth  = 2,
-    parameter int OutWidth = 2
+module prim_msb_extend # (
+  parameter int InWidth = 2,
+  parameter int OutWidth = 2
 ) (
-    input  [ InWidth-1:0] in_i,
-    output [OutWidth-1:0] out_o
+  input [InWidth-1:0] in_i,
+  output [OutWidth-1:0] out_o
 );
 
   `ASSERT_INIT(WidthCheck_A, OutWidth >= InWidth)

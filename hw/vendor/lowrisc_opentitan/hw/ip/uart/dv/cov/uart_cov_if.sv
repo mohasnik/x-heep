@@ -4,7 +4,7 @@
 //
 // Implements functional coverage for UART.
 interface uart_cov_if (
-    input logic clk_i
+  input logic clk_i
 );
 
   import uvm_pkg::*;
@@ -29,7 +29,7 @@ interface uart_cov_if (
     // The section below constructs the `get_vifs()` task using the helper macros. It retrieves the
     // VIF handles bound to sub-modules from the uvm_resource_db.
     `DV_VIF_WRAP_GET_VIFS_BEGIN
-    `DV_VIF_WRAP_GET_VIF(uart_core_cov_if, uart_core_cov_vif)
+      `DV_VIF_WRAP_GET_VIF(uart_core_cov_if, uart_core_cov_vif)
     `DV_VIF_WRAP_GET_VIFS_END
 
   endclass
@@ -37,19 +37,19 @@ interface uart_cov_if (
   uart_cov_vifs_wrap m_uart_cov_vifs_wrap;
 
   initial begin
-    m_uart_cov_vifs_wrap =
-        new(dv_utils_pkg::get_parent_hier(.hier($sformatf("%m"))), "m_uart_cov_vifs_wrap");
+    m_uart_cov_vifs_wrap = new(dv_utils_pkg::get_parent_hier(.hier($sformatf("%m"))),
+                               "m_uart_cov_vifs_wrap");
     m_uart_cov_vifs_wrap.get_vifs();
   end
 
   covergroup uart_op_cg @(posedge clk_i);
-    option.name = "uart_op_cg";
-    option.comment = "UART TX and RX operations";
+    option.name         = "uart_op_cg";
+    option.comment      = "UART TX and RX operations";
     option.per_instance = 1;
 
-    cp_tx_enable: coverpoint uart_core.tx_enable;
-    cp_rx_enable: coverpoint m_uart_cov_vifs_wrap.uart_core_cov_vif.rx_enable;
-    cr_tx_rx_enable: cross cp_tx_enable, cp_rx_enable;
+    cp_tx_enable:     coverpoint uart_core.tx_enable;
+    cp_rx_enable:     coverpoint m_uart_cov_vifs_wrap.uart_core_cov_vif.rx_enable;
+    cr_tx_rx_enable:  cross cp_tx_enable, cp_rx_enable;
   endgroup
   `DV_FCOV_INSTANTIATE_CG(uart_op_cg, en_full_cov)
 

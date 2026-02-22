@@ -8,30 +8,35 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-module generic_rom #(
-    parameter ADDR_WIDTH = 32,
-    parameter DATA_WIDTH = 32,
-    parameter FILE_NAME  = "./boot/boot_code.cde"
-) (
-    input  logic                  CLK,
-    input  logic                  CEN,
-    input  logic [ADDR_WIDTH-1:0] A,
-    output logic [DATA_WIDTH-1:0] Q
+module generic_rom
+#(
+  parameter ADDR_WIDTH = 32,
+  parameter DATA_WIDTH = 32,
+  parameter FILE_NAME  = "./boot/boot_code.cde"
+)
+(
+  input  logic                  CLK,
+  input  logic                  CEN,
+  input  logic [ADDR_WIDTH-1:0] A,
+  output logic [DATA_WIDTH-1:0] Q
 );
 
-  localparam NUM_WORDS = 2 ** ADDR_WIDTH;
+   localparam   NUM_WORDS = 2**ADDR_WIDTH;
 
-  logic [DATA_WIDTH-1:0] MEM [NUM_WORDS-1:0];
-  logic [ADDR_WIDTH-1:0] A_Q;
+   logic [DATA_WIDTH-1:0] MEM [NUM_WORDS-1:0];
+   logic [ADDR_WIDTH-1:0] A_Q;
 
-  initial begin
-    $readmemb(FILE_NAME, MEM);
-  end
+   initial
+   begin
+     $readmemb(FILE_NAME, MEM);
+   end
 
-  always_ff @(posedge CLK) begin
-    if (CEN == 1'b0) A_Q <= A;
-  end
+   always_ff @(posedge CLK)
+   begin
+     if (CEN == 1'b0)
+        A_Q <= A;
+   end
 
-  assign Q = MEM[A_Q];
+   assign Q = MEM[A_Q];
 
 endmodule

@@ -30,97 +30,97 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_ex_stage
-  import cv32e40x_pkg::*;
+module cv32e40x_ex_stage import cv32e40x_pkg::*;
 #(
-    parameter bit     X_EXT = 1'b0,
-    parameter b_ext_e B_EXT = B_NONE,
-    parameter m_ext_e M_EXT = M
-) (
-    input logic clk,
-    input logic rst_n,
+  parameter bit     X_EXT = 1'b0,
+  parameter b_ext_e B_EXT = B_NONE,
+  parameter m_ext_e M_EXT = M
+)
+(
+  input  logic        clk,
+  input  logic        rst_n,
 
-    // ID/EX pipeline
-    input id_ex_pipe_t id_ex_pipe_i,
+  // ID/EX pipeline
+  input id_ex_pipe_t  id_ex_pipe_i,
 
-    // CSR interface
-    input logic [31:0] csr_rdata_i,
-    input logic        csr_illegal_i,
-    input logic        csr_mnxti_read_i,
+  // CSR interface
+  input  logic [31:0] csr_rdata_i,
+  input  logic        csr_illegal_i,
+  input  logic        csr_mnxti_read_i,
 
-    // EX/WB pipeline
-    output ex_wb_pipe_t ex_wb_pipe_o,
+  // EX/WB pipeline
+  output ex_wb_pipe_t ex_wb_pipe_o,
 
-    // From controller FSM
-    input ctrl_fsm_t ctrl_fsm_i,
+  // From controller FSM
+  input  ctrl_fsm_t   ctrl_fsm_i,
 
-    // Register file forwarding signals (to ID)
-    output logic [31:0] rf_wdata_o,
+  // Register file forwarding signals (to ID)
+  output logic [31:0] rf_wdata_o,
 
-    // To IF: Jump and branch target and decision
-    output logic        branch_decision_o,
-    output logic [31:0] branch_target_o,
+  // To IF: Jump and branch target and decision
+  output logic        branch_decision_o,
+  output logic [31:0] branch_target_o,
 
-    // Output to controller
-    output logic xif_csr_error_o,
+  // Output to controller
+  output logic        xif_csr_error_o,
 
-    // LSU handshake interface
-    input  logic lsu_valid_i,
-    output logic lsu_ready_o,
-    output logic lsu_valid_o,
-    input  logic lsu_ready_i,
-    input  logic lsu_split_i,    // LSU is performing first part of a misaligned/split instruction
-    input  logic lsu_last_op_i,
-    input  logic lsu_first_op_i,
+  // LSU handshake interface
+  input  logic        lsu_valid_i,
+  output logic        lsu_ready_o,
+  output logic        lsu_valid_o,
+  input  logic        lsu_ready_i,
+  input  logic        lsu_split_i,      // LSU is performing first part of a misaligned/split instruction
+  input  logic        lsu_last_op_i,
+  input  logic        lsu_first_op_i,
 
-    // Stage ready/valid
-    output logic ex_ready_o,  // EX stage is ready for new data
-    output logic ex_valid_o,  // EX stage has valid (non-bubble) data for next stage
-    input  logic wb_ready_i,  // WB stage is ready for new data
+  // Stage ready/valid
+  output logic        ex_ready_o,       // EX stage is ready for new data
+  output logic        ex_valid_o,       // EX stage has valid (non-bubble) data for next stage
+  input  logic        wb_ready_i,       // WB stage is ready for new data
 
-    output logic last_op_o,
-    output logic first_op_o
+  output logic        last_op_o,
+  output logic        first_op_o
 );
 
   // Ready and valid signals
-  logic        instr_valid;
-  logic        alu_ready;
-  logic        alu_valid;
-  logic        csr_ready;
-  logic        csr_valid;
-  logic        sys_ready;
-  logic        sys_valid;
-  logic        mul_ready;
-  logic        mul_valid;
-  logic        div_ready;
-  logic        div_valid;
-  logic        xif_ready;
-  logic        xif_valid;
+  logic           instr_valid;
+  logic           alu_ready;
+  logic           alu_valid;
+  logic           csr_ready;
+  logic           csr_valid;
+  logic           sys_ready;
+  logic           sys_valid;
+  logic           mul_ready;
+  logic           mul_valid;
+  logic           div_ready;
+  logic           div_valid;
+  logic           xif_ready;
+  logic           xif_valid;
 
   // Result signals
-  logic [31:0] alu_result;
-  logic        alu_cmp_result;
-  logic [31:0] mul_result;
-  logic [31:0] div_result;
+  logic [31:0]    alu_result;
+  logic           alu_cmp_result;
+  logic [31:0]    mul_result;
+  logic [31:0]    div_result;
 
   // Gated enable signals factoring in instr_valid)
-  logic        mul_en_gated;
-  logic        div_en_gated;
-  logic        lsu_en_gated;
+  logic           mul_en_gated;
+  logic           div_en_gated;
+  logic           lsu_en_gated;
 
   // Divider signals
-  logic        div_en;  // Not affected by instr_valid (kill/halt)
-  logic        div_clz_en;
-  logic [31:0] div_clz_data_rev;
-  logic [ 5:0] div_clz_result;
-  logic        div_shift_en;
-  logic [ 5:0] div_shift_amt;
-  logic [31:0] div_op_b_shifted;
+  logic           div_en;               // Not affected by instr_valid (kill/halt)
+  logic           div_clz_en;
+  logic [31:0]    div_clz_data_rev;
+  logic [5:0]     div_clz_result;
+  logic           div_shift_en;
+  logic [5:0]     div_shift_amt;
+  logic [31:0]    div_op_b_shifted;
 
-  logic        previous_exception;
+  logic           previous_exception;
 
   // Detect if we get an illegal CSR instruction
-  logic        csr_is_illegal;
+  logic           csr_is_illegal;
 
   assign instr_valid = id_ex_pipe_i.instr_valid && !ctrl_fsm_i.kill_ex && !ctrl_fsm_i.halt_ex;
 
@@ -155,21 +155,22 @@ module cv32e40x_ex_stage
                               id_ex_pipe_i.instr_valid;
 
   // ALU write port mux
-  always_comb begin
+  always_comb
+  begin
     // There is no need to use gated versions of alu_en, mul_en, etc. as rf_wdata_o will be ignored
     // for invalid instructions (as the register file write enable will be suppressed).
     unique case (1'b1)
-      id_ex_pipe_i.alu_en: rf_wdata_o = alu_result;
-      id_ex_pipe_i.mul_en: rf_wdata_o = mul_result;
-      id_ex_pipe_i.div_en: rf_wdata_o = div_result;
-      id_ex_pipe_i.csr_en: rf_wdata_o = csr_rdata_i;
-      default:             rf_wdata_o = alu_result;
+      id_ex_pipe_i.alu_en : rf_wdata_o = alu_result;
+      id_ex_pipe_i.mul_en : rf_wdata_o = mul_result;
+      id_ex_pipe_i.div_en : rf_wdata_o = div_result;
+      id_ex_pipe_i.csr_en : rf_wdata_o = csr_rdata_i;
+      default             : rf_wdata_o = alu_result;
     endcase
   end
 
   // Branch handling
   assign branch_decision_o = alu_cmp_result;
-  assign branch_target_o = id_ex_pipe_i.operand_c;
+  assign branch_target_o   = id_ex_pipe_i.operand_c;
 
   // Detect last operation
   // Both parts of a split misaligned load/store will reach WB, but only the second half will be marked with "last_op"
@@ -186,27 +187,28 @@ module cv32e40x_ex_stage
   //                        //
   ////////////////////////////
 
-  cv32e40x_alu #(
-      .B_EXT(B_EXT)
-  ) alu_i (
-      .operator_i        (id_ex_pipe_i.alu_operator),
-      .operand_a_i       (id_ex_pipe_i.alu_operand_a),
-      .operand_b_i       (id_ex_pipe_i.alu_operand_b),
-      .muldiv_operand_b_i(id_ex_pipe_i.muldiv_operand_b),
+  cv32e40x_alu
+    #(.B_EXT(B_EXT))
+  alu_i
+  (
+    .operator_i          ( id_ex_pipe_i.alu_operator     ),
+    .operand_a_i         ( id_ex_pipe_i.alu_operand_a    ),
+    .operand_b_i         ( id_ex_pipe_i.alu_operand_b    ),
+    .muldiv_operand_b_i  ( id_ex_pipe_i.muldiv_operand_b ),
 
-      // ALU CLZ interface
-      .div_clz_en_i      (div_clz_en),
-      .div_clz_data_rev_i(div_clz_data_rev),
-      .div_clz_result_o  (div_clz_result),
+    // ALU CLZ interface
+    .div_clz_en_i        ( div_clz_en                    ),
+    .div_clz_data_rev_i  ( div_clz_data_rev              ),
+    .div_clz_result_o    ( div_clz_result                ),
 
-      // ALU shifter interface
-      .div_shift_en_i    (div_shift_en),
-      .div_shift_amt_i   (div_shift_amt),
-      .div_op_b_shifted_o(div_op_b_shifted),
+    // ALU shifter interface
+    .div_shift_en_i      ( div_shift_en                  ),
+    .div_shift_amt_i     ( div_shift_amt                 ),
+    .div_op_b_shifted_o  ( div_op_b_shifted              ),
 
-      // Result(s)
-      .result_o    (alu_result),
-      .cmp_result_o(alu_cmp_result)
+    // Result(s)
+    .result_o            ( alu_result                    ),
+    .cmp_result_o        ( alu_cmp_result                )
   );
 
   ////////////////////////////////////////////////////
@@ -221,42 +223,44 @@ module cv32e40x_ex_stage
   // TODO:low COCO analysis. is it okay from a leakage perspective to use the ALU at all for DIV/REM instructions?
 
   generate
-    if (M_EXT == M) begin : div
+    if (M_EXT == M) begin: div
 
-      cv32e40x_div div_i (
-          .clk  (clk),
-          .rst_n(rst_n),
+      cv32e40x_div div_i
+        (
+         .clk                ( clk                                  ),
+         .rst_n              ( rst_n                                ),
 
-          // Input IF
-          .data_ind_timing_i(1'b0),  // CV32E40X does not support data independent timing
-          .operator_i(id_ex_pipe_i.div_operator),
-          .op_a_i(id_ex_pipe_i.muldiv_operand_a),
-          .op_b_i(id_ex_pipe_i.muldiv_operand_b),
+         // Input IF
+         .data_ind_timing_i  ( 1'b0                                 ), // CV32E40X does not support data independent timing
+         .operator_i         ( id_ex_pipe_i.div_operator            ),
+         .op_a_i             ( id_ex_pipe_i.muldiv_operand_a        ),
+         .op_b_i             ( id_ex_pipe_i.muldiv_operand_b        ),
 
-          // ALU CLZ interface
-          .alu_clz_result_i  (div_clz_result),
-          .alu_clz_en_o      (div_clz_en),
-          .alu_clz_data_rev_o(div_clz_data_rev),
+         // ALU CLZ interface
+         .alu_clz_result_i   ( div_clz_result                       ),
+         .alu_clz_en_o       ( div_clz_en                           ),
+         .alu_clz_data_rev_o ( div_clz_data_rev                     ),
 
-          // ALU shifter interface
-          .alu_op_b_shifted_i(div_op_b_shifted),
-          .alu_shift_en_o    (div_shift_en),
-          .alu_shift_amt_o   (div_shift_amt),
+         // ALU shifter interface
+         .alu_op_b_shifted_i ( div_op_b_shifted                     ),
+         .alu_shift_en_o     ( div_shift_en                         ),
+         .alu_shift_amt_o    ( div_shift_amt                        ),
 
-          // Result
-          .result_o(div_result),
+         // Result
+         .result_o           ( div_result                           ),
 
-          // divider enable, not affected by kill/halt
-          .div_en_i(div_en),
+         // divider enable, not affected by kill/halt
+         .div_en_i           ( div_en                               ),
 
-          // Handshakes
-          .valid_i(div_en_gated),
-          .ready_o(div_ready),
-          .valid_o(div_valid),
-          .ready_i(wb_ready_i)
-      );
+         // Handshakes
+         .valid_i            ( div_en_gated                         ),
+         .ready_o            ( div_ready                            ),
+         .valid_o            ( div_valid                            ),
+         .ready_i            ( wb_ready_i                           )
+         );
 
-    end else begin : no_div
+    end
+    else begin: no_div
 
       // No divider, tie off outputs
       assign div_clz_en       = 1'b0;
@@ -280,28 +284,30 @@ module cv32e40x_ex_stage
   ////////////////////////////////////////////////////////////////
 
   generate
-    if (M_EXT != M_NONE) begin : mul
+    if (M_EXT != M_NONE) begin: mul
 
-      cv32e40x_mult mult_i (
-          .clk  (clk),
-          .rst_n(rst_n),
+      cv32e40x_mult mult_i
+        (
+         .clk             ( clk                           ),
+         .rst_n           ( rst_n                         ),
 
-          .operator_i   (id_ex_pipe_i.mul_operator),
-          .signed_mode_i(id_ex_pipe_i.mul_signed_mode),
-          .op_a_i       (id_ex_pipe_i.muldiv_operand_a),
-          .op_b_i       (id_ex_pipe_i.muldiv_operand_b),
+         .operator_i      ( id_ex_pipe_i.mul_operator     ),
+         .signed_mode_i   ( id_ex_pipe_i.mul_signed_mode  ),
+         .op_a_i          ( id_ex_pipe_i.muldiv_operand_a ),
+         .op_b_i          ( id_ex_pipe_i.muldiv_operand_b ),
 
-          // Result
-          .result_o(mul_result),
+         // Result
+         .result_o        ( mul_result                    ),
 
-          // Handshakes
-          .valid_i(mul_en_gated),
-          .ready_o(mul_ready),
-          .valid_o(mul_valid),
-          .ready_i(wb_ready_i)
-      );
+         // Handshakes
+         .valid_i         ( mul_en_gated                  ),
+         .ready_o         ( mul_ready                     ),
+         .valid_o         ( mul_valid                     ),
+         .ready_i         ( wb_ready_i                    )
+         );
 
-    end else begin : no_mul
+    end
+    else begin: no_mul
 
       // No multiplier, tie off outputs
       assign mul_result = 32'h0;
@@ -314,8 +320,10 @@ module cv32e40x_ex_stage
   ///////////////////////////////////////
   // EX/WB Pipeline Register           //
   ///////////////////////////////////////
-  always_ff @(posedge clk, negedge rst_n) begin : EX_WB_PIPE_REGISTERS
-    if (rst_n == 1'b0) begin
+  always_ff @(posedge clk, negedge rst_n)
+  begin : EX_WB_PIPE_REGISTERS
+    if (rst_n == 1'b0)
+    begin
       ex_wb_pipe_o.instr_valid        <= 1'b0;
       ex_wb_pipe_o.rf_we              <= 1'b0;
       ex_wb_pipe_o.rf_waddr           <= '0;
@@ -355,17 +363,19 @@ module cv32e40x_ex_stage
       ex_wb_pipe_o.abort_op           <= 1'b0;
 
       ex_wb_pipe_o.priv_lvl           <= PRIV_LVL_M;
-    end else begin
+    end
+    else
+    begin
       if (ex_valid_o && wb_ready_i) begin
         ex_wb_pipe_o.instr_valid <= 1'b1;
-        ex_wb_pipe_o.priv_lvl <= id_ex_pipe_i.priv_lvl;
-        ex_wb_pipe_o.last_op <= last_op_o;
-        ex_wb_pipe_o.first_op <= first_op_o;
+        ex_wb_pipe_o.priv_lvl    <= id_ex_pipe_i.priv_lvl;
+        ex_wb_pipe_o.last_op     <= last_op_o;
+        ex_wb_pipe_o.first_op    <= first_op_o;
         ex_wb_pipe_o.abort_op    <= id_ex_pipe_i.abort_op; // MPU exceptions and watchpoint triggers have WB timing and will not impact ex_wb_pipe.abort_op
         // Deassert rf_we in case of illegal csr instruction or when the first half of a misaligned/split LSU goes to WB.
         // Also deassert if CSR was accepted both by eXtension if and pipeline
-        ex_wb_pipe_o.rf_we <= (csr_is_illegal || lsu_split_i) ? 1'b0 : id_ex_pipe_i.rf_we;
-        ex_wb_pipe_o.lsu_en <= id_ex_pipe_i.lsu_en;
+        ex_wb_pipe_o.rf_we       <= (csr_is_illegal || lsu_split_i) ? 1'b0 : id_ex_pipe_i.rf_we;
+        ex_wb_pipe_o.lsu_en      <= id_ex_pipe_i.lsu_en;
 
         if (id_ex_pipe_i.rf_we) begin
           ex_wb_pipe_o.rf_waddr <= id_ex_pipe_i.rf_waddr;
@@ -374,14 +384,14 @@ module cv32e40x_ex_stage
           end
         end
 
-        ex_wb_pipe_o.alu_jmp_qual <= id_ex_pipe_i.alu_jmp && id_ex_pipe_i.alu_en;
-        ex_wb_pipe_o.alu_bch_qual <= id_ex_pipe_i.alu_bch && id_ex_pipe_i.alu_en;
+        ex_wb_pipe_o.alu_jmp_qual       <= id_ex_pipe_i.alu_jmp && id_ex_pipe_i.alu_en;
+        ex_wb_pipe_o.alu_bch_qual       <= id_ex_pipe_i.alu_bch && id_ex_pipe_i.alu_en;
         ex_wb_pipe_o.alu_bch_taken_qual <= id_ex_pipe_i.alu_bch && id_ex_pipe_i.alu_en && branch_decision_o;
 
         // Update signals for CSR access in WB
         // deassert csr_en in case of an internal illegal csr instruction
         // to avoid writing to CSRs inside the core.
-        ex_wb_pipe_o.csr_en <= (csr_illegal_i || xif_csr_error_o) ? 1'b0 : id_ex_pipe_i.csr_en;
+        ex_wb_pipe_o.csr_en     <= (csr_illegal_i || xif_csr_error_o) ? 1'b0 : id_ex_pipe_i.csr_en;
         if (id_ex_pipe_i.csr_en) begin
           // The ex_wb_pipe_o.csr_addr is used (for RVFI) even for CSR instructions that do not write to the CSR
           // Any future clock gating improvements to ex_wb_pipe.csr_addr must take this into account.
@@ -392,11 +402,11 @@ module cv32e40x_ex_stage
         end
 
         // Propagate signals needed for exception handling in WB
-        ex_wb_pipe_o.pc         <= id_ex_pipe_i.pc;
-        ex_wb_pipe_o.instr      <= id_ex_pipe_i.instr;
-        ex_wb_pipe_o.instr_meta <= id_ex_pipe_i.instr_meta;
+        ex_wb_pipe_o.pc             <= id_ex_pipe_i.pc;
+        ex_wb_pipe_o.instr          <= id_ex_pipe_i.instr;
+        ex_wb_pipe_o.instr_meta     <= id_ex_pipe_i.instr_meta;
 
-        ex_wb_pipe_o.sys_en     <= id_ex_pipe_i.sys_en;
+        ex_wb_pipe_o.sys_en            <= id_ex_pipe_i.sys_en;
         if (id_ex_pipe_i.sys_en) begin
           ex_wb_pipe_o.sys_dret_insn   <= id_ex_pipe_i.sys_dret_insn;
           ex_wb_pipe_o.sys_ebrk_insn   <= id_ex_pipe_i.sys_ebrk_insn;
@@ -409,12 +419,12 @@ module cv32e40x_ex_stage
         end
 
         // CSR illegal instruction detected in this stage, OR'ing in the status
-        ex_wb_pipe_o.illegal_insn  <= id_ex_pipe_i.illegal_insn || csr_is_illegal;
-        ex_wb_pipe_o.trigger_match <= id_ex_pipe_i.trigger_match;
+        ex_wb_pipe_o.illegal_insn   <= id_ex_pipe_i.illegal_insn || csr_is_illegal;
+        ex_wb_pipe_o.trigger_match  <= id_ex_pipe_i.trigger_match;
 
         // eXtension interface
-        ex_wb_pipe_o.xif_en        <= ctrl_fsm_i.kill_xif ? 1'b0 : id_ex_pipe_i.xif_en;
-        ex_wb_pipe_o.xif_meta      <= id_ex_pipe_i.xif_meta;
+        ex_wb_pipe_o.xif_en         <= ctrl_fsm_i.kill_xif ? 1'b0 : id_ex_pipe_i.xif_en;
+        ex_wb_pipe_o.xif_meta       <= id_ex_pipe_i.xif_meta;
       end else if (wb_ready_i) begin
         // we are ready for a new instruction, but there is none available,
         // so we introduce a bubble
@@ -456,9 +466,9 @@ module cv32e40x_ex_stage
                        (id_ex_pipe_i.lsu_en && lsu_valid_i)     ||
                        (id_ex_pipe_i.xif_en && xif_valid)       ||
                        (id_ex_pipe_i.instr_meta.clic_ptr)       || // todo: Should this instead have it's own _valid?
-      (id_ex_pipe_i.instr_meta.mret_ptr) ||  // todo: Should this instead have it's own _valid?
-      previous_exception  // todo:ab:remove
-      ) && instr_valid;
+                       (id_ex_pipe_i.instr_meta.mret_ptr)       || // todo: Should this instead have it's own _valid?
+                       previous_exception // todo:ab:remove
+                      ) && instr_valid;
 
   //---------------------------------------------------------------------------
   // eXtension interface

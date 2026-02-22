@@ -8,14 +8,12 @@
  * Tile-Link UL response integrity check
  */
 
-module tlul_rsp_intg_chk
-  import tlul_pkg::*;
-(
-    // TL-UL interface
-    input tl_d2h_t tl_i,
+module tlul_rsp_intg_chk import tlul_pkg::*; (
+  // TL-UL interface
+  input  tl_d2h_t tl_i,
 
-    // error output
-    output logic err_o
+  // error output
+  output logic err_o
 );
 
   logic [1:0] err;
@@ -23,10 +21,10 @@ module tlul_rsp_intg_chk
   assign rsp = extract_d2h_rsp_intg(tl_i);
 
   prim_secded_64_57_dec u_chk (
-      .in({tl_i.d_user.rsp_intg, D2HRspMaxWidth'(rsp)}),
-      .d_o(),
-      .syndrome_o(),
-      .err_o(err)
+    .in({tl_i.d_user.rsp_intg, D2HRspMaxWidth'(rsp)}),
+    .d_o(),
+    .syndrome_o(),
+    .err_o(err)
   );
 
   // error is not permanently latched as rsp_intg_chk is typically
@@ -41,4 +39,4 @@ module tlul_rsp_intg_chk
 
   `ASSERT_INIT(PayLoadWidthCheck, $bits(tl_d2h_rsp_intg_t) <= D2HRspMaxWidth)
 
-endmodule  // tlul_rsp_intg_chk
+endmodule // tlul_rsp_intg_chk

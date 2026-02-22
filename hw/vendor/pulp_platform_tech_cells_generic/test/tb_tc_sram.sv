@@ -12,16 +12,16 @@
 // Description: Testbench for the functional `*_sram` modules
 
 module tb_tc_sram #(
-    parameter int unsigned NumPorts  = 32'd2,
-    parameter int unsigned Latency   = 32'd1,
-    parameter int unsigned NumWords  = 32'd1024,
-    parameter int unsigned DataWidth = 32'd64,
-    parameter int unsigned ByteWidth = 32'd8,
-    parameter int unsigned NoReq     = 32'd200000,
-    parameter string       SimInit   = "zeros",
-    parameter time         CyclTime  = 10ns,
-    parameter time         ApplTime  = 2ns,
-    parameter time         TestTime  = 8ns
+  parameter int unsigned NumPorts  = 32'd2,
+  parameter int unsigned Latency   = 32'd1,
+  parameter int unsigned NumWords  = 32'd1024,
+  parameter int unsigned DataWidth = 32'd64,
+  parameter int unsigned ByteWidth = 32'd8,
+  parameter int unsigned NoReq     = 32'd200000,
+  parameter string       SimInit   = "zeros",
+  parameter time         CyclTime  = 10ns,
+  parameter time         ApplTime  = 2ns,
+  parameter time         TestTime  = 8ns
 );
 
   //-----------------------------------
@@ -29,31 +29,31 @@ module tb_tc_sram #(
   //-----------------------------------
   logic clk, rst_n;
   clk_rst_gen #(
-      .ClkPeriod   (CyclTime),
-      .RstClkCycles(5)
+    .ClkPeriod   ( CyclTime ),
+    .RstClkCycles( 5        )
   ) i_clk_gen (
-      .clk_o (clk),
-      .rst_no(rst_n)
+    .clk_o  ( clk   ),
+    .rst_no ( rst_n )
   );
 
   logic [NumPorts-1:0] done;
 
   localparam int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1;
-  localparam int unsigned BeWidth = (DataWidth + ByteWidth - 32'd1) / ByteWidth;
+  localparam int unsigned BeWidth   = (DataWidth + ByteWidth - 32'd1) / ByteWidth;
 
   typedef logic [AddrWidth-1:0] addr_t;
   typedef logic [DataWidth-1:0] data_t;
-  typedef logic [BeWidth-1:0] be_t;
+  typedef logic [BeWidth-1:0]   be_t;
 
   // signal declarations for each sram
-  logic [NumPorts-1:0] req, we;
+  logic  [NumPorts-1:0] req,   we;
   addr_t [NumPorts-1:0] addr;
   data_t [NumPorts-1:0] wdata, rdata;
-  be_t             [NumPorts-1:0] be;
+  be_t   [NumPorts-1:0] be;
 
   // golden model
-  data_t                          memory      [NumWords-1:0];
-  longint unsigned                failed_test;
+  data_t           memory [NumWords-1:0];
+  longint unsigned failed_test;
 
   // This process drives the requests on the port with random data.
   for (genvar i = 0; i < NumPorts; i++) begin : gen_stimuli
@@ -103,7 +103,7 @@ module tb_tc_sram #(
         wdata[i] <= #ApplTime data_t'(0);
         be[i]    <= #ApplTime be_t'(0);
 
-        repeat ($urandom_range(0, 5)) @(posedge clk);
+        repeat ($urandom_range(0,5)) @(posedge clk);
       end
       done[i] <= 1'b1;
     end
@@ -114,7 +114,7 @@ module tb_tc_sram #(
   // - Data is written exactly at the clock edge, if there is a write request on a port.
   // - At `TestTime` a process is launched on read requests which lives for `Latency` cycles.
   //   This process asserts the expected read output at `TestTime` in the respective cycle.
-  initial begin : proc_golden_model
+  initial begin: proc_golden_model
     failed_test = 0;
     for (int unsigned i = 0; i < NumWords; i++) begin
       for (int unsigned j = 0; j < DataWidth; j++) begin
@@ -164,10 +164,9 @@ module tb_tc_sram #(
 
       for (int unsigned i = 0; i < DataWidth; i++) begin
         if (!$isunknown(exp_data[i])) begin
-          assert (exp_data[i] === rdata[port][i])
-          else begin
-            $warning("Port: %0d unexpected bit[%0h], Addr: %0h expected: %0h, measured: %0h", port,
-                     i, read_addr, exp_data[i], rdata[port][i]);
+          assert(exp_data[i] === rdata[port][i]) else begin
+            $warning("Port: %0d unexpected bit[%0h], Addr: %0h expected: %0h, measured: %0h",
+                port, i, read_addr, exp_data[i], rdata[port][i]);
             failed_test++;
           end
         end
@@ -185,21 +184,21 @@ module tb_tc_sram #(
   end
 
   tc_sram #(
-      .NumWords   (NumWords),   // Number of Words in data array
-      .DataWidth  (DataWidth),  // Data signal width
-      .ByteWidth  (ByteWidth),  // Width of a data byte
-      .NumPorts   (NumPorts),   // Number of read and write ports
-      .Latency    (Latency),    // Latency when the read data is available
-      .SimInit    (SimInit),    // Simulation initialization
-      .PrintSimCfg(1'b1)        // Print configuration
+    .NumWords    ( NumWords  ), // Number of Words in data array
+    .DataWidth   ( DataWidth ), // Data signal width
+    .ByteWidth   ( ByteWidth ), // Width of a data byte
+    .NumPorts    ( NumPorts  ), // Number of read and write ports
+    .Latency     ( Latency   ), // Latency when the read data is available
+    .SimInit     ( SimInit   ), // Simulation initialization
+    .PrintSimCfg ( 1'b1      )  // Print configuration
   ) i_tc_sram_dut (
-      .clk_i  (clk),    // Clock
-      .rst_ni (rst_n),  // Asynchronous reset active low
-      .req_i  (req),    // request
-      .we_i   (we),     // write enable
-      .addr_i (addr),   // request address
-      .wdata_i(wdata),  // write data
-      .be_i   (be),     // write byte enable
-      .rdata_o(rdata)   // read data
+    .clk_i   ( clk   ), // Clock
+    .rst_ni  ( rst_n ), // Asynchronous reset active low
+    .req_i   ( req   ), // request
+    .we_i    ( we    ), // write enable
+    .addr_i  ( addr  ), // request address
+    .wdata_i ( wdata ), // write data
+    .be_i    ( be    ), // write byte enable
+    .rdata_o ( rdata )  // read data
   );
 endmodule

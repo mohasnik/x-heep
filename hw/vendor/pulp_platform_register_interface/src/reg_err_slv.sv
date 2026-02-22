@@ -8,14 +8,14 @@
 // Simple module that permanently answers with an error
 
 module reg_err_slv #(
-    parameter int unsigned DW        = -1,
-    parameter type         payload_t = logic [DW-1:0],
-    parameter payload_t    ERR_VAL   = '0,
-    parameter type         req_t     = logic,
-    parameter type         rsp_t     = logic
+  parameter int unsigned    DW        = -1,
+  parameter type            payload_t = logic [DW-1:0],
+  parameter payload_t       ERR_VAL   = '0,
+  parameter type            req_t     = logic,
+  parameter type            rsp_t     = logic
 ) (
-    input  req_t req_i,
-    output rsp_t rsp_o
+  input  req_t               req_i,
+  output rsp_t               rsp_o
 );
 
   // Always ready to return an error and the error message
@@ -23,4 +23,4 @@ module reg_err_slv #(
   assign rsp_o.error = 1'b1;
   assign rsp_o.ready = 1'b1;
 
-endmodule  // reg_err_slv
+endmodule // reg_err_slv

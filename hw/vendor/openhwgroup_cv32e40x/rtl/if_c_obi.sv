@@ -24,22 +24,29 @@
 // 
 // The 'c' in the interface names means 'Compressed'
 // since this interface is a subset of the full OBI spec.
-interface if_c_obi
-  import cv32e40x_pkg::*;
+interface if_c_obi import cv32e40x_pkg::*;
 #(
     parameter type REQ_TYPE  = obi_inst_req_t,
     parameter type RESP_TYPE = obi_inst_resp_t
 );
-  // A channel signals
-  obi_req_t    s_req;
-  obi_gnt_t    s_gnt;
-  REQ_TYPE     req_payload;
-  // R channel signals
-  obi_rvalid_t s_rvalid;
-  RESP_TYPE    resp_payload;
-
-  modport master(output s_req, req_payload, input s_gnt, s_rvalid, resp_payload);
-
-  modport monitor(input s_req, req_payload, s_gnt, s_rvalid, resp_payload);
+    // A channel signals
+    obi_req_t                  s_req;
+    obi_gnt_t                  s_gnt;
+    REQ_TYPE                   req_payload;
+    // R channel signals
+    obi_rvalid_t               s_rvalid;
+    RESP_TYPE                  resp_payload;
+  
+    modport master
+       (
+       output s_req, req_payload,
+       input  s_gnt, s_rvalid, resp_payload
+       );
+  
+    modport monitor
+       (
+       input  s_req, req_payload,
+              s_gnt, s_rvalid, resp_payload
+       );
 
 endinterface : if_c_obi

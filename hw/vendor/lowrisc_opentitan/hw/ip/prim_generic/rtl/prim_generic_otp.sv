@@ -5,52 +5,52 @@
 module prim_generic_otp
   import prim_otp_pkg::*;
 #(
-    // Native OTP word size. This determines the size_i granule.
-    parameter  int Width       = 16,
-    parameter  int Depth       = 1024,
-    // This determines the maximum number of native words that
-    // can be transferred accross the interface in one cycle.
-    parameter  int SizeWidth   = 2,
-    // Width of the power sequencing signal.
-    parameter  int PwrSeqWidth = 2,
-    // Number of Test TL-UL words
-    parameter  int TlDepth     = 16,
-    // Derived parameters
-    localparam int AddrWidth   = prim_util_pkg::vbits(Depth),
-    localparam int IfWidth     = 2 ** SizeWidth * Width,
-    // VMEM file to initialize the memory with
-    parameter      MemInitFile = ""
+  // Native OTP word size. This determines the size_i granule.
+  parameter  int Width       = 16,
+  parameter  int Depth       = 1024,
+  // This determines the maximum number of native words that
+  // can be transferred accross the interface in one cycle.
+  parameter  int SizeWidth   = 2,
+  // Width of the power sequencing signal.
+  parameter  int PwrSeqWidth = 2,
+  // Number of Test TL-UL words
+  parameter  int TlDepth     = 16,
+  // Derived parameters
+  localparam int AddrWidth   = prim_util_pkg::vbits(Depth),
+  localparam int IfWidth     = 2**SizeWidth*Width,
+  // VMEM file to initialize the memory with
+  parameter      MemInitFile = ""
 ) (
-    input clk_i,
-    input rst_ni,
-    // Macro-specific power sequencing signals to/from AST
-    output logic [PwrSeqWidth-1:0] pwr_seq_o,
-    input [PwrSeqWidth-1:0] pwr_seq_h_i,
-    // Test interface
-    input tlul_pkg::tl_h2d_t test_tl_i,
-    output tlul_pkg::tl_d2h_t test_tl_o,
-    // Ready valid handshake for read/write command
-    output logic ready_o,
-    input valid_i,
-    input [SizeWidth-1:0] size_i,  // #(Native words)-1, e.g. size == 0 for 1 native word.
-    input cmd_e cmd_i,  // 00: read command, 01: write command, 11: init command
-    input [AddrWidth-1:0] addr_i,
-    input [IfWidth-1:0] wdata_i,
-    // Response channel
-    output logic valid_o,
-    output logic [IfWidth-1:0] rdata_o,
-    output err_e err_o,
-    // External programming voltage
-    inout wire ext_voltage_io,  //TODO enable it after the change in prim_otp file
-    input ext_voltage_en_i,  // TODO
-    //// alert indication
-    //////////////////////////
-    output ast_pkg::ast_dif_t otp_alert_src_o,
+  input                          clk_i,
+  input                          rst_ni,
+  // Macro-specific power sequencing signals to/from AST
+  output logic [PwrSeqWidth-1:0] pwr_seq_o,
+  input        [PwrSeqWidth-1:0] pwr_seq_h_i,
+  // Test interface
+  input  tlul_pkg::tl_h2d_t      test_tl_i,
+  output tlul_pkg::tl_d2h_t      test_tl_o,
+  // Ready valid handshake for read/write command
+  output logic                   ready_o,
+  input                          valid_i,
+  input [SizeWidth-1:0]          size_i, // #(Native words)-1, e.g. size == 0 for 1 native word.
+  input  cmd_e                   cmd_i,  // 00: read command, 01: write command, 11: init command
+  input [AddrWidth-1:0]          addr_i,
+  input [IfWidth-1:0]            wdata_i,
+  // Response channel
+  output logic                   valid_o,
+  output logic [IfWidth-1:0]     rdata_o,
+  output err_e                   err_o,
+  // External programming voltage
+  inout wire ext_voltage_io, //TODO enable it after the change in prim_otp file
+  input ext_voltage_en_i, // TODO
+  //// alert indication
+  //////////////////////////
+  output ast_pkg::ast_dif_t otp_alert_src_o,
 
-    // Scan
-    input lc_ctrl_pkg::lc_tx_t scanmode_i,  // Scan Mode input
-    input scan_en_i,  // Scan Shift
-    input scan_rst_ni  // Scan Reset
+  // Scan
+  input lc_ctrl_pkg::lc_tx_t scanmode_i,  // Scan Mode input
+  input scan_en_i,  // Scan Shift
+  input scan_rst_ni  // Scan Reset
 );
 
   // Not supported in open-source emulation model.
@@ -79,31 +79,31 @@ module prim_generic_otp
   logic tlul_req, tlul_rvalid_q, tlul_wren;
   logic [TlDepth-1:0][31:0] tlul_regfile_q;
   logic [31:0] tlul_wdata, tlul_rdata_q;
-  logic [TlAddrWidth-1:0] tlul_addr;
+  logic [TlAddrWidth-1:0]  tlul_addr;
 
   tlul_adapter_sram #(
-      .SramAw     (TlAddrWidth),
-      .SramDw     (32),
-      .Outstanding(1),
-      .ByteAccess (0),
-      .ErrOnWrite (0)
+    .SramAw      ( TlAddrWidth   ),
+    .SramDw      ( 32            ),
+    .Outstanding ( 1             ),
+    .ByteAccess  ( 0             ),
+    .ErrOnWrite  ( 0             )
   ) u_tlul_adapter_sram (
-      .clk_i,
-      .rst_ni,
-      .tl_i        (test_tl_i),
-      .tl_o        (test_tl_o),
-      .en_ifetch_i (tlul_pkg::InstrDis),
-      .req_o       (tlul_req),
-      .gnt_i       (tlul_req),
-      .we_o        (tlul_wren),
-      .addr_o      (tlul_addr),
-      .wdata_o     (tlul_wdata),
-      .wmask_o     (),
-      .intg_error_o(),
-      .rdata_i     (tlul_rdata_q),
-      .rvalid_i    (tlul_rvalid_q),
-      .rerror_i    ('0),
-      .req_type_o  ()
+    .clk_i,
+    .rst_ni,
+    .tl_i        ( test_tl_i          ),
+    .tl_o        ( test_tl_o          ),
+    .en_ifetch_i ( tlul_pkg::InstrDis ),
+    .req_o       ( tlul_req           ),
+    .gnt_i       ( tlul_req           ),
+    .we_o        ( tlul_wren          ),
+    .addr_o      ( tlul_addr          ),
+    .wdata_o     ( tlul_wdata         ),
+    .wmask_o     (                    ),
+    .intg_error_o(                    ),
+    .rdata_i     ( tlul_rdata_q       ),
+    .rvalid_i    ( tlul_rvalid_q      ),
+    .rerror_i    ( '0                 ),
+    .req_type_o  (                    )
   );
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_tlul_testreg
@@ -167,7 +167,8 @@ module prim_generic_otp
   logic [SizeWidth-1:0] cnt_d, cnt_q;
   logic cnt_clr, cnt_en;
 
-  assign cnt_d   = (cnt_clr) ? '0 : (cnt_en) ? cnt_q + 1'b1 : cnt_q;
+  assign cnt_d = (cnt_clr) ? '0           :
+                 (cnt_en)  ? cnt_q + 1'b1 : cnt_q;
 
   assign valid_o = valid_q;
   assign rdata_o = rdata_q;
@@ -187,7 +188,7 @@ module prim_generic_otp
     unique case (state_q)
       // Wait here until we receive an initialization command.
       ResetSt: begin
-        err_d   = NoError;
+        err_d = NoError;
         ready_o = 1'b1;
         if (valid_i) begin
           if (cmd_i == Init) begin
@@ -195,7 +196,7 @@ module prim_generic_otp
           end else begin
             // Invalid commands get caught here
             valid_d = 1'b1;
-            err_d   = MacroError;
+            err_d = MacroError;
           end
         end
       end
@@ -203,24 +204,24 @@ module prim_generic_otp
       InitSt: begin
         state_d = IdleSt;
         valid_d = 1'b1;
-        err_d   = NoError;
+        err_d = NoError;
       end
       // In the idle state, we basically wait for read or write commands.
       IdleSt: begin
         ready_o = 1'b1;
-        err_d   = NoError;
+        err_d = NoError;
         if (valid_i) begin
           cnt_clr = 1'b1;
-          err_d   = NoError;
+          err_d = NoError;
           unique case (cmd_i)
             Read:  state_d = ReadSt;
             Write: state_d = WriteCheckSt;
-            default: begin
+            default:  begin
               // Invalid commands get caught here
               valid_d = 1'b1;
-              err_d   = MacroError;
+              err_d = MacroError;
             end
-          endcase  // cmd_i
+          endcase // cmd_i
         end
       end
       // Issue a read command to the macro.
@@ -236,7 +237,7 @@ module prim_generic_otp
           if (rerror[1]) begin
             state_d = IdleSt;
             valid_d = 1'b1;
-            err_d   = MacroEccUncorrError;
+            err_d = MacroEccUncorrError;
           end else begin
             if (cnt_q == size_q) begin
               state_d = IdleSt;
@@ -266,7 +267,7 @@ module prim_generic_otp
           if (rerror[1] || (rdata_d & wdata_q[cnt_q]) != rdata_d) begin
             state_d = IdleSt;
             valid_d = 1'b1;
-            err_d   = MacroWriteBlankError;
+            err_d = MacroWriteBlankError;
           end else begin
             if (cnt_q == size_q) begin
               cnt_clr = 1'b1;
@@ -290,7 +291,7 @@ module prim_generic_otp
       default: begin
         state_d = ResetSt;
       end
-    endcase  // state_q
+    endcase // state_q
   end
 
   ///////////////////////////////////////////
@@ -301,26 +302,26 @@ module prim_generic_otp
   assign addr = addr_q + AddrWidth'(cnt_q);
 
   prim_ram_1p_adv #(
-      .Depth               (Depth),
-      .Width               (Width),
-      .MemInitFile         (MemInitFile),
-      .EnableECC           (1'b1),
-      .EnableInputPipeline (1),
-      .EnableOutputPipeline(1),
-      // Use a standard Hamming ECC for OTP.
-      .HammingECC          (1)
+    .Depth                (Depth),
+    .Width                (Width),
+    .MemInitFile          (MemInitFile),
+    .EnableECC            (1'b1),
+    .EnableInputPipeline  (1),
+    .EnableOutputPipeline (1),
+    // Use a standard Hamming ECC for OTP.
+    .HammingECC           (1)
   ) u_prim_ram_1p_adv (
-      .clk_i,
-      .rst_ni,
-      .req_i   (req),
-      .write_i (wren),
-      .addr_i  (addr),
-      .wdata_i (wdata_q[cnt_q]),
-      .wmask_i ({Width{1'b1}}),
-      .rdata_o (rdata_d),
-      .rvalid_o(rvalid),
-      .rerror_o(rerror),
-      .cfg_i   ('0)
+    .clk_i,
+    .rst_ni,
+    .req_i    ( req            ),
+    .write_i  ( wren           ),
+    .addr_i   ( addr           ),
+    .wdata_i  ( wdata_q[cnt_q] ),
+    .wmask_i  ( {Width{1'b1}}  ),
+    .rdata_o  ( rdata_d        ),
+    .rvalid_o ( rvalid         ),
+    .rerror_o ( rerror         ),
+    .cfg_i    ( '0             )
   );
 
   // Currently it is assumed that no wrap arounds can occur.
@@ -335,13 +336,13 @@ module prim_generic_otp
   logic [StateWidth-1:0] state_raw_q;
   assign state_q = state_e'(state_raw_q);
   prim_flop #(
-      .Width(StateWidth),
-      .ResetValue(StateWidth'(ResetSt))
+    .Width(StateWidth),
+    .ResetValue(StateWidth'(ResetSt))
   ) u_state_regs (
-      .clk_i,
-      .rst_ni,
-      .d_i(state_d),
-      .q_o(state_raw_q)
+    .clk_i,
+    .rst_ni,
+    .d_i ( state_d     ),
+    .q_o ( state_raw_q )
   );
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_regs

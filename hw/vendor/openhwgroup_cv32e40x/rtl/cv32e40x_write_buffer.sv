@@ -29,32 +29,32 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_write_buffer
-  import cv32e40x_pkg::*;
+module cv32e40x_write_buffer import cv32e40x_pkg::*;
 #(
-    parameter int       PMA_NUM_REGIONS                      = 0,
-    parameter pma_cfg_t PMA_CFG        [PMA_NUM_REGIONS-1:0] = '{default: PMA_R_DEFAULT}
-) (
-    // clock and reset
-    input logic clk,
-    input logic rst_n,
+  parameter int          PMA_NUM_REGIONS = 0,
+  parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1:0] = '{default:PMA_R_DEFAULT}
+)
+  (
+   // clock and reset
+   input logic           clk,
+   input logic           rst_n,
 
-    // inputs
-    input logic          valid_i,
-    input obi_data_req_t trans_i,
-    input logic          ready_i,
+   // inputs
+   input  logic          valid_i,
+   input  obi_data_req_t trans_i,
+   input  logic          ready_i,
 
-    // outputs
-    output logic          valid_o,
-    output obi_data_req_t trans_o,
-    output logic          ready_o
-);
+   // outputs
+   output logic          valid_o,
+   output obi_data_req_t trans_o,
+   output logic          ready_o
+  );
 
   // local signals
-  write_buffer_state_e state, next_state;
-  obi_data_req_t trans_q;
-  logic          push;
-  logic          bufferable;
+  write_buffer_state_e        state, next_state;
+  obi_data_req_t              trans_q;
+  logic                       push;
+  logic                       bufferable;
 
   assign bufferable = trans_i.memtype[0];
 
@@ -62,7 +62,7 @@ module cv32e40x_write_buffer
   // FSM
   ///////////////////////////////////////////
   always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+    if(!rst_n) begin
       state <= WBUF_EMPTY;
     end else begin
       state <= next_state;
@@ -73,33 +73,33 @@ module cv32e40x_write_buffer
     next_state = state;
     push       = 1'b0;
 
-    case (state)
-      WBUF_EMPTY: begin  // buffer is empty
-        if (bufferable && valid_i && !ready_i) begin
+    case(state)
+      WBUF_EMPTY: begin // buffer is empty
+        if(bufferable && valid_i && !ready_i) begin
           next_state = WBUF_FULL;
-          push       = 1'b1;  // push incoming data into the buffer
+          push       = 1'b1; // push incoming data into the buffer
         end
       end
-      WBUF_FULL: begin  // buffer is full
-        if (ready_i) begin
+      WBUF_FULL: begin // buffer is full
+        if(ready_i) begin
           if (bufferable && valid_i) begin
             next_state = WBUF_FULL;
-            push       = 1'b1;  // push incoming data into the buffer
+            push       = 1'b1; // push incoming data into the buffer
           end else begin
             next_state = WBUF_EMPTY;
           end
         end
       end
 
-      default: ;
-    endcase  // case (state)
+      default:;
+    endcase // case (state)
   end
 
   ///////////////////////////////////////////
   // Buffer
   ///////////////////////////////////////////
   always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+    if(!rst_n) begin
       trans_q <= '0;
     end else if (push) begin
       trans_q <= trans_i;
@@ -111,7 +111,7 @@ module cv32e40x_write_buffer
   ///////////////////////////////////////////
   assign ready_o = (state == WBUF_FULL) ?
                    (bufferable && ready_i) : // A downstream ready will free up the buffer for a new bufferable transfer
-      (bufferable || ready_i);  // Ready for bufferable transfer, accept any transfer if downstream is ready
+                   (bufferable || ready_i);  // Ready for bufferable transfer, accept any transfer if downstream is ready
   assign valid_o = (state == WBUF_FULL) || valid_i;
   assign trans_o = (state == WBUF_FULL) ? trans_q : trans_i;
 

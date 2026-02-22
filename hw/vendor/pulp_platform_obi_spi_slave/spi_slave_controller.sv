@@ -10,7 +10,7 @@
 
 
 module spi_slave_controller #(
-    parameter DUMMY_CYCLES = 32
+  parameter DUMMY_CYCLES = 32
 ) (
     input  logic        sclk,
     input  logic        sys_rstn,

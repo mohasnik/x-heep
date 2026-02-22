@@ -7,16 +7,16 @@
  */
 
 module reg_to_tlul #(
-    parameter type req_t = logic,
-    parameter type rsp_t = logic,
-    parameter type tl_h2d_t = logic,
-    parameter type tl_d2h_t = logic,
-    //you should pass tlul_pkg::TL_A_USER_DEFAULT from the OpenTitan TLUL package
-    parameter type tl_a_user_t = logic,
-    parameter type tl_a_op_e = logic,
-    parameter tl_a_user_t TL_A_USER_DEFAULT = '0,
-    parameter tl_a_op_e PutFullData = '0,
-    parameter tl_a_op_e Get = '0
+  parameter type req_t = logic,
+  parameter type rsp_t = logic,
+  parameter type tl_h2d_t = logic,
+  parameter type tl_d2h_t = logic,
+  //you should pass tlul_pkg::TL_A_USER_DEFAULT from the OpenTitan TLUL package
+  parameter type tl_a_user_t  = logic,
+  parameter type tl_a_op_e  = logic,
+  parameter tl_a_user_t TL_A_USER_DEFAULT = '0,
+  parameter tl_a_op_e PutFullData = '0,
+  parameter tl_a_op_e Get = '0
 ) (
     // TL-UL interface
     output tl_h2d_t tl_o,

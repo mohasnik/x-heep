@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module uartdpi #(
-    parameter BAUD = 'x,
-    parameter FREQ = 'x,
-    parameter string NAME = "uart0"
-) (
-    input logic clk_i,
-    input logic rst_ni,
+  parameter BAUD = 'x,
+  parameter FREQ = 'x,
+  parameter string NAME = "uart0"
+)(
+  input  logic clk_i,
+  input  logic rst_ni,
 
-    output logic tx_o,
-    input  logic rx_i
+  output logic tx_o,
+  input  logic rx_i
 );
   // Path to a log file. Used if none is specified through the `UARTDPI_LOG_<name>` plusarg.
   localparam string DEFAULT_LOG_FILE = {NAME, ".log"};
@@ -19,24 +19,23 @@ module uartdpi #(
   // Min cycles is 2 for fast test mode
   localparam int CYCLES_PER_SYMBOL = FREQ / BAUD;
 
-  import "DPI-C" function chandle uartdpi_create(
-    input string name,
-    input string log_file_path
-  );
+  import "DPI-C" function
+    chandle uartdpi_create(input string name, input string log_file_path);
 
-  import "DPI-C" function void uartdpi_close(input chandle ctx);
+  import "DPI-C" function
+    void uartdpi_close(input chandle ctx);
 
-  import "DPI-C" function byte uartdpi_read(input chandle ctx);
+  import "DPI-C" function
+    byte uartdpi_read(input chandle ctx);
 
-  import "DPI-C" function int uartdpi_can_read(input chandle ctx);
+  import "DPI-C" function
+    int uartdpi_can_read(input chandle ctx);
 
-  import "DPI-C" function void uartdpi_write(
-    input chandle ctx,
-    int data
-  );
+  import "DPI-C" function
+    void uartdpi_write(input chandle ctx, int data);
 
   chandle ctx;
-  string  log_file_path = DEFAULT_LOG_FILE;
+  string log_file_path = DEFAULT_LOG_FILE;
 
   initial begin
     $value$plusargs({"UARTDPI_LOG_", NAME, "=%s"}, log_file_path);
@@ -50,8 +49,8 @@ module uartdpi #(
 
   // TX
   reg txactive;
-  int txcount;
-  int txcyccount;
+  int  txcount;
+  int  txcyccount;
   reg [9:0] txsymbol;
   reg seen_reset;
 
@@ -74,8 +73,10 @@ module uartdpi #(
         tx_o <= txsymbol[txcount];
         if (txcyccount == CYCLES_PER_SYMBOL - 1) begin
           txcyccount <= 0;
-          if (txcount == 9) txactive <= 0;
-          else txcount <= txcount + 1;
+          if (txcount == 9)
+            txactive <= 0;
+          else
+            txcount <= txcount + 1;
         end
       end
     end
@@ -102,7 +103,7 @@ module uartdpi #(
     rxcyccount <= rxcyccount + 1;
 
     if (!rst_ni) begin
-      rxactive   <= 0;
+      rxactive <= 0;
       seen_reset <= 1;
     end else begin
       if (!rxactive) begin
@@ -113,7 +114,7 @@ module uartdpi #(
         end
       end else begin
         if (rxcount == 0) begin
-          if (rxcyccount == CYCLES_PER_SYMBOL / 2 - 1) begin
+          if (rxcyccount == CYCLES_PER_SYMBOL/2 - 1) begin
             if (rx_i) begin
               rxactive <= 0;
             end else begin

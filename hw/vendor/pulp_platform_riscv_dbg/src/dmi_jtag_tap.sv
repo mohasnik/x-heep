@@ -17,53 +17,41 @@
  */
 
 module dmi_jtag_tap #(
-    parameter int unsigned IrLength = 5,
-    // JTAG IDCODE Value
-    parameter logic [31:0] IdcodeValue = 32'h00000001
-    // xxxx             version
-    // xxxxxxxxxxxxxxxx part number
-    // xxxxxxxxxxx      manufacturer id
-    // 1                required by standard
+  parameter int unsigned IrLength = 5,
+  // JTAG IDCODE Value
+  parameter logic [31:0] IdcodeValue = 32'h00000001
+  // xxxx             version
+  // xxxxxxxxxxxxxxxx part number
+  // xxxxxxxxxxx      manufacturer id
+  // 1                required by standard
 ) (
-    input  logic tck_i,           // JTAG test clock pad
-    input  logic tms_i,           // JTAG test mode select pad
-    input  logic trst_ni,         // JTAG test reset pad
-    input  logic td_i,            // JTAG test data input pad
-    output logic td_o,            // JTAG test data output pad
-    output logic tdo_oe_o,        // Data out output enable
-    input  logic testmode_i,
-    // JTAG is interested in writing the DTM CSR register
-    output logic tck_o,
-    // Synchronous reset of the dmi module triggered by JTAG TAP
-    output logic dmi_clear_o,
-    output logic update_o,
-    output logic capture_o,
-    output logic shift_o,
-    output logic tdi_o,
-    output logic dtmcs_select_o,
-    input  logic dtmcs_tdo_i,
-    // we want to access DMI register
-    output logic dmi_select_o,
-    input  logic dmi_tdo_i
+  input  logic        tck_i,    // JTAG test clock pad
+  input  logic        tms_i,    // JTAG test mode select pad
+  input  logic        trst_ni,  // JTAG test reset pad
+  input  logic        td_i,     // JTAG test data input pad
+  output logic        td_o,     // JTAG test data output pad
+  output logic        tdo_oe_o, // Data out output enable
+  input  logic        testmode_i,
+  // JTAG is interested in writing the DTM CSR register
+  output logic        tck_o,
+  // Synchronous reset of the dmi module triggered by JTAG TAP
+  output logic        dmi_clear_o,
+  output logic        update_o,
+  output logic        capture_o,
+  output logic        shift_o,
+  output logic        tdi_o,
+  output logic        dtmcs_select_o,
+  input  logic        dtmcs_tdo_i,
+  // we want to access DMI register
+  output logic        dmi_select_o,
+  input  logic        dmi_tdo_i
 );
 
   typedef enum logic [3:0] {
-    TestLogicReset,
-    RunTestIdle,
-    SelectDrScan,
-    CaptureDr,
-    ShiftDr,
-    Exit1Dr,
-    PauseDr,
-    Exit2Dr,
-    UpdateDr,
-    SelectIrScan,
-    CaptureIr,
-    ShiftIr,
-    Exit1Ir,
-    PauseIr,
-    Exit2Ir,
-    UpdateIr
+    TestLogicReset, RunTestIdle, SelectDrScan,
+    CaptureDr, ShiftDr, Exit1Dr, PauseDr, Exit2Dr,
+    UpdateDr, SelectIrScan, CaptureIr, ShiftIr,
+    Exit1Ir, PauseIr, Exit2Ir, UpdateIr
   } tap_state_e;
 
   tap_state_e tap_state_q, tap_state_d;
@@ -82,10 +70,10 @@ module dmi_jtag_tap #(
   // ----------------
 
   // shift register
-  logic [IrLength-1:0] jtag_ir_shift_d, jtag_ir_shift_q;
+  logic [IrLength-1:0]  jtag_ir_shift_d, jtag_ir_shift_q;
   // IR register -> this gets captured from shift register upon update_ir
-  ir_reg_e jtag_ir_d, jtag_ir_q;
-  logic capture_ir, shift_ir, update_ir, test_logic_reset;  // pause_ir
+  ir_reg_e              jtag_ir_d, jtag_ir_q;
+  logic capture_ir, shift_ir, update_ir, test_logic_reset; // pause_ir
 
   always_comb begin : p_jtag
     jtag_ir_shift_d = jtag_ir_shift_q;
@@ -98,7 +86,7 @@ module dmi_jtag_tap #(
 
     // capture IR register
     if (capture_ir) begin
-      jtag_ir_shift_d = IrLength'(4'b0101);
+      jtag_ir_shift_d =  IrLength'(4'b0101);
     end
 
     // update IR register
@@ -130,10 +118,10 @@ module dmi_jtag_tap #(
   // - IDCODE
   // - DTM CS
   logic [31:0] idcode_d, idcode_q;
-  logic idcode_select;
-  logic bypass_select;
+  logic        idcode_select;
+  logic        bypass_select;
 
-  logic bypass_d, bypass_q;  // this is a 1-bit register
+  logic        bypass_d, bypass_q;  // this is a 1-bit register
 
   always_comb begin
     idcode_d = idcode_q;
@@ -145,8 +133,8 @@ module dmi_jtag_tap #(
     end
 
     if (shift_dr) begin
-      if (idcode_select) idcode_d = {td_i, 31'(idcode_q >> 1)};
-      if (bypass_select) bypass_d = td_i;
+      if (idcode_select)  idcode_d = {td_i, 31'(idcode_q >> 1)};
+      if (bypass_select)  bypass_d = td_i;
     end
 
     if (test_logic_reset) begin
@@ -183,13 +171,13 @@ module dmi_jtag_tap #(
     // we are shifting out the IR register
     if (shift_ir) begin
       tdo_mux = jtag_ir_shift_q[0];
-      // here we are shifting the DR register
+    // here we are shifting the DR register
     end else begin
       unique case (jtag_ir_q)
-        IDCODE:    tdo_mux = idcode_q[0];  // Reading ID code
-        DTMCSR:    tdo_mux = dtmcs_tdo_i;  // Read from DTMCS TDO
-        DMIACCESS: tdo_mux = dmi_tdo_i;  // Read from DMI TDO
-        default:   tdo_mux = bypass_q;  // BYPASS instruction
+        IDCODE:         tdo_mux = idcode_q[0];   // Reading ID code
+        DTMCSR:         tdo_mux = dtmcs_tdo_i;   // Read from DTMCS TDO
+        DMIACCESS:      tdo_mux = dmi_tdo_i;     // Read from DMI TDO
+        default:        tdo_mux = bypass_q;      // BYPASS instruction
       endcase
     end
   end
@@ -200,15 +188,15 @@ module dmi_jtag_tap #(
   logic tck_n, tck_ni;
 
   tc_clk_inverter i_tck_inv (
-      .clk_i(tck_i),
-      .clk_o(tck_ni)
+    .clk_i ( tck_i  ),
+    .clk_o ( tck_ni )
   );
 
   tc_clk_mux2 i_dft_tck_mux (
-      .clk0_i   (tck_ni),
-      .clk1_i   (tck_i),       // bypass the inverted clock for testing
-      .clk_sel_i(testmode_i),
-      .clk_o    (tck_n)
+    .clk0_i    ( tck_ni     ),
+    .clk1_i    ( tck_i      ), // bypass the inverted clock for testing
+    .clk_sel_i ( testmode_i ),
+    .clk_o     ( tck_n      )
   );
 
   // TDO changes state at negative edge of TCK
@@ -227,16 +215,16 @@ module dmi_jtag_tap #(
   // Determination of next state; purely combinatorial
   always_comb begin : p_tap_fsm
 
-    test_logic_reset = 1'b0;
+    test_logic_reset   = 1'b0;
 
-    capture_dr       = 1'b0;
-    shift_dr         = 1'b0;
-    update_dr        = 1'b0;
+    capture_dr         = 1'b0;
+    shift_dr           = 1'b0;
+    update_dr          = 1'b0;
 
-    capture_ir       = 1'b0;
-    shift_ir         = 1'b0;
+    capture_ir         = 1'b0;
+    shift_ir           = 1'b0;
     // pause_ir           = 1'b0; unused
-    update_ir        = 1'b0;
+    update_ir          = 1'b0;
 
     unique case (tap_state_q)
       TestLogicReset: begin
@@ -251,7 +239,7 @@ module dmi_jtag_tap #(
         tap_state_d = (tms_i) ? SelectIrScan : CaptureDr;
       end
       CaptureDr: begin
-        capture_dr  = 1'b1;
+        capture_dr = 1'b1;
         tap_state_d = (tms_i) ? Exit1Dr : ShiftDr;
       end
       ShiftDr: begin
@@ -268,7 +256,7 @@ module dmi_jtag_tap #(
         tap_state_d = (tms_i) ? UpdateDr : ShiftDr;
       end
       UpdateDr: begin
-        update_dr   = 1'b1;
+        update_dr = 1'b1;
         tap_state_d = (tms_i) ? SelectDrScan : RunTestIdle;
       end
       // IR Path
@@ -280,7 +268,7 @@ module dmi_jtag_tap #(
       // the rising edge of TCK. The last two significant bits must always
       // be "01".
       CaptureIr: begin
-        capture_ir  = 1'b1;
+        capture_ir = 1'b1;
         tap_state_d = (tms_i) ? Exit1Ir : ShiftIr;
       end
       // In this controller state, the instruction register gets connected
@@ -306,10 +294,10 @@ module dmi_jtag_tap #(
       // Register on every falling edge of TCK. This instruction becomes
       // the current instruction once it is latched.
       UpdateIr: begin
-        update_ir   = 1'b1;
+        update_ir = 1'b1;
         tap_state_d = (tms_i) ? SelectDrScan : RunTestIdle;
       end
-      default: ;  // can't actually happen since case is full
+      default: ; // can't actually happen since case is full
     endcase
   end
 

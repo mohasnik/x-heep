@@ -15,21 +15,22 @@ package reg_test;
 
   /// A driver for AXI4-Lite interface.
   class reg_driver #(
-      parameter int  AW,
-      parameter int  DW,
-      parameter time TA = 0,  // stimuli application time
-      parameter time TT = 0   // stimuli test time
+    parameter int  AW     ,
+    parameter int  DW     ,
+    parameter time TA = 0 , // stimuli application time
+    parameter time TT = 0   // stimuli test time
   );
     virtual REG_BUS #(
-        .ADDR_WIDTH(AW),
-        .DATA_WIDTH(DW)
+      .ADDR_WIDTH(AW),
+      .DATA_WIDTH(DW)
     ) bus;
 
     function new(
-    virtual REG_BUS #(
-    .ADDR_WIDTH(AW),
-    .DATA_WIDTH(DW)
-    ) bus);
+      virtual REG_BUS #(
+        .ADDR_WIDTH(AW),
+        .DATA_WIDTH(DW)
+      ) bus
+    );
       this.bus = bus;
     endfunction
 
@@ -56,18 +57,19 @@ package reg_test;
     endtask
 
     /// Issue a write transaction.
-    task send_write(input logic [AW-1:0] addr, input logic [DW-1:0] data,
-                    input logic [DW/8-1:0] strb, output logic error);
+    task send_write (
+      input  logic [AW-1:0] addr,
+      input  logic [DW-1:0] data,
+      input  logic [DW/8-1:0] strb,
+      output logic error
+    );
       bus.addr  <= #TA addr;
       bus.write <= #TA 1;
       bus.wdata <= #TA data;
       bus.wstrb <= #TA strb;
       bus.valid <= #TA 1;
       cycle_start();
-      while (bus.ready != 1) begin
-        cycle_end();
-        cycle_start();
-      end
+      while (bus.ready != 1) begin cycle_end(); cycle_start(); end
       error = bus.error;
       cycle_end();
       bus.addr  <= #TA '0;
@@ -78,15 +80,16 @@ package reg_test;
     endtask
 
     /// Issue a read transaction.
-    task send_read(input logic [AW-1:0] addr, output logic [DW-1:0] data, output logic error);
+    task send_read (
+      input  logic [AW-1:0] addr,
+      output logic [DW-1:0] data,
+      output logic error
+    );
       bus.addr  <= #TA addr;
       bus.write <= #TA 0;
       bus.valid <= #TA 1;
       cycle_start();
-      while (bus.ready != 1) begin
-        cycle_end();
-        cycle_start();
-      end
+      while (bus.ready != 1) begin cycle_end(); cycle_start(); end
       data  = bus.rdata;
       error = bus.error;
       cycle_end();

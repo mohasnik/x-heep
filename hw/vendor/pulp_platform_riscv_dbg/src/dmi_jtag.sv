@@ -17,43 +17,41 @@
 */
 
 module dmi_jtag #(
-    parameter logic [31:0] IdcodeValue = 32'h00000DB3
+  parameter logic [31:0] IdcodeValue = 32'h00000DB3
 ) (
-    input logic clk_i,      // DMI Clock
-    input logic rst_ni,     // Asynchronous reset active low
-    input logic testmode_i,
+  input  logic         clk_i,      // DMI Clock
+  input  logic         rst_ni,     // Asynchronous reset active low
+  input  logic         testmode_i,
 
-    // active-low glitch free reset signal. Is asserted for one dmi clock cycle
-    // (clk_i) whenever the dmi_jtag is reset (POR or functional reset).
-    output logic         dmi_rst_no,
-    output dm::dmi_req_t dmi_req_o,
-    output logic         dmi_req_valid_o,
-    input  logic         dmi_req_ready_i,
+  // active-low glitch free reset signal. Is asserted for one dmi clock cycle
+  // (clk_i) whenever the dmi_jtag is reset (POR or functional reset).
+  output logic         dmi_rst_no,
+  output dm::dmi_req_t dmi_req_o,
+  output logic         dmi_req_valid_o,
+  input  logic         dmi_req_ready_i,
 
-    input  dm::dmi_resp_t dmi_resp_i,
-    output logic          dmi_resp_ready_o,
-    input  logic          dmi_resp_valid_i,
+  input dm::dmi_resp_t dmi_resp_i,
+  output logic         dmi_resp_ready_o,
+  input  logic         dmi_resp_valid_i,
 
-    input  logic tck_i,    // JTAG test clock pad
-    input  logic tms_i,    // JTAG test mode select pad
-    input  logic trst_ni,  // JTAG test reset pad
-    input  logic td_i,     // JTAG test data input pad
-    output logic td_o,     // JTAG test data output pad
-    output logic tdo_oe_o  // Data out output enable
+  input  logic         tck_i,    // JTAG test clock pad
+  input  logic         tms_i,    // JTAG test mode select pad
+  input  logic         trst_ni,  // JTAG test reset pad
+  input  logic         td_i,     // JTAG test data input pad
+  output logic         td_o,     // JTAG test data output pad
+  output logic         tdo_oe_o  // Data out output enable
 );
 
   typedef enum logic [1:0] {
-    DMINoError = 2'h0,
-    DMIReservedError = 2'h1,
-    DMIOPFailed = 2'h2,
-    DMIBusy = 2'h3
+    DMINoError = 2'h0, DMIReservedError = 2'h1,
+    DMIOPFailed = 2'h2, DMIBusy = 2'h3
   } dmi_error_e;
   dmi_error_e error_d, error_q;
 
   logic tck;
-  logic jtag_dmi_clear;  // Synchronous reset of DMI triggered by TestLogicReset in
-                         // jtag TAP
-  logic dmi_clear;  // Functional (warm) reset of the entire DMI
+  logic jtag_dmi_clear; // Synchronous reset of DMI triggered by TestLogicReset in
+                        // jtag TAP
+  logic dmi_clear; // Functional (warm) reset of the entire DMI
   logic update;
   logic capture;
   logic shift;
@@ -73,21 +71,21 @@ module dmi_jtag #(
     dtmcs_d = dtmcs_q;
     if (capture) begin
       if (dtmcs_select) begin
-        dtmcs_d = '{
-            zero1        : '0,
-            dmihardreset : 1'b0,
-            dmireset     : 1'b0,
-            zero0        : '0,
-            idle         : 3'd1,  // 1: Enter Run-Test/Idle and leave it immediately
-            dmistat      : error_q,  // 0: No error, 2: Op failed, 3: too fast
-            abits        : 6'd7,  // The size of address in dmi
-            version      : 4'd1  // Version described in spec version 0.13 (and later?)
-        };
+        dtmcs_d  = '{
+                      zero1        : '0,
+                      dmihardreset : 1'b0,
+                      dmireset     : 1'b0,
+                      zero0        : '0,
+                      idle         : 3'd1, // 1: Enter Run-Test/Idle and leave it immediately
+                      dmistat      : error_q, // 0: No error, 2: Op failed, 3: too fast
+                      abits        : 6'd7, // The size of address in dmi
+                      version      : 4'd1  // Version described in spec version 0.13 (and later?)
+                    };
       end
     end
 
     if (shift) begin
-      if (dtmcs_select) dtmcs_d = {tdi, 31'(dtmcs_q >> 1)};
+      if (dtmcs_select) dtmcs_d  = {tdi, 31'(dtmcs_q >> 1)};
     end
   end
 
@@ -103,8 +101,8 @@ module dmi_jtag #(
   // DMI (Debug Module Interface)
   // ----------------------------
 
-  logic          dmi_select;
-  logic          dmi_tdo;
+  logic        dmi_select;
+  logic        dmi_tdo;
 
   dm::dmi_req_t  dmi_req;
   logic          dmi_req_ready;
@@ -120,24 +118,18 @@ module dmi_jtag #(
     logic [1:0]  op;
   } dmi_t;
 
-  typedef enum logic [2:0] {
-    Idle,
-    Read,
-    WaitReadValid,
-    Write,
-    WaitWriteValid
-  } state_e;
+  typedef enum logic [2:0] { Idle, Read, WaitReadValid, Write, WaitWriteValid } state_e;
   state_e state_d, state_q;
 
   logic [$bits(dmi_t)-1:0] dr_d, dr_q;
   logic [6:0] address_d, address_q;
   logic [31:0] data_d, data_q;
 
-  dmi_t dmi;
-  assign dmi            = dmi_t'(dr_q);
-  assign dmi_req.addr   = address_q;
-  assign dmi_req.data   = data_q;
-  assign dmi_req.op     = (state_q == Write) ? dm::DTM_WRITE : dm::DTM_READ;
+  dmi_t  dmi;
+  assign dmi          = dmi_t'(dr_q);
+  assign dmi_req.addr = address_q;
+  assign dmi_req.data = data_q;
+  assign dmi_req.op   = (state_q == Write) ? dm::DTM_WRITE : dm::DTM_READ;
   // We will always be ready to accept the data we requested.
   assign dmi_resp_ready = 1'b1;
 
@@ -267,7 +259,7 @@ module dmi_jtag #(
   assign dmi_tdo = dr_q[0];
 
   always_comb begin : p_shift
-    dr_d = dr_q;
+    dr_d    = dr_q;
     if (dmi_clear) begin
       dr_d = '0;
     end else begin
@@ -310,52 +302,52 @@ module dmi_jtag #(
   // TAP
   // ---------
   dmi_jtag_tap #(
-      .IrLength(5),
-      .IdcodeValue(IdcodeValue)
+    .IrLength (5),
+    .IdcodeValue(IdcodeValue)
   ) i_dmi_jtag_tap (
-      .tck_i,
-      .tms_i,
-      .trst_ni,
-      .td_i,
-      .td_o,
-      .tdo_oe_o,
-      .testmode_i,
-      .tck_o         (tck),
-      .dmi_clear_o   (jtag_dmi_clear),
-      .update_o      (update),
-      .capture_o     (capture),
-      .shift_o       (shift),
-      .tdi_o         (tdi),
-      .dtmcs_select_o(dtmcs_select),
-      .dtmcs_tdo_i   (dtmcs_q[0]),
-      .dmi_select_o  (dmi_select),
-      .dmi_tdo_i     (dmi_tdo)
+    .tck_i,
+    .tms_i,
+    .trst_ni,
+    .td_i,
+    .td_o,
+    .tdo_oe_o,
+    .testmode_i,
+    .tck_o          ( tck              ),
+    .dmi_clear_o    ( jtag_dmi_clear   ),
+    .update_o       ( update           ),
+    .capture_o      ( capture          ),
+    .shift_o        ( shift            ),
+    .tdi_o          ( tdi              ),
+    .dtmcs_select_o ( dtmcs_select     ),
+    .dtmcs_tdo_i    ( dtmcs_q[0]       ),
+    .dmi_select_o   ( dmi_select       ),
+    .dmi_tdo_i      ( dmi_tdo          )
   );
 
   // ---------
   // CDC
   // ---------
   dmi_cdc i_dmi_cdc (
-      // JTAG side (master side)
-      .tck_i               (tck),
-      .trst_ni             (trst_ni),
-      .jtag_dmi_cdc_clear_i(dmi_clear),
-      .jtag_dmi_req_i      (dmi_req),
-      .jtag_dmi_ready_o    (dmi_req_ready),
-      .jtag_dmi_valid_i    (dmi_req_valid),
-      .jtag_dmi_resp_o     (dmi_resp),
-      .jtag_dmi_valid_o    (dmi_resp_valid),
-      .jtag_dmi_ready_i    (dmi_resp_ready),
-      // core side
-      .clk_i,
-      .rst_ni,
-      .core_dmi_rst_no     (dmi_rst_no),
-      .core_dmi_req_o      (dmi_req_o),
-      .core_dmi_valid_o    (dmi_req_valid_o),
-      .core_dmi_ready_i    (dmi_req_ready_i),
-      .core_dmi_resp_i     (dmi_resp_i),
-      .core_dmi_ready_o    (dmi_resp_ready_o),
-      .core_dmi_valid_i    (dmi_resp_valid_i)
+    // JTAG side (master side)
+    .tck_i                ( tck              ),
+    .trst_ni              ( trst_ni          ),
+    .jtag_dmi_cdc_clear_i ( dmi_clear        ),
+    .jtag_dmi_req_i       ( dmi_req          ),
+    .jtag_dmi_ready_o     ( dmi_req_ready    ),
+    .jtag_dmi_valid_i     ( dmi_req_valid    ),
+    .jtag_dmi_resp_o      ( dmi_resp         ),
+    .jtag_dmi_valid_o     ( dmi_resp_valid   ),
+    .jtag_dmi_ready_i     ( dmi_resp_ready   ),
+    // core side
+    .clk_i,
+    .rst_ni,
+    .core_dmi_rst_no      ( dmi_rst_no       ),
+    .core_dmi_req_o       ( dmi_req_o        ),
+    .core_dmi_valid_o     ( dmi_req_valid_o  ),
+    .core_dmi_ready_i     ( dmi_req_ready_i  ),
+    .core_dmi_resp_i      ( dmi_resp_i       ),
+    .core_dmi_ready_o     ( dmi_resp_ready_o ),
+    .core_dmi_valid_i     ( dmi_resp_valid_i )
   );
 
 endmodule : dmi_jtag

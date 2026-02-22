@@ -5,32 +5,30 @@
 // Nils Wistoff <nwistoff@iis.ee.ethz.ch>
 
 module reg_to_apb #(
-    /// Regbus request struct type.
-    parameter type reg_req_t = logic,
-    /// Regbus response struct type.
-    parameter type reg_rsp_t = logic,
-    /// APB request struct type.
-    parameter type apb_req_t = logic,
-    /// APB response type.
-    parameter type apb_rsp_t = logic
-) (
-    input logic clk_i,
-    input logic rst_ni,
+  /// Regbus request struct type.
+  parameter type reg_req_t = logic,
+  /// Regbus response struct type.
+  parameter type reg_rsp_t = logic,
+  /// APB request struct type.
+  parameter type apb_req_t = logic,
+  /// APB response type.
+  parameter type apb_rsp_t = logic
+)
+(
+  input  logic     clk_i,
+  input  logic     rst_ni,
 
-    // Register interface
-    input  reg_req_t reg_req_i,
-    output reg_rsp_t reg_rsp_o,
+  // Register interface
+  input  reg_req_t reg_req_i,
+  output reg_rsp_t reg_rsp_o,
 
-    // APB interface
-    output apb_req_t apb_req_o,
-    input  apb_rsp_t apb_rsp_i
+  // APB interface
+  output apb_req_t apb_req_o,
+  input  apb_rsp_t apb_rsp_i
 );
 
   // APB phase FSM
-  typedef enum logic {
-    SETUP,
-    ACCESS
-  } state_e;
+  typedef enum logic {SETUP, ACCESS} state_e;
   state_e state_d, state_q;
 
   // Feed these through.
@@ -44,7 +42,7 @@ module reg_to_apb #(
   assign reg_rsp_o.rdata  = apb_rsp_i.prdata;
 
   // Tie PPROT to {0: unprivileged, 1: non-secure, 0: data}
-  assign apb_req_o.pprot  = 3'b010;
+  assign apb_req_o.pprot   = 3'b010;
 
   // APB phase FSM
   always_comb begin : apb_fsm
@@ -53,7 +51,7 @@ module reg_to_apb #(
     state_d           = state_q;
     unique case (state_q)
       // Setup phase (or idle). Deassert PENABLE, gate PREADY.
-      SETUP:   if (reg_req_i.valid) state_d = ACCESS;
+      SETUP: if (reg_req_i.valid) state_d = ACCESS;
       // Access phase. Assert PENABLE, feed PREADY through.
       ACCESS: begin
         apb_req_o.penable = 1'b1;

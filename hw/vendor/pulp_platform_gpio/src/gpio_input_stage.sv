@@ -32,41 +32,41 @@
 
 
 module gpio_input_stage #(
-    parameter NrSyncStages = 2
+  parameter NrSyncStages=2
 ) (
-    input  logic clk_i,
-    input  logic rst_ni,
-    input  logic en_i,
-    input  logic serial_i,
-    output logic r_edge_o,
-    output logic f_edge_o,
-    output logic serial_o
+   input logic  clk_i,
+   input logic  rst_ni,
+   input logic  en_i,
+   input logic  serial_i,
+   output logic r_edge_o,
+   output logic f_edge_o,
+   output logic serial_o
 );
 
-  logic clk;
-  logic serial, serial_q;
+  logic         clk;
+  logic         serial, serial_q;
 
-  assign serial_o = serial_q;
+  assign serial_o =  serial_q;
   assign f_edge_o = (~serial) & serial_q;
   assign r_edge_o = serial & (~serial_q);
 
   tc_clk_gating #(
-      .IS_FUNCTIONAL(0)  // The clock gate is not required for proper
-                         // functionality. Just for power saving.
+    .IS_FUNCTIONAL(0) // The clock gate is not required for proper
+                      // functionality. Just for power saving.
   ) i_clk_gate (
-      .clk_i,
-      .en_i,
-      .test_en_i(1'b0),
-      .clk_o    (clk)
+    .clk_i,
+    .en_i,
+    .test_en_i ( 1'b0 ),
+    .clk_o     ( clk  )
   );
 
   sync #(
-      .STAGES(NrSyncStages)
+    .STAGES (NrSyncStages)
   ) i_sync (
-      .clk_i(clk),
-      .rst_ni,
-      .serial_i,
-      .serial_o(serial)
+    .clk_i(clk),
+    .rst_ni,
+    .serial_i,
+    .serial_o ( serial )
   );
 
   always_ff @(posedge clk, negedge rst_ni) begin

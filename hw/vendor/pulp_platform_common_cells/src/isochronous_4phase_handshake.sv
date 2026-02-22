@@ -42,14 +42,14 @@
 `include "common_cells/assertions.svh"
 
 module isochronous_4phase_handshake (
-    input  logic src_clk_i,
-    input  logic src_rst_ni,
-    input  logic src_valid_i,
-    output logic src_ready_o,
-    input  logic dst_clk_i,
-    input  logic dst_rst_ni,
-    output logic dst_valid_o,
-    input  logic dst_ready_i
+  input  logic src_clk_i,
+  input  logic src_rst_ni,
+  input  logic src_valid_i,
+  output logic src_ready_o,
+  input  logic dst_clk_i,
+  input  logic dst_rst_ni,
+  output logic dst_valid_o,
+  input  logic dst_ready_i
 );
 
   logic src_req_q, src_ack_q;
@@ -69,23 +69,6 @@ module isochronous_4phase_handshake (
   // destination is valid if we didn't yet get acknowledge
   assign dst_valid_o = (dst_req_q != dst_ack_q);
 
-<<<<<<< HEAD
-  // pragma translate_off
-  // stability guarantees
-`ifndef VERILATOR
-  assert property (@(posedge src_clk_i) disable iff (~src_rst_ni)
-    (src_valid_i && !src_ready_o |=> $stable(
-      src_valid_i
-  )))
-  else $error("src_valid_i is unstable");
-  assert property (@(posedge dst_clk_i) disable iff (~dst_rst_ni)
-    (dst_valid_o && !dst_ready_i |=> $stable(
-      dst_valid_o
-  )))
-  else $error("dst_valid_o is unstable");
-`endif
-  // pragma translate_on
-=======
  // stability guarantees
   `ifndef COMMON_CELLS_ASSERTS_OFF
   `ASSERT(src_valid_unstable, src_valid_i && !src_ready_o |=> $stable(src_valid_i),
@@ -93,6 +76,5 @@ module isochronous_4phase_handshake (
   `ASSERT(dst_valid_unstable, dst_valid_o && !dst_ready_i |=> $stable(dst_valid_o),
           dst_clk_i, !dst_rst_ni, "dst_valid_o is unstable")
   `endif
->>>>>>> main
 
 endmodule

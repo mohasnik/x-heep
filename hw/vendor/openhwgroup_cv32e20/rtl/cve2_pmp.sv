@@ -7,43 +7,43 @@
 // defined by rule PVL-40 of the CV32E20 core functional requirements.
 
 module cve2_pmp #(
-    // Granularity of NAPOT access,
-    // 0 = No restriction, 1 = 8 byte, 2 = 16 byte, 3 = 32 byte, etc.
-    parameter int unsigned PMPGranularity = 0,
-    // Number of access channels (e.g. i-side + d-side)
-    parameter int unsigned PMPNumChan     = 2,
-    // Number of implemented regions
-    parameter int unsigned PMPNumRegions  = 4
+  // Granularity of NAPOT access,
+  // 0 = No restriction, 1 = 8 byte, 2 = 16 byte, 3 = 32 byte, etc.
+  parameter int unsigned PMPGranularity = 0,
+  // Number of access channels (e.g. i-side + d-side)
+  parameter int unsigned PMPNumChan     = 2,
+  // Number of implemented regions
+  parameter int unsigned PMPNumRegions  = 4
 ) (
-    // Clock and Reset
-    input logic clk_i,
-    input logic rst_ni,
+  // Clock and Reset
+  input  logic                    clk_i,
+  input  logic                    rst_ni,
 
-    // Interface to CSRs
-    input cve2_pkg::pmp_cfg_t            csr_pmp_cfg_i    [PMPNumRegions],
-    input logic                   [33:0] csr_pmp_addr_i   [PMPNumRegions],
-    input cve2_pkg::pmp_mseccfg_t        csr_pmp_mseccfg_i,
+  // Interface to CSRs
+  input  cve2_pkg::pmp_cfg_t      csr_pmp_cfg_i     [PMPNumRegions],
+  input  logic [33:0]             csr_pmp_addr_i    [PMPNumRegions],
+  input  cve2_pkg::pmp_mseccfg_t  csr_pmp_mseccfg_i,
 
-    input  cve2_pkg::priv_lvl_e        priv_mode_i   [PMPNumChan],
-    // Access checking channels
-    input  logic                [33:0] pmp_req_addr_i[PMPNumChan],
-    input  cve2_pkg::pmp_req_e         pmp_req_type_i[PMPNumChan],
-    output logic                       pmp_req_err_o [PMPNumChan]
+  input  cve2_pkg::priv_lvl_e     priv_mode_i    [PMPNumChan],
+  // Access checking channels
+  input  logic [33:0]             pmp_req_addr_i [PMPNumChan],
+  input  cve2_pkg::pmp_req_e      pmp_req_type_i [PMPNumChan],
+  output logic                    pmp_req_err_o  [PMPNumChan]
 
 );
 
   import cve2_pkg::*;
 
   // Access Checking Signals
-  logic [               33:0]                    region_start_addr       [PMPNumRegions];
-  logic [33:PMPGranularity+2]                    region_addr_mask        [PMPNumRegions];
-  logic [     PMPNumChan-1:0][PMPNumRegions-1:0] region_match_gt;
-  logic [     PMPNumChan-1:0][PMPNumRegions-1:0] region_match_lt;
-  logic [     PMPNumChan-1:0][PMPNumRegions-1:0] region_match_eq;
-  logic [     PMPNumChan-1:0][PMPNumRegions-1:0] region_match_all;
-  logic [     PMPNumChan-1:0][PMPNumRegions-1:0] region_basic_perm_check;
-  logic [     PMPNumChan-1:0][PMPNumRegions-1:0] region_mml_perm_check;
-  logic [     PMPNumChan-1:0]                    access_fault;
+  logic [33:0]                                region_start_addr [PMPNumRegions];
+  logic [33:PMPGranularity+2]                 region_addr_mask  [PMPNumRegions];
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_match_gt;
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_match_lt;
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_match_eq;
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_match_all;
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_basic_perm_check;
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_mml_perm_check;
+  logic [PMPNumChan-1:0]                      access_fault;
 
   $warning("CVE2 does not officially support PMP, see rule PVL-40.");
 
@@ -121,23 +121,18 @@ module cve2_pmp #(
 
         if (!csr_pmp_cfg_i[r].read && csr_pmp_cfg_i[r].write) begin
           // Special-case shared regions where R = 0, W = 1
-          unique case ({
-            csr_pmp_cfg_i[r].lock, csr_pmp_cfg_i[r].exec
-          })
+          unique case ({csr_pmp_cfg_i[r].lock, csr_pmp_cfg_i[r].exec})
             // Read/write in M, read only in S/U
-            2'b00:
-            region_mml_perm_check[c][r] =
+            2'b00: region_mml_perm_check[c][r] =
                 (pmp_req_type_i[c] == PMP_ACC_READ) |
                 ((pmp_req_type_i[c] == PMP_ACC_WRITE) & (priv_mode_i[c] == PRIV_LVL_M));
             // Read/write in M/S/U
-            2'b01:
-            region_mml_perm_check[c][r] =
+            2'b01: region_mml_perm_check[c][r] =
                 (pmp_req_type_i[c] == PMP_ACC_READ) | (pmp_req_type_i[c] == PMP_ACC_WRITE);
             // Execute only on M/S/U
             2'b10: region_mml_perm_check[c][r] = (pmp_req_type_i[c] == PMP_ACC_EXEC);
             // Read/execute in M, execute only on S/U
-            2'b11:
-            region_mml_perm_check[c][r] =
+            2'b11: region_mml_perm_check[c][r] =
                 (pmp_req_type_i[c] == PMP_ACC_EXEC) |
                 ((pmp_req_type_i[c] == PMP_ACC_READ) & (priv_mode_i[c] == PRIV_LVL_M));
             default: ;
@@ -174,11 +169,11 @@ module cve2_pmp #(
           end else begin
             // Otherwise use original PMP behaviour
             access_fault[c] = (priv_mode_i[c] == PRIV_LVL_M) ?
-            // For M-mode, any region which matches with the L-bit clear, or with sufficient
-            // access permissions will be allowed
-            (csr_pmp_cfg_i[r].lock & ~region_basic_perm_check[c][r]) :
-            // For other modes, the lock bit doesn't matter
-            ~region_basic_perm_check[c][r];
+                // For M-mode, any region which matches with the L-bit clear, or with sufficient
+                // access permissions will be allowed
+                (csr_pmp_cfg_i[r].lock & ~region_basic_perm_check[c][r]) :
+                // For other modes, the lock bit doesn't matter
+                ~region_basic_perm_check[c][r];
           end
         end
       end

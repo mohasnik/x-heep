@@ -17,21 +17,6 @@
 //              The behaviour, parameters and ports are described in the header of `rtl/tc_sram.sv`.
 
 module tc_sram #(
-<<<<<<< HEAD
-    parameter int unsigned NumWords = 32'd1024,  // Number of Words in data array
-    parameter int unsigned DataWidth = 32'd128,  // Data signal width (in bits)
-    parameter int unsigned ByteWidth = 32'd8,  // Width of a data byte (in bits)
-    parameter int unsigned NumPorts = 32'd2,  // Number of read and write ports
-    parameter int unsigned Latency = 32'd1,  // Latency when the read data is available
-    parameter SimInit = "zeros",  // Simulation initialization, fixed to zero here!
-    parameter bit PrintSimCfg = 1'b0,  // Print configuration
-    // DEPENDENT PARAMETERS, DO NOT OVERWRITE!
-    parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1,
-    parameter int unsigned BeWidth = (DataWidth + ByteWidth - 32'd1) / ByteWidth,  // ceil_div
-    parameter type addr_t = logic [AddrWidth-1:0],
-    parameter type data_t = logic [DataWidth-1:0],
-    parameter type be_t = logic [BeWidth-1:0]
-=======
   parameter int unsigned NumWords     = 32'd1024, // Number of Words in data array
   parameter int unsigned DataWidth    = 32'd128,  // Data signal width (in bits)
   parameter int unsigned ByteWidth    = 32'd8,    // Width of a data byte (in bits)
@@ -48,24 +33,19 @@ module tc_sram #(
   parameter type         addr_t    = logic [AddrWidth-1:0],
   parameter type         data_t    = logic [DataWidth-1:0],
   parameter type         be_t      = logic [BeWidth-1:0]
->>>>>>> main
 ) (
-    input  logic                 clk_i,    // Clock
-    input  logic                 rst_ni,   // Asynchronous reset active low
-    // input ports
-    input  logic  [NumPorts-1:0] req_i,    // request
-    input  logic  [NumPorts-1:0] we_i,     // write enable
-    input  addr_t [NumPorts-1:0] addr_i,   // request address
-    input  data_t [NumPorts-1:0] wdata_i,  // write data
-    input  be_t   [NumPorts-1:0] be_i,     // write byte enable
-    // output ports
-    output data_t [NumPorts-1:0] rdata_o   // read data
+  input  logic                clk_i,      // Clock
+  input  logic                rst_ni,     // Asynchronous reset active low
+  // input ports
+  input  logic  [NumPorts-1:0] req_i,      // request
+  input  logic  [NumPorts-1:0] we_i,       // write enable
+  input  addr_t [NumPorts-1:0] addr_i,     // request address
+  input  data_t [NumPorts-1:0] wdata_i,    // write data
+  input  be_t   [NumPorts-1:0] be_i,       // write byte enable
+  // output ports
+  output data_t [NumPorts-1:0] rdata_o     // read data
 );
 
-<<<<<<< HEAD
-  localparam int unsigned DataWidthAligned = ByteWidth * BeWidth;
-  localparam int unsigned Size = NumWords * DataWidthAligned;
-=======
 
   // XPM only supports a byte width of 8. Hence, map each input byte to a multiple of 8 bit
   // Number of 8-bit bytes (memory bytes) per data byte
@@ -75,7 +55,6 @@ module tc_sram #(
   // Resulting memory width and size
   localparam int unsigned DataWidthAligned = ByteWidthAligned * BeWidth;
   localparam int unsigned Size             = NumWords * DataWidthAligned;
->>>>>>> main
 
   typedef logic [DataWidthAligned-1:0]     data_aligned_t;
   typedef logic [BytesPerByte*BeWidth-1:0] be_aligned_t;
@@ -104,40 +83,6 @@ module tc_sram #(
   if (NumPorts == 32'd1) begin : gen_1_ports
     // xpm_memory_spram: Single Port RAM
     // XilinxParameterizedMacro, version 2018.1
-<<<<<<< HEAD
-    xpm_memory_spram #(
-        .ADDR_WIDTH_A       (AddrWidth),         // DECIMAL
-        .AUTO_SLEEP_TIME    (0),                 // DECIMAL
-        .BYTE_WRITE_WIDTH_A (ByteWidth),         // DECIMAL
-        .ECC_MODE           ("no_ecc"),          // String
-        .MEMORY_INIT_FILE   ("none"),            // String
-        .MEMORY_INIT_PARAM  ("0"),               // String
-        .MEMORY_OPTIMIZATION("true"),            // String
-        .MEMORY_PRIMITIVE   ("auto"),            // String
-        .MEMORY_SIZE        (Size),              // DECIMAL in bit!
-        .MESSAGE_CONTROL    (0),                 // DECIMAL
-        .READ_DATA_WIDTH_A  (DataWidthAligned),  // DECIMAL
-        .READ_LATENCY_A     (Latency),           // DECIMAL
-        .READ_RESET_VALUE_A ("0"),               // String
-        .USE_MEM_INIT       (1),                 // DECIMAL
-        .WAKEUP_TIME        ("disable_sleep"),   // String
-        .WRITE_DATA_WIDTH_A (DataWidthAligned),  // DECIMAL
-        .WRITE_MODE_A       ("no_change")        // String
-    ) i_xpm_memory_spram (
-        .dbiterra(  /*not used*/),  // 1-bit output: Status signal to indicate double biterror
-        .douta(rdata_al[0]),  // READ_DATA_WIDTH_A-bitoutput: Data output for port A
-        .sbiterra(  /*not used*/),  // 1-bit output: Status signal to indicate single biterror
-        .addra(addr_i[0]),  // ADDR_WIDTH_A-bit input: Address for port A
-        .clka(clk_i),  // 1-bit input: Clock signal for port A.
-        .dina(wdata_al[0]),  // WRITE_DATA_WIDTH_A-bitinput: Data input for port A
-        .ena(req_i[0]),  // 1-bit input: Memory enable signal for port A.
-        .injectdbiterra(1'b0),  // 1-bit input: Controls double biterror injection
-        .injectsbiterra(1'b0),  // 1-bit input: Controls single biterror injection
-        .regcea(1'b1),  // 1-bit input: Clock Enable for the last register
-        .rsta(~rst_ni),  // 1-bit input: Reset signal for the final port A output
-        .sleep(1'b0),  // 1-bit input: sleep signal to enable the dynamic power save
-        .wea(we[0])
-=======
     xpm_memory_spram#(
       .ADDR_WIDTH_A        ( AddrWidth        ), // DECIMAL
       .AUTO_SLEEP_TIME     ( 0                ), // DECIMAL
@@ -170,66 +115,10 @@ module tc_sram #(
       .rsta     ( ~rst_ni      ), // 1-bit input: Reset signal for the final port A output
       .sleep    ( 1'b0         ), // 1-bit input: sleep signal to enable the dynamic power save
       .wea      ( we_al[0]     )
->>>>>>> main
     );
   end else if (NumPorts == 32'd2) begin : gen_2_ports
     // xpm_memory_tdpram: True Dual Port RAM
     // XilinxParameterizedMacro, version 2018.1
-<<<<<<< HEAD
-    xpm_memory_tdpram #(
-        .ADDR_WIDTH_A           (AddrWidth),         // DECIMAL
-        .ADDR_WIDTH_B           (AddrWidth),         // DECIMAL
-        .AUTO_SLEEP_TIME        (0),                 // DECIMAL
-        .BYTE_WRITE_WIDTH_A     (ByteWidth),         // DECIMAL
-        .BYTE_WRITE_WIDTH_B     (ByteWidth),         // DECIMAL
-        .CLOCKING_MODE          ("common_clock"),    // String
-        .ECC_MODE               ("no_ecc"),          // String
-        .MEMORY_INIT_FILE       ("none"),            // String
-        .MEMORY_INIT_PARAM      ("0"),               // String
-        .MEMORY_OPTIMIZATION    ("true"),            // String
-        .MEMORY_PRIMITIVE       ("auto"),            // String
-        .MEMORY_SIZE            (Size),              // DECIMAL in bits!
-        .MESSAGE_CONTROL        (0),                 // DECIMAL
-        .READ_DATA_WIDTH_A      (DataWidthAligned),  // DECIMAL
-        .READ_DATA_WIDTH_B      (DataWidthAligned),  // DECIMAL
-        .READ_LATENCY_A         (Latency),           // DECIMAL
-        .READ_LATENCY_B         (Latency),           // DECIMAL
-        .READ_RESET_VALUE_A     ("0"),               // String
-        .READ_RESET_VALUE_B     ("0"),               // String
-        .USE_EMBEDDED_CONSTRAINT(0),                 // DECIMAL
-        .USE_MEM_INIT           (1),                 // DECIMAL
-        .WAKEUP_TIME            ("disable_sleep"),   // String
-        .WRITE_DATA_WIDTH_A     (DataWidthAligned),  // DECIMAL
-        .WRITE_DATA_WIDTH_B     (DataWidthAligned),  // DECIMAL
-        .WRITE_MODE_A           ("no_change"),       // String
-        .WRITE_MODE_B           ("no_change")        // String
-    ) i_xpm_memory_tdpram (
-        .dbiterra(  /*not used*/),  // 1-bit output: Doubble bit error A
-        .dbiterrb(  /*not used*/),  // 1-bit output: Doubble bit error B
-        .sbiterra(  /*not used*/),  // 1-bit output: Single bit error A
-        .sbiterrb(  /*not used*/),  // 1-bit output: Single bit error B
-        .addra(addr_i[0]),  // ADDR_WIDTH_A-bit input: Address for port A
-        .addrb(addr_i[1]),  // ADDR_WIDTH_B-bit input: Address for port B
-        .clka(clk_i),  // 1-bit input: Clock signal for port A
-        .clkb(clk_i),  // 1-bit input: Clock signal for port B
-        .dina(wdata_al[0]),  // WRITE_DATA_WIDTH_A-bit input: Data input for port A
-        .dinb(wdata_al[1]),  // WRITE_DATA_WIDTH_B-bit input: Data input for port B
-        .douta(rdata_al[0]),  // READ_DATA_WIDTH_A-bit output: Data output for port A
-        .doutb(rdata_al[1]),  // READ_DATA_WIDTH_B-bit output: Data output for port B
-        .ena(req_i[0]),  // 1-bit input: Memory enable signal for port A
-        .enb(req_i[1]),  // 1-bit input: Memory enable signal for port B
-        .injectdbiterra(1'b0),  // 1-bit input: Controls doublebiterror injection on input data
-        .injectdbiterrb(1'b0),  // 1-bit input: Controls doublebiterror injection on input data
-        .injectsbiterra(1'b0),  // 1-bit input: Controls singlebiterror injection on input data
-        .injectsbiterrb(1'b0),  // 1-bit input: Controls singlebiterror injection on input data
-        .regcea(1'b1),  // 1-bit input: Clock Enable for the last register stage
-        .regceb(1'b1),  // 1-bit input: Clock Enable for the last register stage
-        .rsta(~rst_ni),  // 1-bit input: Reset signal for the final port A output
-        .rstb(~rst_ni),  // 1-bit input: Reset signal for the final port B output
-        .sleep(1'b0),  // 1-bit input: sleep signal to enable the dynamic power
-        .wea(we[0]),  // WRITE_DATA_WIDTH_A-bit input: Write enable vector for port A
-        .web(we[1])  // WRITE_DATA_WIDTH_B-bit input: Write enable vector for port B
-=======
     xpm_memory_tdpram#(
       .ADDR_WIDTH_A            ( AddrWidth        ), // DECIMAL
       .ADDR_WIDTH_B            ( AddrWidth        ), // DECIMAL
@@ -283,64 +172,51 @@ module tc_sram #(
       .sleep    ( 1'b0         ), // 1-bit input: sleep signal to enable the dynamic power
       .wea      ( we_al[0]     ), // WRITE_DATA_WIDTH_A-bit input: Write enable vector for port A
       .web      ( we_al[1]     )  // WRITE_DATA_WIDTH_B-bit input: Write enable vector for port B
->>>>>>> main
     );
   end else begin : gen_err_ports
     $fatal(1, "Not supported port parametrization for NumPorts: %0d", NumPorts);
   end
 
-  // Validate parameters.
-  // pragma translate_off
+// Validate parameters.
+// pragma translate_off
 `ifndef VERILATOR
 `ifndef TARGET_SYNTHESIS
-  initial begin : p_assertions
-    assert (SimInit == "zeros")
-    else $fatal(1, "The Xilinx `tc_sram` has fixed SimInit: zeros");
-    assert ($bits(addr_i) == NumPorts * AddrWidth)
-    else $fatal(1, "AddrWidth problem on `addr_i`");
-    assert ($bits(wdata_i) == NumPorts * DataWidth)
-    else $fatal(1, "DataWidth problem on `wdata_i`");
-    assert ($bits(be_i) == NumPorts * BeWidth)
-    else $fatal(1, "BeWidth   problem on `be_i`");
-    assert ($bits(rdata_o) == NumPorts * DataWidth)
-    else $fatal(1, "DataWidth problem on `rdata_o`");
-    assert (NumWords >= 32'd1)
-    else $fatal(1, "NumWords has to be > 0");
-    assert (DataWidth >= 32'd1)
-    else $fatal(1, "DataWidth has to be > 0");
-    assert (ByteWidth >= 32'd1)
-    else $fatal(1, "ByteWidth has to be > 0");
-    assert (NumPorts >= 32'd1)
-    else $fatal(1, "The number of ports must be at least 1!");
+  initial begin: p_assertions
+    assert (SimInit == "zeros") else $fatal(1, "The Xilinx `tc_sram` has fixed SimInit: zeros");
+    assert ($bits(addr_i)  == NumPorts * AddrWidth) else $fatal(1, "AddrWidth problem on `addr_i`");
+    assert ($bits(wdata_i) == NumPorts * DataWidth) else $fatal(1, "DataWidth problem on `wdata_i`");
+    assert ($bits(be_i)    == NumPorts * BeWidth)   else $fatal(1, "BeWidth   problem on `be_i`"   );
+    assert ($bits(rdata_o) == NumPorts * DataWidth) else $fatal(1, "DataWidth problem on `rdata_o`");
+    assert (NumWords  >= 32'd1) else $fatal(1, "NumWords has to be > 0");
+    assert (DataWidth >= 32'd1) else $fatal(1, "DataWidth has to be > 0");
+    assert (ByteWidth >= 32'd1) else $fatal(1, "ByteWidth has to be > 0");
+    assert (NumPorts  >= 32'd1) else $fatal(1, "The number of ports must be at least 1!");
   end
-  initial begin : p_sim_hello
+  initial begin: p_sim_hello
     if (PrintSimCfg) begin
       $display("#################################################################################");
-      $display("tc_sram functional instantiated with the configuration:");
-      $display("Instance: %m");
-      $display("Number of ports   (dec): %0d", NumPorts);
-      $display("Number of words   (dec): %0d", NumWords);
-      $display("Address width     (dec): %0d", AddrWidth);
-      $display("Data width        (dec): %0d", DataWidth);
-      $display("Byte width        (dec): %0d", ByteWidth);
-      $display("Byte enable width (dec): %0d", BeWidth);
-      $display("Latency Cycles    (dec): %0d", Latency);
-      $display("Simulation init   (str): %0s", SimInit);
+      $display("tc_sram functional instantiated with the configuration:"                          );
+      $display("Instance: %m"                                                                     );
+      $display("Number of ports   (dec): %0d", NumPorts                                           );
+      $display("Number of words   (dec): %0d", NumWords                                           );
+      $display("Address width     (dec): %0d", AddrWidth                                          );
+      $display("Data width        (dec): %0d", DataWidth                                          );
+      $display("Byte width        (dec): %0d", ByteWidth                                          );
+      $display("Byte enable width (dec): %0d", BeWidth                                            );
+      $display("Latency Cycles    (dec): %0d", Latency                                            );
+      $display("Simulation init   (str): %0s", SimInit                                            );
       $display("#################################################################################");
     end
   end
   for (genvar i = 0; i < NumPorts; i++) begin : gen_assertions
-    assert property (@(posedge clk_i) disable iff (!rst_ni) (req_i[i] |-> (addr_i[i] < NumWords)))
-    else
-      $warning(
-          "Request address %0h not mapped, port %0d, expect random write or read behavior!",
-          addr_i[i],
-          i
-      );
+    assert property ( @(posedge clk_i) disable iff (!rst_ni)
+        (req_i[i] |-> (addr_i[i] < NumWords))) else
+      $warning("Request address %0h not mapped, port %0d, expect random write or read behavior!",
+          addr_i[i], i);
   end
 
 `endif
 `endif
-  // pragma translate_on
+// pragma translate_on
 
 endmodule

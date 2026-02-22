@@ -15,46 +15,35 @@
 /// Furthermore, this unit contains a more efficient implementation for Verilator (simulation only).
 /// This speeds up simulation significantly.
 module lzc #(
-    /// The width of the input vector.
-    parameter int unsigned WIDTH     = 2,
-    /// Mode selection: 0 -> trailing zero, 1 -> leading zero
-    parameter bit          MODE      = 1'b0,
-    /// Dependent parameter. Do **not** change!
-    ///
-    /// Width of the output signal with the zero count.
-    parameter int unsigned CNT_WIDTH = cf_math_pkg::idx_width(WIDTH)
+  /// The width of the input vector.
+  parameter int unsigned WIDTH = 2,
+  /// Mode selection: 0 -> trailing zero, 1 -> leading zero
+  parameter bit          MODE  = 1'b0,
+  /// Dependent parameter. Do **not** change!
+  ///
+  /// Width of the output signal with the zero count.
+  parameter int unsigned CNT_WIDTH = cf_math_pkg::idx_width(WIDTH)
 ) (
-    /// Input vector to be counted.
-    input  logic [    WIDTH-1:0] in_i,
-    /// Count of the leading / trailing zeros.
-    output logic [CNT_WIDTH-1:0] cnt_o,
-    /// Counter is empty: Asserted if all bits in in_i are zero.
-    output logic                 empty_o
+  /// Input vector to be counted.
+  input  logic [WIDTH-1:0]     in_i,
+  /// Count of the leading / trailing zeros.
+  output logic [CNT_WIDTH-1:0] cnt_o,
+  /// Counter is empty: Asserted if all bits in in_i are zero.
+  output logic                 empty_o
 );
 
   if (WIDTH == 1) begin : gen_degenerate_lzc
 
     assign cnt_o[0] = !in_i[0];
-    assign empty_o  = !in_i[0];
+    assign empty_o = !in_i[0];
 
   end else begin : gen_lzc
 
     localparam int unsigned NumLevels = $clog2(WIDTH);
 
-<<<<<<< HEAD
-`ifndef VERILATOR
-    // pragma translate_off
-    initial begin
-      assert (WIDTH > 0)
-      else $fatal(1, "input must be at least one bit wide");
-    end
-    // pragma translate_on
-`endif
-=======
   `ifndef COMMON_CELLS_ASSERTS_OFF
     `ASSERT_INIT(width_0, WIDTH > 0, "input must be at least one bit wide")
   `endif
->>>>>>> main
 
     logic [WIDTH-1:0][NumLevels-1:0] index_lut;
     logic [2**NumLevels-1:0] sel_nodes;
@@ -78,20 +67,20 @@ module lzc #(
         for (genvar k = 0; k < 2 ** level; k++) begin : g_level
           // if two successive indices are still in the vector...
           if (unsigned'(k) * 2 < WIDTH - 1) begin : g_reduce
-            assign sel_nodes[2**level-1+k] = in_tmp[k*2] | in_tmp[k*2+1];
+            assign sel_nodes[2 ** level - 1 + k] = in_tmp[k * 2] | in_tmp[k * 2 + 1];
             assign index_nodes[2 ** level - 1 + k] = (in_tmp[k * 2] == 1'b1)
               ? index_lut[k * 2] :
                 index_lut[k * 2 + 1];
           end
           // if only the first index is still in the vector...
           if (unsigned'(k) * 2 == WIDTH - 1) begin : g_base
-            assign sel_nodes[2**level-1+k]   = in_tmp[k*2];
-            assign index_nodes[2**level-1+k] = index_lut[k*2];
+            assign sel_nodes[2 ** level - 1 + k] = in_tmp[k * 2];
+            assign index_nodes[2 ** level - 1 + k] = index_lut[k * 2];
           end
           // if index is out of range
           if (unsigned'(k) * 2 > WIDTH - 1) begin : g_out_of_range
-            assign sel_nodes[2**level-1+k]   = 1'b0;
-            assign index_nodes[2**level-1+k] = '0;
+            assign sel_nodes[2 ** level - 1 + k] = 1'b0;
+            assign index_nodes[2 ** level - 1 + k] = '0;
           end
         end
       end else begin : g_not_last_level
@@ -105,24 +94,13 @@ module lzc #(
       end
     end
 
-    assign cnt_o   = NumLevels > unsigned'(0) ? index_nodes[0] : {($clog2(WIDTH)) {1'b0}};
+    assign cnt_o = NumLevels > unsigned'(0) ? index_nodes[0] : {($clog2(WIDTH)) {1'b0}};
     assign empty_o = NumLevels > unsigned'(0) ? ~sel_nodes[0] : ~(|in_i);
 
   end : gen_lzc
 
-<<<<<<< HEAD
-  // pragma translate_off
-`ifndef VERILATOR
-  initial begin : validate_params
-    assert (WIDTH >= 1)
-    else $fatal(1, "The WIDTH must at least be one bit wide!");
-  end
-`endif
-  // pragma translate_on
-=======
 `ifndef COMMON_CELLS_ASSERTS_OFF
   `ASSERT_INIT(width_0, WIDTH >= 1, "The WIDTH must at least be one bit wide!")
 `endif
->>>>>>> main
 
 endmodule : lzc

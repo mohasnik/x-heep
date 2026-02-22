@@ -40,36 +40,36 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module cv32e40x_sleep_unit
-  import cv32e40x_pkg::*;
+module cv32e40x_sleep_unit import cv32e40x_pkg::*;
 #(
-    parameter LIB = 0
-) (
-    // Clock, reset interface
-    input  logic clk_ungated_i,  // Free running clock
-    input  logic rst_n,
-    output logic clk_gated_o,    // Gated clock
-    input  logic scan_cg_en_i,   // Enable all clock gates for testing
+  parameter LIB = 0
+)
+(
+  // Clock, reset interface
+  input  logic        clk_ungated_i,            // Free running clock
+  input  logic        rst_n,
+  output logic        clk_gated_o,              // Gated clock
+  input  logic        scan_cg_en_i,             // Enable all clock gates for testing
 
-    // Core sleep
-    output logic core_sleep_o,
+  // Core sleep
+  output logic        core_sleep_o,
 
-    // Fetch enable
-    input  logic fetch_enable_i,
-    output logic fetch_enable_o,
+  // Fetch enable
+  input  logic        fetch_enable_i,
+  output logic        fetch_enable_o,
 
-    // Core status
-    input logic if_busy_i,
-    input logic lsu_busy_i,
+  // Core status
+  input  logic        if_busy_i,
+  input  logic        lsu_busy_i,
 
-    input ctrl_fsm_t ctrl_fsm_i
+  input  ctrl_fsm_t   ctrl_fsm_i
 );
 
-  logic fetch_enable_q;  // Sticky version of fetch_enable_i
-  logic fetch_enable_d;
+  logic              fetch_enable_q;            // Sticky version of fetch_enable_i
+  logic              fetch_enable_d;
   logic              core_busy_q;               // Is core still busy (and requires a clock) with what needs to finish before entering sleep?
-  logic core_busy_d;
-  logic clock_en;  // Final clock enable
+  logic              core_busy_d;
+  logic              clock_en;                  // Final clock enable
 
   //////////////////////////////////////////////////////////////////////////////
   // Sleep FSM
@@ -89,7 +89,8 @@ module cv32e40x_sleep_unit
   // based on the debug_wfi_no_sleep signal from the controller.
   assign core_sleep_o = fetch_enable_q && !clock_en;
 
-  always_ff @(posedge clk_ungated_i, negedge rst_n) begin
+  always_ff @(posedge clk_ungated_i, negedge rst_n)
+  begin
     if (rst_n == 1'b0) begin
       core_busy_q    <= 1'b0;
       fetch_enable_q <= 1'b0;
@@ -103,13 +104,14 @@ module cv32e40x_sleep_unit
   assign fetch_enable_o = fetch_enable_q;
 
   // Main clock gate of CV32E40P
-  cv32e40x_clock_gate #(
-      .LIB(LIB)
-  ) core_clock_gate_i (
-      .clk_i       (clk_ungated_i),
-      .en_i        (clock_en),
-      .scan_cg_en_i(scan_cg_en_i),
-      .clk_o       (clk_gated_o)
+  cv32e40x_clock_gate
+    #(.LIB (LIB))
+  core_clock_gate_i
+  (
+    .clk_i        ( clk_ungated_i   ),
+    .en_i         ( clock_en        ),
+    .scan_cg_en_i ( scan_cg_en_i    ),
+    .clk_o        ( clk_gated_o     )
   );
 
 endmodule
