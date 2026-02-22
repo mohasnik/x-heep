@@ -32,6 +32,7 @@ module stream_fifo_optimal_wrap #(
     input  logic                  ready_i      // pop head from fifo
 );
 
+<<<<<<< HEAD
   //--------------------------------------
   // Prevent Depth 0 and 1
   //--------------------------------------
@@ -56,8 +57,19 @@ module stream_fifo_optimal_wrap #(
       initial begin
         $display("[%m] Instantiate spill register (of depth %d)", Depth);
       end
+=======
+    //--------------------------------------
+    // Prevent Depth 0 and 1
+    //--------------------------------------
+    // Throw an error if depth is 0 or 1
+    `ifndef SYNTHESIS
+    if (Depth < 32'd2) begin : gen_fatal
+        initial begin
+            $fatal(1, "FIFO of depth %d does not make any sense!", Depth);
+        end
+>>>>>>> main
     end
-    // pragma translate on
+    `endif
 
     // spill register
     spill_register_flushable #(
@@ -75,9 +87,20 @@ module stream_fifo_optimal_wrap #(
         .data_o
     );
 
+<<<<<<< HEAD
     // usage is not supported
     assign usage_o = 'x;
   end
+=======
+        // print info
+        `ifndef SYNTHESIS
+        if (PrintInfo) begin : gen_info
+            initial begin
+                $display("[%m] Instantiate spill register (of depth %d)", Depth);
+            end
+        end
+        `endif
+>>>>>>> main
 
 
   //--------------------------------------
@@ -95,6 +118,7 @@ module stream_fifo_optimal_wrap #(
     end
     // pragma translate on
 
+<<<<<<< HEAD
     // stream fifo
     stream_fifo #(
         .DEPTH(Depth),
@@ -113,5 +137,41 @@ module stream_fifo_optimal_wrap #(
         .ready_i
     );
   end
+=======
+
+    //--------------------------------------
+    // FIFO register (depth 3+)
+    //--------------------------------------
+    // default to stream fifo
+    if (Depth > 32'd2) begin : gen_fifo
+
+        // print info
+        `ifndef SYNTHESIS
+        if (PrintInfo) begin : gen_info
+            initial begin
+                $info("[%m] Instantiate stream FIFO of depth %d", Depth);
+            end
+        end
+        `endif
+
+        // stream fifo
+        stream_fifo #(
+            .DEPTH        ( Depth  ),
+            .T            ( type_t )
+        ) i_stream_fifo (
+            .clk_i,
+            .rst_ni,
+            .flush_i,
+            .testmode_i,
+            .usage_o,
+            .data_i,
+            .valid_i,
+            .ready_o,
+            .data_o,
+            .valid_o,
+            .ready_i
+        );
+    end
+>>>>>>> main
 
 endmodule : stream_fifo_optimal_wrap

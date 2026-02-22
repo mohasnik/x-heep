@@ -18,6 +18,7 @@
 ///
 /// Breaks all combinatorial paths between its input and output.
 module axi_cut #(
+<<<<<<< HEAD
     // bypass enable
     parameter bit  Bypass    = 1'b0,
     // AXI channel structs
@@ -38,12 +39,44 @@ module axi_cut #(
     // master port
     output req_t  mst_req_o,
     input  resp_t mst_resp_i
+=======
+  // bypass enable
+  parameter bit  Bypass     = 1'b0,
+  parameter bit  BypassAw   = Bypass,
+  parameter bit  BypassW    = Bypass,
+  parameter bit  BypassB    = Bypass,
+  parameter bit  BypassAr   = Bypass,
+  parameter bit  BypassR    = Bypass,
+  // AXI channel structs
+  parameter type  aw_chan_t = logic,
+  parameter type   w_chan_t = logic,
+  parameter type   b_chan_t = logic,
+  parameter type  ar_chan_t = logic,
+  parameter type   r_chan_t = logic,
+  // AXI request & response structs
+  parameter type  axi_req_t = logic,
+  parameter type axi_resp_t = logic
+) (
+  input logic       clk_i,
+  input logic       rst_ni,
+  // salve port
+  input  axi_req_t  slv_req_i,
+  output axi_resp_t slv_resp_o,
+  // master port
+  output axi_req_t  mst_req_o,
+  input  axi_resp_t mst_resp_i
+>>>>>>> main
 );
 
   // a spill register for each channel
   spill_register #(
+<<<<<<< HEAD
       .T     (aw_chan_t),
       .Bypass(Bypass)
+=======
+    .T       ( aw_chan_t ),
+    .Bypass  ( BypassAw  )
+>>>>>>> main
   ) i_reg_aw (
       .clk_i  (clk_i),
       .rst_ni (rst_ni),
@@ -56,6 +89,7 @@ module axi_cut #(
   );
 
   spill_register #(
+<<<<<<< HEAD
       .T     (w_chan_t),
       .Bypass(Bypass)
   ) i_reg_w (
@@ -86,6 +120,38 @@ module axi_cut #(
   spill_register #(
       .T     (ar_chan_t),
       .Bypass(Bypass)
+=======
+    .T       ( w_chan_t ),
+    .Bypass  ( BypassW  )
+  ) i_reg_w  (
+    .clk_i   ( clk_i              ),
+    .rst_ni  ( rst_ni             ),
+    .valid_i ( slv_req_i.w_valid  ),
+    .ready_o ( slv_resp_o.w_ready ),
+    .data_i  ( slv_req_i.w        ),
+    .valid_o ( mst_req_o.w_valid  ),
+    .ready_i ( mst_resp_i.w_ready ),
+    .data_o  ( mst_req_o.w        )
+  );
+
+  spill_register #(
+    .T       ( b_chan_t ),
+    .Bypass  ( BypassB  )
+  ) i_reg_b  (
+    .clk_i   ( clk_i              ),
+    .rst_ni  ( rst_ni             ),
+    .valid_i ( mst_resp_i.b_valid ),
+    .ready_o ( mst_req_o.b_ready  ),
+    .data_i  ( mst_resp_i.b       ),
+    .valid_o ( slv_resp_o.b_valid ),
+    .ready_i ( slv_req_i.b_ready  ),
+    .data_o  ( slv_resp_o.b       )
+  );
+
+  spill_register #(
+    .T       ( ar_chan_t ),
+    .Bypass  ( BypassAr  )
+>>>>>>> main
   ) i_reg_ar (
       .clk_i  (clk_i),
       .rst_ni (rst_ni),
@@ -98,6 +164,7 @@ module axi_cut #(
   );
 
   spill_register #(
+<<<<<<< HEAD
       .T     (r_chan_t),
       .Bypass(Bypass)
   ) i_reg_r (
@@ -109,6 +176,19 @@ module axi_cut #(
       .valid_o(slv_resp_o.r_valid),
       .ready_i(slv_req_i.r_ready),
       .data_o (slv_resp_o.r)
+=======
+    .T       ( r_chan_t ),
+    .Bypass  ( BypassR  )
+  ) i_reg_r  (
+    .clk_i   ( clk_i              ),
+    .rst_ni  ( rst_ni             ),
+    .valid_i ( mst_resp_i.r_valid ),
+    .ready_o ( mst_req_o.r_ready  ),
+    .data_i  ( mst_resp_i.r       ),
+    .valid_o ( slv_resp_o.r_valid ),
+    .ready_i ( slv_req_i.r_ready  ),
+    .data_o  ( slv_resp_o.r       )
+>>>>>>> main
   );
 endmodule
 
@@ -117,6 +197,7 @@ endmodule
 
 // interface wrapper
 module axi_cut_intf #(
+<<<<<<< HEAD
     // Bypass eneable
     parameter bit          BYPASS     = 1'b0,
     // The address width.
@@ -127,6 +208,23 @@ module axi_cut_intf #(
     parameter int unsigned ID_WIDTH   = 0,
     // The user data width.
     parameter int unsigned USER_WIDTH = 0
+=======
+  // Bypass eneable
+  parameter bit          BYPASS     = 1'b0,
+  parameter bit          BYPASS_AW  = BYPASS,
+  parameter bit          BYPASS_W   = BYPASS,
+  parameter bit          BYPASS_B   = BYPASS,
+  parameter bit          BYPASS_AR  = BYPASS,
+  parameter bit          BYPASS_R   = BYPASS,
+  // The address width.
+  parameter int unsigned ADDR_WIDTH = 0,
+  // The data width.
+  parameter int unsigned DATA_WIDTH = 0,
+  // The ID width.
+  parameter int unsigned ID_WIDTH   = 0,
+  // The user data width.
+  parameter int unsigned USER_WIDTH = 0
+>>>>>>> main
 ) (
     input logic          clk_i,
     input logic          rst_ni,
@@ -145,11 +243,16 @@ module axi_cut_intf #(
   `AXI_TYPEDEF_B_CHAN_T(b_chan_t, id_t, user_t)
   `AXI_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_R_CHAN_T(r_chan_t, data_t, id_t, user_t)
-  `AXI_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
-  `AXI_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
+  `AXI_TYPEDEF_REQ_T(axi_req_t, aw_chan_t, w_chan_t, ar_chan_t)
+  `AXI_TYPEDEF_RESP_T(axi_resp_t, b_chan_t, r_chan_t)
 
+<<<<<<< HEAD
   req_t slv_req, mst_req;
   resp_t slv_resp, mst_resp;
+=======
+  axi_req_t  slv_req,  mst_req;
+  axi_resp_t slv_resp, mst_resp;
+>>>>>>> main
 
   `AXI_ASSIGN_TO_REQ(slv_req, in)
   `AXI_ASSIGN_FROM_RESP(in, slv_resp)
@@ -158,6 +261,7 @@ module axi_cut_intf #(
   `AXI_ASSIGN_TO_RESP(mst_resp, out)
 
   axi_cut #(
+<<<<<<< HEAD
       .Bypass   (BYPASS),
       .aw_chan_t(aw_chan_t),
       .w_chan_t (w_chan_t),
@@ -166,6 +270,21 @@ module axi_cut_intf #(
       .r_chan_t (r_chan_t),
       .req_t    (req_t),
       .resp_t   (resp_t)
+=======
+    .Bypass     (     BYPASS ),
+    .BypassAw   (  BYPASS_AW ),
+    .BypassW    (   BYPASS_W ),
+    .BypassB    (   BYPASS_B ),
+    .BypassAr   (  BYPASS_AR ),
+    .BypassR    (   BYPASS_R ),
+    .aw_chan_t  (  aw_chan_t ),
+    .w_chan_t   (   w_chan_t ),
+    .b_chan_t   (   b_chan_t ),
+    .ar_chan_t  (  ar_chan_t ),
+    .r_chan_t   (   r_chan_t ),
+    .axi_req_t  (  axi_req_t ),
+    .axi_resp_t ( axi_resp_t )
+>>>>>>> main
   ) i_axi_cut (
       .clk_i,
       .rst_ni,
@@ -209,12 +328,26 @@ module axi_cut_intf #(
 endmodule
 
 module axi_lite_cut_intf #(
+<<<<<<< HEAD
     // bypass enable
     parameter bit          BYPASS     = 1'b0,
     /// The address width.
     parameter int unsigned ADDR_WIDTH = 0,
     /// The data width.
     parameter int unsigned DATA_WIDTH = 0
+=======
+  // bypass enable
+  parameter bit          BYPASS     = 1'b0,
+  parameter bit          BYPASS_AW  = BYPASS,
+  parameter bit          BYPASS_W   = BYPASS,
+  parameter bit          BYPASS_B   = BYPASS,
+  parameter bit          BYPASS_AR  = BYPASS,
+  parameter bit          BYPASS_R   = BYPASS,
+  /// The address width.
+  parameter int unsigned ADDR_WIDTH = 0,
+  /// The data width.
+  parameter int unsigned DATA_WIDTH = 0
+>>>>>>> main
 ) (
     input logic           clk_i,
     input logic           rst_ni,
@@ -231,11 +364,16 @@ module axi_lite_cut_intf #(
   `AXI_LITE_TYPEDEF_B_CHAN_T(b_chan_t)
   `AXI_LITE_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t)
   `AXI_LITE_TYPEDEF_R_CHAN_T(r_chan_t, data_t)
-  `AXI_LITE_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
-  `AXI_LITE_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
+  `AXI_LITE_TYPEDEF_REQ_T(axi_req_t, aw_chan_t, w_chan_t, ar_chan_t)
+  `AXI_LITE_TYPEDEF_RESP_T(axi_resp_t, b_chan_t, r_chan_t)
 
+<<<<<<< HEAD
   req_t slv_req, mst_req;
   resp_t slv_resp, mst_resp;
+=======
+  axi_req_t   slv_req,  mst_req;
+  axi_resp_t  slv_resp, mst_resp;
+>>>>>>> main
 
   `AXI_LITE_ASSIGN_TO_REQ(slv_req, in)
   `AXI_LITE_ASSIGN_FROM_RESP(in, slv_resp)
@@ -244,6 +382,7 @@ module axi_lite_cut_intf #(
   `AXI_LITE_ASSIGN_TO_RESP(mst_resp, out)
 
   axi_cut #(
+<<<<<<< HEAD
       .Bypass   (BYPASS),
       .aw_chan_t(aw_chan_t),
       .w_chan_t (w_chan_t),
@@ -252,6 +391,21 @@ module axi_lite_cut_intf #(
       .r_chan_t (r_chan_t),
       .req_t    (req_t),
       .resp_t   (resp_t)
+=======
+    .Bypass     (     BYPASS ),
+    .BypassAw   (  BYPASS_AW ),
+    .BypassW    (   BYPASS_W ),
+    .BypassB    (   BYPASS_B ),
+    .BypassAr   (  BYPASS_AR ),
+    .BypassR    (   BYPASS_R ),
+    .aw_chan_t  (  aw_chan_t ),
+    .w_chan_t   (   w_chan_t ),
+    .b_chan_t   (   b_chan_t ),
+    .ar_chan_t  (  ar_chan_t ),
+    .r_chan_t   (   r_chan_t ),
+    .axi_req_t  (  axi_req_t ),
+    .axi_resp_t ( axi_resp_t )
+>>>>>>> main
   ) i_axi_cut (
       .clk_i,
       .rst_ni,

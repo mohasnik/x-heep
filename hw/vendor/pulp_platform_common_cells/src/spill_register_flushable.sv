@@ -11,6 +11,7 @@
 //
 // Fabian Schuiki <fschuiki@iis.ee.ethz.ch>
 
+`include "common_cells/assertions.svh"
 
 /// A register with handshakes that completely cuts any combinational paths
 /// between the input and output. This spill register can be flushed.
@@ -40,8 +41,15 @@ module spill_register_flushable #(
     logic a_fill, a_drain;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : ps_a_data
+<<<<<<< HEAD
       if (!rst_ni) a_data_q <= '0;
       else if (a_fill) a_data_q <= data_i;
+=======
+      if (!rst_ni)
+        a_data_q <= T'('0);
+      else if (a_fill)
+        a_data_q <= data_i;
+>>>>>>> main
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : ps_a_full
@@ -55,8 +63,15 @@ module spill_register_flushable #(
     logic b_fill, b_drain;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : ps_b_data
+<<<<<<< HEAD
       if (!rst_ni) b_data_q <= '0;
       else if (b_fill) b_data_q <= a_data_q;
+=======
+      if (!rst_ni)
+        b_data_q <= T'('0);
+      else if (b_fill)
+        b_data_q <= a_data_q;
+>>>>>>> main
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin : ps_b_full
@@ -86,6 +101,7 @@ module spill_register_flushable #(
     // We empty the spill register before the slice register.
     assign data_o  = b_full_q ? b_data_q : a_data_q;
 
+<<<<<<< HEAD
     // pragma translate_off
 `ifndef VERILATOR
     flush_valid :
@@ -94,5 +110,11 @@ module spill_register_flushable #(
       $warning("Trying to flush and feed the spill register simultaneously. You will lose data!");
 `endif
     // pragma translate_on
+=======
+    `ifndef COMMON_CELLS_ASSERTS_OFF
+    `ASSERT(flush_valid, flush_i |-> ~valid_i, clk_i, !rst_ni,
+           "Trying to flush and feed the spill register simultaneously. You will lose data!")
+   `endif
+>>>>>>> main
   end
 endmodule

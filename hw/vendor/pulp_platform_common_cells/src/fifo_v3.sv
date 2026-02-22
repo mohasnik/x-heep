@@ -10,6 +10,8 @@
 
 // Author: Florian Zaruba <zarubaf@iis.ee.ethz.ch>
 
+`include "common_cells/assertions.svh"
+
 module fifo_v3 #(
     parameter bit FALL_THROUGH = 1'b0,  // fifo is in fall-through mode
     parameter int unsigned DATA_WIDTH = 32,  // default data width if the fifo is of type logic
@@ -124,14 +126,24 @@ module fifo_v3 #(
     end
   end
 
+<<<<<<< HEAD
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin
       mem_q <= '0;
     end else if (!gate_clock) begin
       mem_q <= mem_n;
+=======
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if(~rst_ni) begin
+            mem_q <= {FifoDepth{dtype'('0)}};
+        end else if (!gate_clock) begin
+            mem_q <= mem_n;
+        end
+>>>>>>> main
     end
   end
 
+<<<<<<< HEAD
   // pragma translate_off
 `ifndef VERILATOR
   initial begin
@@ -148,5 +160,16 @@ module fifo_v3 #(
   else $fatal(1, "Trying to pop data although the FIFO is empty.");
 `endif
   // pragma translate_on
+=======
+`ifndef COMMON_CELLS_ASSERTS_OFF
+    `ASSERT_INIT(depth_0, DEPTH > 0, "DEPTH must be greater than 0.")
+
+    `ASSERT(full_write, full_o |-> ~push_i, clk_i, !rst_ni,
+            "Trying to push new data although the FIFO is full.")
+
+    `ASSERT(empty_read, empty_o |-> ~pop_i, clk_i, !rst_ni,
+            "Trying to pop data although the FIFO is empty.")
+`endif
+>>>>>>> main
 
 endmodule  // fifo_v3

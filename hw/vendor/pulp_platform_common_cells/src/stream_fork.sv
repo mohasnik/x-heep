@@ -16,6 +16,8 @@
 // This module has no data ports because stream data does not need to be forked: the data of the
 // input stream can just be applied at all output streams.
 
+`include "common_cells/assertions.svh"
+
 module stream_fork #(
     parameter int unsigned N_OUP = 0  // Synopsys DC requires a default value for parameters.
 ) (
@@ -124,6 +126,7 @@ module stream_fork #(
   assign all_ones = '1;  // Synthesis fix for Vivado, which does not correctly compute the width
                          // of the '1 literal when assigned to a port of parametrized width.
 
+<<<<<<< HEAD
   // pragma translate_off
 `ifndef VERILATOR
   initial begin : p_assertions
@@ -132,5 +135,51 @@ module stream_fork #(
   end
 `endif
   // pragma translate_on
+=======
+        always_comb begin
+            oup_ready[i]    = 1'b1;
+            valid_o[i]      = 1'b0;
+            oup_state_d     = oup_state_q;
+
+            unique case (oup_state_q)
+                READY: begin
+                    if (valid_i) begin
+                        valid_o[i] = 1'b1;
+                        if (ready_i[i]) begin   // Output handshake
+                            if (!ready_o) begin     // No input handshake yet
+                                oup_state_d = WAIT;
+                            end
+                        end else begin          // No output handshake
+                            oup_ready[i] = 1'b0;
+                        end
+                    end
+                end
+                WAIT: begin
+                    if (valid_i && ready_o) begin   // Input handshake
+                        oup_state_d = READY;
+                    end
+                end
+                default: begin
+                    oup_state_d = READY;
+                end
+            endcase
+        end
+
+        always_ff @(posedge clk_i, negedge rst_ni) begin
+            if (!rst_ni) begin
+                oup_state_q <= READY;
+            end else begin
+                oup_state_q <= oup_state_d;
+            end
+        end
+    end
+
+    assign all_ones = '1;   // Synthesis fix for Vivado, which does not correctly compute the width
+                            // of the '1 literal when assigned to a port of parametrized width.
+
+`ifndef COMMON_CELLS_ASSERTS_OFF
+    `ASSERT_INIT(n_oup_0, N_OUP >= 1, "Number of outputs must be at least 1!")
+`endif
+>>>>>>> main
 
 endmodule

@@ -657,6 +657,7 @@ package cve2_pkg;
   } rvfi_csr_t;
 
   // CV-X-IF
+<<<<<<< HEAD
   parameter int unsigned X_NUM_RS = 2;
   parameter int unsigned X_ID_WIDTH = 4;
   parameter int unsigned X_RFR_WIDTH = 32;
@@ -664,6 +665,16 @@ package cve2_pkg;
   parameter int unsigned X_HARTID_WIDTH = 32;
   parameter int unsigned X_DUAL_READ = 0;
   parameter int unsigned X_DUAL_WRITE = 0;
+=======
+  parameter int unsigned X_NUM_RS         = 2;
+  parameter int unsigned X_ID_WIDTH       = 4;
+  parameter int unsigned X_RFR_WIDTH      = 32;
+  parameter int unsigned X_RFW_WIDTH      = 32;
+  parameter int unsigned X_HARTID_WIDTH   = 32;
+  parameter int unsigned X_DUAL_READ      = 0;
+  parameter int unsigned X_DUAL_WRITE     = 0;
+  parameter int unsigned X_INSTR_INFLIGHT = 2**X_ID_WIDTH;
+>>>>>>> main
 
   typedef logic [X_NUM_RS+X_DUAL_READ-1:0] readregflags_t;
   typedef logic [X_DUAL_WRITE:0] writeregflags_t;

@@ -24,6 +24,7 @@ module generic_fifo_adv #(
     output logic                  grant_o,
 
     //POP SIDE
+<<<<<<< HEAD
     output logic [DATA_WIDTH-1:0] data_o,
     output logic                  valid_o,
     input  logic                  grant_i,
@@ -72,6 +73,50 @@ module generic_fifo_adv #(
   end
   // synopsys translate_on
 
+=======
+    output logic [DATA_WIDTH-1:0]                   data_o,
+    output logic                                    valid_o,
+    input  logic                                    grant_i,
+    
+    input  logic                                    test_mode_i
+    );
+   
+   
+   // Local Parameter
+   localparam  int 				    unsigned ADDR_DEPTH = $clog2(DATA_DEPTH);
+   enum 					    logic [1:0] { EMPTY, FULL, MIDDLE } CS, NS;
+   // Internal Signals
+   
+   logic 					    gate_clock;
+   logic 					    clk_gated;
+   
+   logic [ADDR_DEPTH-1:0] 			    Pop_Pointer_CS,  Pop_Pointer_NS;
+   logic [ADDR_DEPTH-1:0] 			    Push_Pointer_CS, Push_Pointer_NS;
+   logic [DATA_WIDTH-1:0] 			    FIFO_REGISTERS[DATA_DEPTH-1:0];
+   int 						    unsigned                    i;
+   
+   // Parameter Check
+   `ifndef SYNTHESIS
+   initial
+   begin : parameter_check
+      integer param_err_flg;
+      param_err_flg = 0;
+      
+      if (DATA_WIDTH < 1)
+	begin
+           param_err_flg = 1;
+           $display("ERROR: %m :\n  Invalid value (%d) for parameter DATA_WIDTH (legal range: greater than 1)", DATA_WIDTH );
+	end
+      
+      if (DATA_DEPTH < 1)
+	begin
+           param_err_flg = 1;
+           $display("ERROR: %m :\n  Invalid value (%d) for parameter DATA_DEPTH (legal range: greater than 1)", DATA_DEPTH );
+	end                   
+   end
+   `endif
+   
+>>>>>>> main
 `ifndef PULP_FPGA_EMUL
   cluster_clock_gating cg_cell (
       .clk_i    (clk),

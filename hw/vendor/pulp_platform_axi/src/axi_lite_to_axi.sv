@@ -16,6 +16,7 @@
 
 /// An AXI4-Lite to AXI4 adapter.
 module axi_lite_to_axi #(
+<<<<<<< HEAD
     parameter int unsigned AxiDataWidth = 32'd0,
     // LITE AXI structs
     parameter type         req_lite_t   = logic,
@@ -32,6 +33,24 @@ module axi_lite_to_axi #(
     // Master AXI port
     output req_t            mst_req_o,
     input  resp_t           mst_resp_i
+=======
+  parameter int unsigned AxiDataWidth = 32'd0,
+  // LITE AXI structs
+  parameter type  req_lite_t = logic,
+  parameter type resp_lite_t = logic,
+  // FULL AXI structs
+  parameter type   axi_req_t = logic,
+  parameter type  axi_resp_t = logic
+) (
+  // Slave AXI LITE port
+  input  req_lite_t       slv_req_lite_i,
+  output resp_lite_t      slv_resp_lite_o,
+  input  axi_pkg::cache_t slv_aw_cache_i,
+  input  axi_pkg::cache_t slv_ar_cache_i,
+  // Master AXI port
+  output axi_req_t        mst_req_o,
+  input  axi_resp_t       mst_resp_i
+>>>>>>> main
 );
   localparam int unsigned AxiSize = axi_pkg::size_t'($unsigned($clog2(AxiDataWidth / 8)));
 
@@ -109,7 +128,7 @@ module axi_lite_to_axi_intf #(
   assign out.aw_id     = '0;
   assign out.aw_addr   = in.aw_addr;
   assign out.aw_len    = '0;
-  assign out.aw_size   = AxiSize;
+  assign out.aw_size   = axi_pkg::size_t'(AxiSize);
   assign out.aw_burst  = axi_pkg::BURST_FIXED;
   assign out.aw_lock   = '0;
   assign out.aw_cache  = slv_aw_cache_i;
@@ -135,7 +154,7 @@ module axi_lite_to_axi_intf #(
   assign out.ar_id     = '0;
   assign out.ar_addr   = in.ar_addr;
   assign out.ar_len    = '0;
-  assign out.ar_size   = AxiSize;
+  assign out.ar_size   = axi_pkg::size_t'(AxiSize);
   assign out.ar_burst  = axi_pkg::BURST_FIXED;
   assign out.ar_lock   = '0;
   assign out.ar_cache  = slv_ar_cache_i;

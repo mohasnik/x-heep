@@ -25,10 +25,45 @@ module delta_counter #(
     output logic [WIDTH-1:0] q_o,
     output logic             overflow_o
 );
+<<<<<<< HEAD
   logic [WIDTH:0] counter_q, counter_d;
   if (STICKY_OVERFLOW) begin : gen_sticky_overflow
     logic overflow_d, overflow_q;
     always_ff @(posedge clk_i or negedge rst_ni) overflow_q <= ~rst_ni ? 1'b0 : overflow_d;
+=======
+    logic [WIDTH:0] counter_q, counter_d;
+    if (STICKY_OVERFLOW) begin : gen_sticky_overflow
+        logic overflow_d, overflow_q;
+
+        always_ff @(posedge clk_i or negedge rst_ni)
+        begin
+            if(!rst_ni) begin
+                overflow_q <= 1'b0;
+            end else begin
+                overflow_q <= overflow_d;
+            end
+        end
+
+        always_comb begin
+            overflow_d = overflow_q;
+            if (clear_i || load_i) begin
+                overflow_d = 1'b0;
+            end else if (!overflow_q && en_i) begin
+                if (down_i) begin
+                    overflow_d = delta_i > counter_q[WIDTH-1:0];
+                end else begin
+                    overflow_d = counter_q[WIDTH-1:0] > ({WIDTH{1'b1}} - delta_i);
+                end
+            end
+        end
+        assign overflow_o = overflow_q;
+    end else begin : gen_transient_overflow
+        // counter overflowed if the MSB is set
+        assign overflow_o = counter_q[WIDTH];
+    end
+    assign q_o = counter_q[WIDTH-1:0];
+
+>>>>>>> main
     always_comb begin
       overflow_d = overflow_q;
       if (clear_i || load_i) begin

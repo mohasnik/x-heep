@@ -28,6 +28,7 @@ module rstgen_bypass #(
 
   logic [NumRegs-1:0] synch_regs_q;
 
+<<<<<<< HEAD
   // bypass mode: use glitch-free (clock) multiplexers
   tc_clk_mux2 i_tc_clk_mux2_rst_n (
       .clk0_i   (rst_ni),
@@ -35,6 +36,15 @@ module rstgen_bypass #(
       .clk_sel_i(test_mode_i),
       .clk_o    (rst_n)
   );
+=======
+    // bypass mode: use (clock) multiplexers
+    tc_clk_mux2 i_tc_clk_mux2_rst_n (
+        .clk0_i     ( rst_ni ),
+        .clk1_i     ( rst_test_mode_ni ),
+        .clk_sel_i  ( test_mode_i ),
+        .clk_o      ( rst_n )
+    );
+>>>>>>> main
 
   tc_clk_mux2 i_tc_clk_mux2_rst_no (
       .clk0_i   (synch_regs_q[NumRegs-1]),
@@ -56,6 +66,7 @@ module rstgen_bypass #(
     end else begin
       synch_regs_q <= {synch_regs_q[NumRegs-2:0], 1'b1};
     end
+<<<<<<< HEAD
   end
   // pragma translate_off
 `ifndef VERILATOR
@@ -64,4 +75,13 @@ module rstgen_bypass #(
   end
 `endif
   // pragma translate_on
+=======
+    `ifndef SYNTHESIS
+    `ifndef COMMON_CELLS_ASSERTS_OFF
+    initial begin : p_assertions
+        if (NumRegs < 1) $fatal(1, "At least one register is required.");
+    end
+    `endif
+    `endif
+>>>>>>> main
 endmodule

@@ -13,6 +13,7 @@
 /// Split memory access over multiple parallel banks, where each bank has its own req/gnt
 /// request and valid response direction.
 module mem_to_banks #(
+<<<<<<< HEAD
     /// Input address width.
     parameter  int unsigned AddrWidth  = 32'd0,
     /// Input data width, must be a power of two.
@@ -39,6 +40,34 @@ module mem_to_banks #(
     localparam type         oup_data_t = logic [  DataWidth/NumBanks-1:0],
     /// Dependent parameter, do not override! Output write strobe type.
     localparam type         oup_strb_t = logic [DataWidth/NumBanks/8-1:0]
+=======
+  /// Input address width.
+  parameter int unsigned AddrWidth = 32'd0,
+  /// Input data width, must be a power of two.
+  parameter int unsigned DataWidth = 32'd0,
+  /// Atop width.
+  parameter int unsigned AtopWidth = 32'd0,
+  /// Number of banks at output, must evenly divide `DataWidth`.
+  parameter int unsigned NumBanks  = 32'd1,
+  /// Remove transactions that have zero strobe
+  parameter bit          HideStrb  = 1'b0,
+  /// Number of outstanding transactions
+  parameter int unsigned MaxTrans  = 32'd1,
+  /// FIFO depth, must be >=1
+  parameter int unsigned FifoDepth = 32'd1,
+  /// Atop type.
+  parameter  type atop_t     = logic [AtopWidth-1:0],
+  /// Dependent parameter, do not override! Address type.
+  localparam type addr_t     = logic [AddrWidth-1:0],
+  /// Dependent parameter, do not override! Input data type.
+  localparam type inp_data_t = logic [DataWidth-1:0],
+  /// Dependent parameter, do not override! Input write strobe type.
+  localparam type inp_strb_t = logic [DataWidth/8-1:0],
+  /// Dependent parameter, do not override! Output data type.
+  localparam type oup_data_t = logic [DataWidth/NumBanks-1:0],
+  /// Dependent parameter, do not override! Output write strobe type.
+  localparam type oup_strb_t = logic [DataWidth/NumBanks/8-1:0]
+>>>>>>> main
 ) (
     /// Clock input.
     input  logic                     clk_i,
@@ -82,6 +111,7 @@ module mem_to_banks #(
     input  oup_data_t [NumBanks-1:0] bank_rdata_i
 );
 
+<<<<<<< HEAD
   localparam int unsigned DataBytes = $bits(inp_strb_t);
   localparam int unsigned BitsPerBank = $bits(oup_data_t);
   localparam int unsigned BytesPerBank = $bits(oup_strb_t);
@@ -211,4 +241,41 @@ module mem_to_banks #(
 `endif
 `endif
   // pragma translate_on
+=======
+  mem_to_banks_detailed #(
+    .AddrWidth  ( AddrWidth  ),
+    .DataWidth  ( DataWidth  ),
+    .WUserWidth ( AtopWidth  ),
+    .RUserWidth ( 1          ),
+    .NumBanks   ( NumBanks   ),
+    .HideStrb   ( HideStrb   ),
+    .MaxTrans   ( MaxTrans   ),
+    .FifoDepth  ( FifoDepth  ),
+    .wuser_t    ( atop_t     )
+  ) i_mem_to_banks_detailed (
+    .clk_i,
+    .rst_ni,
+    .req_i,
+    .gnt_o,
+    .addr_i,
+    .wdata_i,
+    .strb_i,
+    .wuser_i      ( atop_i ),
+    .we_i,
+    .rvalid_o,
+    .rdata_o,
+    .ruser_o      (),
+    .bank_req_o,
+    .bank_gnt_i,
+    .bank_addr_o,
+    .bank_wdata_o,
+    .bank_strb_o,
+    .bank_wuser_o ( bank_atop_o ),
+    .bank_we_o,
+    .bank_rvalid_i,
+    .bank_rdata_i,
+    .bank_ruser_i ('0)
+  );
+
+>>>>>>> main
 endmodule

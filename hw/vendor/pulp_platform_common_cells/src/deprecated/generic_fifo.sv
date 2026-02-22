@@ -72,11 +72,19 @@ module generic_fifo #(
   logic        [DATA_WIDTH-1:0] FIFO_REGISTERS[DATA_DEPTH-1:0];
   int unsigned                  i;
 
+<<<<<<< HEAD
   // Parameter Check
   // synopsys translate_off
   initial begin : parameter_check
     integer param_err_flg;
     param_err_flg = 0;
+=======
+   // Parameter Check
+   `ifndef SYNTHESIS
+   initial begin : parameter_check
+      integer param_err_flg;
+      param_err_flg = 0;
+>>>>>>> main
 
     if (DATA_WIDTH < 1) begin
       param_err_flg = 1;
@@ -85,6 +93,7 @@ module generic_fifo #(
           DATA_WIDTH);
     end
 
+<<<<<<< HEAD
     if (DATA_DEPTH < 1) begin
       param_err_flg = 1;
       $display(
@@ -93,6 +102,14 @@ module generic_fifo #(
     end
   end
   // synopsys translate_on
+=======
+      if (DATA_DEPTH < 1) begin
+         param_err_flg = 1;
+         $display("ERROR: %m :\n  Invalid value (%d) for parameter DATA_DEPTH (legal range: greater than 1)", DATA_DEPTH );
+      end
+   end
+   `endif
+>>>>>>> main
 
 `ifndef PULP_FPGA_EMUL
   cluster_clock_gating cg_cell (

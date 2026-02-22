@@ -11,10 +11,8 @@
 //
 // Authors:
 // - Andreas Kurth <akurth@iis.ee.ethz.ch>
-// - Fabian Schuiki <fschuiki@iis.ee.ethz.ch>
-// - Florian Zaruba <zarubaf@iis.ee.ethz.ch>
+// - Luca Valente <luca.valente@unibo.it>
 // - Wolfgang Roenninger <wroennin@iis.ee.ethz.ch>
-// - Luca Valente <luca.valente2@unibo.it>
 
 `include "axi/assign.svh"
 
@@ -24,6 +22,7 @@
 /// ports are in separate clock domains.  IMPORTANT: For each AXI channel, you MUST properly
 /// constrain three paths through the FIFO; see the header of `cdc_fifo_gray` for instructions.
 module axi_cdc #(
+<<<<<<< HEAD
     parameter type aw_chan_t = logic,  // AW Channel Type
     parameter type w_chan_t = logic,  //  W Channel Type
     parameter type b_chan_t = logic,  //  B Channel Type
@@ -33,6 +32,19 @@ module axi_cdc #(
     parameter type axi_resp_t = logic,  // encapsulates request channels
     /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
     parameter int unsigned LogDepth = 1
+=======
+  parameter type aw_chan_t  = logic, // AW Channel Type
+  parameter type w_chan_t   = logic, //  W Channel Type
+  parameter type b_chan_t   = logic, //  B Channel Type
+  parameter type ar_chan_t  = logic, // AR Channel Type
+  parameter type r_chan_t   = logic, //  R Channel Type
+  parameter type axi_req_t  = logic, // encapsulates request channels
+  parameter type axi_resp_t = logic, // encapsulates request channels
+  /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
+  parameter int unsigned  LogDepth   = 1,
+  /// Number of synchronization registers to insert on the async pointers
+  parameter int unsigned  SyncStages = 2
+>>>>>>> main
 ) (
     // slave side - clocked by `src_clk_i`
     input  logic      src_clk_i,
@@ -64,6 +76,7 @@ module axi_cdc #(
       async_data_r_rptr;
 
   axi_cdc_src #(
+<<<<<<< HEAD
       .aw_chan_t (aw_chan_t),
       .w_chan_t  (w_chan_t),
       .b_chan_t  (b_chan_t),
@@ -72,6 +85,17 @@ module axi_cdc #(
       .axi_req_t (axi_req_t),
       .axi_resp_t(axi_resp_t),
       .LogDepth  (LogDepth)
+=======
+    .aw_chan_t  ( aw_chan_t   ),
+    .w_chan_t   ( w_chan_t    ),
+    .b_chan_t   ( b_chan_t    ),
+    .ar_chan_t  ( ar_chan_t   ),
+    .r_chan_t   ( r_chan_t    ),
+    .axi_req_t  ( axi_req_t   ),
+    .axi_resp_t ( axi_resp_t  ),
+    .LogDepth   ( LogDepth    ),
+    .SyncStages ( SyncStages  )
+>>>>>>> main
   ) i_axi_cdc_src (
       .src_clk_i,
       .src_rst_ni,
@@ -95,6 +119,7 @@ module axi_cdc #(
   );
 
   axi_cdc_dst #(
+<<<<<<< HEAD
       .aw_chan_t (aw_chan_t),
       .w_chan_t  (w_chan_t),
       .b_chan_t  (b_chan_t),
@@ -103,6 +128,17 @@ module axi_cdc #(
       .axi_req_t (axi_req_t),
       .axi_resp_t(axi_resp_t),
       .LogDepth  (LogDepth)
+=======
+    .aw_chan_t  ( aw_chan_t   ),
+    .w_chan_t   ( w_chan_t    ),
+    .b_chan_t   ( b_chan_t    ),
+    .ar_chan_t  ( ar_chan_t   ),
+    .r_chan_t   ( r_chan_t    ),
+    .axi_req_t  ( axi_req_t   ),
+    .axi_resp_t ( axi_resp_t  ),
+    .LogDepth   ( LogDepth    ),
+    .SyncStages ( SyncStages  )
+>>>>>>> main
   ) i_axi_cdc_dst (
       .dst_clk_i,
       .dst_rst_ni,
@@ -132,12 +168,23 @@ endmodule
 
 // interface wrapper
 module axi_cdc_intf #(
+<<<<<<< HEAD
     parameter int unsigned AXI_ID_WIDTH = 0,
     parameter int unsigned AXI_ADDR_WIDTH = 0,
     parameter int unsigned AXI_DATA_WIDTH = 0,
     parameter int unsigned AXI_USER_WIDTH = 0,
     /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
     parameter int unsigned LOG_DEPTH = 1
+=======
+  parameter int unsigned AXI_ID_WIDTH   = 0,
+  parameter int unsigned AXI_ADDR_WIDTH = 0,
+  parameter int unsigned AXI_DATA_WIDTH = 0,
+  parameter int unsigned AXI_USER_WIDTH = 0,
+  /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
+  parameter int unsigned LOG_DEPTH = 1,
+  /// Number of synchronization registers to insert on the async pointers
+  parameter int unsigned SYNC_STAGES = 2
+>>>>>>> main
 ) (
     // slave side - clocked by `src_clk_i`
     input logic          src_clk_i,
@@ -172,6 +219,7 @@ module axi_cdc_intf #(
   `AXI_ASSIGN_TO_RESP(dst_resp, dst)
 
   axi_cdc #(
+<<<<<<< HEAD
       .aw_chan_t (aw_chan_t),
       .w_chan_t  (w_chan_t),
       .b_chan_t  (b_chan_t),
@@ -180,6 +228,17 @@ module axi_cdc_intf #(
       .axi_req_t (req_t),
       .axi_resp_t(resp_t),
       .LogDepth  (LOG_DEPTH)
+=======
+    .aw_chan_t  ( aw_chan_t ),
+    .w_chan_t   ( w_chan_t  ),
+    .b_chan_t   ( b_chan_t  ),
+    .ar_chan_t  ( ar_chan_t ),
+    .r_chan_t   ( r_chan_t  ),
+    .axi_req_t  ( req_t     ),
+    .axi_resp_t ( resp_t    ),
+    .LogDepth   ( LOG_DEPTH ),
+    .SyncStages ( SYNC_STAGES )
+>>>>>>> main
   ) i_axi_cdc (
       .src_clk_i,
       .src_rst_ni,
@@ -194,10 +253,19 @@ module axi_cdc_intf #(
 endmodule
 
 module axi_lite_cdc_intf #(
+<<<<<<< HEAD
     parameter int unsigned AXI_ADDR_WIDTH = 0,
     parameter int unsigned AXI_DATA_WIDTH = 0,
     /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
     parameter int unsigned LOG_DEPTH = 1
+=======
+  parameter int unsigned AXI_ADDR_WIDTH = 0,
+  parameter int unsigned AXI_DATA_WIDTH = 0,
+  /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
+  parameter int unsigned LOG_DEPTH = 1,
+  /// Number of synchronization registers to insert on the async pointers
+  parameter int unsigned SYNC_STAGES = 2
+>>>>>>> main
 ) (
     // slave side - clocked by `src_clk_i`
     input logic           src_clk_i,
@@ -230,6 +298,7 @@ module axi_lite_cdc_intf #(
   `AXI_LITE_ASSIGN_TO_RESP(dst_resp, dst)
 
   axi_cdc #(
+<<<<<<< HEAD
       .aw_chan_t (aw_chan_t),
       .w_chan_t  (w_chan_t),
       .b_chan_t  (b_chan_t),
@@ -238,6 +307,17 @@ module axi_lite_cdc_intf #(
       .axi_req_t (req_t),
       .axi_resp_t(resp_t),
       .LogDepth  (LOG_DEPTH)
+=======
+    .aw_chan_t  ( aw_chan_t ),
+    .w_chan_t   ( w_chan_t  ),
+    .b_chan_t   ( b_chan_t  ),
+    .ar_chan_t  ( ar_chan_t ),
+    .r_chan_t   ( r_chan_t  ),
+    .axi_req_t  ( req_t     ),
+    .axi_resp_t ( resp_t    ),
+    .LogDepth   ( LOG_DEPTH ),
+    .SyncStages ( SYNC_STAGES )
+>>>>>>> main
   ) i_axi_cdc (
       .src_clk_i,
       .src_rst_ni,

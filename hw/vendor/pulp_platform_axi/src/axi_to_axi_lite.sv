@@ -13,10 +13,10 @@
 // - Wolfgang Roenninger <wroennin@iis.ee.ethz.ch>
 // - Andreas Kurth <akurth@iis.ee.ethz.ch>
 // - Fabian Schuiki <fschuiki@iis.ee.ethz.ch>
-// - Florian Zaruba <zarubaf@iis.ee.ethz.ch>
 
 /// An AXI4+ATOP to AXI4-Lite converter with atomic transaction and burst support.
 module axi_to_axi_lite #(
+<<<<<<< HEAD
     parameter int unsigned AxiAddrWidth    = 32'd0,
     parameter int unsigned AxiDataWidth    = 32'd0,
     parameter int unsigned AxiIdWidth      = 32'd0,
@@ -28,6 +28,20 @@ module axi_to_axi_lite #(
     parameter type         full_resp_t     = logic,
     parameter type         lite_req_t      = logic,
     parameter type         lite_resp_t     = logic
+=======
+  parameter int unsigned AxiAddrWidth    = 32'd0,
+  parameter int unsigned AxiDataWidth    = 32'd0,
+  parameter int unsigned AxiIdWidth      = 32'd0,
+  parameter int unsigned AxiUserWidth    = 32'd0,
+  parameter int unsigned AxiMaxWriteTxns = 32'd0,
+  parameter int unsigned AxiMaxReadTxns  = 32'd0,
+  parameter bit          FullBW          = 0,     // ID Queue in Full BW mode in axi_burst_splitter
+  parameter bit          FallThrough     = 1'b1,  // FIFOs in Fall through mode in ID reflect
+  parameter type         full_req_t      = logic,
+  parameter type         full_resp_t     = logic,
+  parameter type         lite_req_t      = logic,
+  parameter type         lite_resp_t     = logic
+>>>>>>> main
 ) (
     input  logic       clk_i,       // Clock
     input  logic       rst_ni,      // Asynchronous reset active low
@@ -45,6 +59,7 @@ module axi_to_axi_lite #(
 
   // atomics adapter so that atomics can be resolved
   axi_atop_filter #(
+<<<<<<< HEAD
       .AxiIdWidth     (AxiIdWidth),
       .AxiMaxWriteTxns(AxiMaxWriteTxns),
       .req_t          (full_req_t),
@@ -56,10 +71,24 @@ module axi_to_axi_lite #(
       .slv_resp_o(slv_resp_o),
       .mst_req_o (filtered_req),
       .mst_resp_i(filtered_resp)
+=======
+    .AxiIdWidth      ( AxiIdWidth      ),
+    .AxiMaxWriteTxns ( AxiMaxWriteTxns ),
+    .axi_req_t       ( full_req_t      ),
+    .axi_resp_t      ( full_resp_t     )
+  ) i_axi_atop_filter(
+    .clk_i      ( clk_i         ),
+    .rst_ni     ( rst_ni        ),
+    .slv_req_i  ( slv_req_i     ),
+    .slv_resp_o ( slv_resp_o    ),
+    .mst_req_o  ( filtered_req  ),
+    .mst_resp_i ( filtered_resp )
+>>>>>>> main
   );
 
   // burst splitter so that the id reflect module has no burst accessing it
   axi_burst_splitter #(
+<<<<<<< HEAD
       .MaxReadTxns (AxiMaxReadTxns),
       .MaxWriteTxns(AxiMaxWriteTxns),
       .AddrWidth   (AxiAddrWidth),
@@ -68,6 +97,17 @@ module axi_to_axi_lite #(
       .UserWidth   (AxiUserWidth),
       .req_t       (full_req_t),
       .resp_t      (full_resp_t)
+=======
+    .MaxReadTxns  ( AxiMaxReadTxns  ),
+    .MaxWriteTxns ( AxiMaxWriteTxns ),
+    .FullBW       ( FullBW          ),
+    .AddrWidth    ( AxiAddrWidth    ),
+    .DataWidth    ( AxiDataWidth    ),
+    .IdWidth      ( AxiIdWidth      ),
+    .UserWidth    ( AxiUserWidth    ),
+    .axi_req_t    ( full_req_t      ),
+    .axi_resp_t   ( full_resp_t     )
+>>>>>>> main
   ) i_axi_burst_splitter (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),
@@ -241,6 +281,7 @@ endmodule
 `include "axi/assign.svh"
 `include "axi/typedef.svh"
 module axi_to_axi_lite_intf #(
+<<<<<<< HEAD
     /// AXI bus parameters
     parameter int unsigned AXI_ADDR_WIDTH     = 32'd0,
     parameter int unsigned AXI_DATA_WIDTH     = 32'd0,
@@ -251,6 +292,19 @@ module axi_to_axi_lite_intf #(
     /// Maximum number of outstanding reads.
     parameter int unsigned AXI_MAX_READ_TXNS  = 32'd1,
     parameter bit          FALL_THROUGH       = 1'b1
+=======
+  /// AXI bus parameters
+  parameter int unsigned AXI_ADDR_WIDTH     = 32'd0,
+  parameter int unsigned AXI_DATA_WIDTH     = 32'd0,
+  parameter int unsigned AXI_ID_WIDTH       = 32'd0,
+  parameter int unsigned AXI_USER_WIDTH     = 32'd0,
+  /// Maximum number of outstanding writes.
+  parameter int unsigned AXI_MAX_WRITE_TXNS = 32'd1,
+  /// Maximum number of outstanding reads.
+  parameter int unsigned AXI_MAX_READ_TXNS  = 32'd1,
+  parameter bit          FALL_THROUGH       = 1'b1,
+  parameter bit          FULL_BW            = 0
+>>>>>>> main
 ) (
     input logic           clk_i,
     input logic           rst_ni,
@@ -292,6 +346,7 @@ module axi_to_axi_lite_intf #(
   `AXI_LITE_ASSIGN_TO_RESP(lite_resp, mst)
 
   axi_to_axi_lite #(
+<<<<<<< HEAD
       .AxiAddrWidth   (AXI_ADDR_WIDTH),
       .AxiDataWidth   (AXI_DATA_WIDTH),
       .AxiIdWidth     (AXI_ID_WIDTH),
@@ -303,6 +358,20 @@ module axi_to_axi_lite_intf #(
       .full_resp_t    (full_resp_t),
       .lite_req_t     (lite_req_t),
       .lite_resp_t    (lite_resp_t)
+=======
+    .AxiAddrWidth    ( AXI_ADDR_WIDTH     ),
+    .AxiDataWidth    ( AXI_DATA_WIDTH     ),
+    .AxiIdWidth      ( AXI_ID_WIDTH       ),
+    .AxiUserWidth    ( AXI_USER_WIDTH     ),
+    .AxiMaxWriteTxns ( AXI_MAX_WRITE_TXNS ),
+    .AxiMaxReadTxns  ( AXI_MAX_READ_TXNS  ),
+    .FallThrough     ( FALL_THROUGH       ),  // FIFOs in Fall through mode in ID reflect
+    .FullBW          ( FULL_BW            ),
+    .full_req_t      ( full_req_t         ),
+    .full_resp_t     ( full_resp_t        ),
+    .lite_req_t      ( lite_req_t         ),
+    .lite_resp_t     ( lite_resp_t        )
+>>>>>>> main
   ) i_axi_to_axi_lite (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),

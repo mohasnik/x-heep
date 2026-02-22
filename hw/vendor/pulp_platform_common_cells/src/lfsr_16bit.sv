@@ -12,6 +12,8 @@
 // Date: 5.11.2018
 // Description: 16-bit LFSR
 
+`include "common_cells/assertions.svh"
+
 // --------------
 // 16-bit LFSR
 // --------------
@@ -57,6 +59,7 @@ module lfsr_16bit #(
     end
   end
 
+<<<<<<< HEAD
 `ifndef VERILATOR
   //pragma translate_off
   initial begin
@@ -65,5 +68,19 @@ module lfsr_16bit #(
   end
   //pragma translate_on
 `endif
+=======
+    always_ff @(posedge clk_i or negedge rst_ni) begin : proc_
+        if(~rst_ni) begin
+            shift_q <= SEED;
+        end else begin
+            shift_q <= shift_d;
+        end
+    end
+
+  `ifndef COMMON_CELLS_ASSERTS_OFF
+    `ASSERT_INIT(width_gt_16, WIDTH <= 16,
+                 "WIDTH needs to be less than 16 because of the 16-bit LFSR")
+  `endif
+>>>>>>> main
 
 endmodule

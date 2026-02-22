@@ -183,10 +183,17 @@ module axi_dw_upsizer #(
   axi_mst_resp_t axi_err_resp;
 
   axi_err_slv #(
+<<<<<<< HEAD
       .AxiIdWidth(AxiIdWidth),
       .Resp      (axi_pkg::RESP_SLVERR),
       .req_t     (axi_mst_req_t),
       .resp_t    (axi_mst_resp_t)
+=======
+    .AxiIdWidth(AxiIdWidth          ),
+    .Resp      (axi_pkg::RESP_SLVERR),
+    .axi_req_t (axi_mst_req_t       ),
+    .axi_resp_t(axi_mst_resp_t      )
+>>>>>>> main
   ) i_axi_err_slv (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),
@@ -206,6 +213,7 @@ module axi_dw_upsizer #(
   logic                   mst_req_aw_err;
 
   axi_demux #(
+<<<<<<< HEAD
       .AxiIdWidth (AxiIdWidth),
       .AxiLookBits(AxiIdWidth),
       .aw_chan_t  (aw_chan_t),
@@ -218,6 +226,20 @@ module axi_dw_upsizer #(
       .NoMstPorts (2),
       .MaxTrans   (AxiMaxReads),
       .SpillAw    (1'b1)             // Required to break dependency between AW and W channels
+=======
+    .AxiIdWidth (AxiIdWidth    ),
+    .AxiLookBits(AxiIdWidth    ),
+    .aw_chan_t  (aw_chan_t     ),
+    .w_chan_t   (mst_w_chan_t  ),
+    .b_chan_t   (b_chan_t      ),
+    .ar_chan_t  (ar_chan_t     ),
+    .r_chan_t   (mst_r_chan_t  ),
+    .axi_req_t  (axi_mst_req_t ),
+    .axi_resp_t (axi_mst_resp_t),
+    .NoMstPorts (2             ),
+    .MaxTrans   (AxiMaxReads   ),
+    .SpillAw    (1'b1          ) // Required to break dependency between AW and W channels
+>>>>>>> main
   ) i_axi_demux (
       .clk_i          (clk_i),
       .rst_ni         (rst_ni),
@@ -322,6 +344,9 @@ module axi_dw_upsizer #(
     // Are we idle?
     assign idle_read_upsizer[t] = (r_state_q == R_IDLE) || (r_state_q == R_INJECT_AW);
 
+    // Byte-grouped data signal for the lane steering step
+    slv_data_t r_data;
+
     always_comb begin
       // Maintain state
       r_state_d              = r_state_q;
@@ -353,8 +378,16 @@ module axi_dw_upsizer #(
         r_req_d.ar_throw_error = 1'b0;
       end
 
+<<<<<<< HEAD
       case (r_state_q)
         R_IDLE: begin
+=======
+      // Initialize r_data
+      r_data = '0;
+
+      unique case (r_state_q)
+        R_IDLE : begin
+>>>>>>> main
           // Reset channels
           r_req_d.ar = '0;
 
@@ -375,13 +408,14 @@ module axi_dw_upsizer #(
               r_req_d.burst_len    = slv_req_i.ar.len;
               r_req_d.orig_ar_size = slv_req_i.ar.size;
 
-              case (r_req_d.ar.burst)
+              unique case (r_req_d.ar.burst)
                 axi_pkg::BURST_INCR: begin
                   // Modifiable transaction
                   if (modifiable(r_req_d.ar.cache)) begin
                     // No need to upsize single-beat transactions.
                     if (r_req_d.ar.len != '0) begin
                       // Evaluate output burst length
+<<<<<<< HEAD
                       automatic
                       addr_t
                       start_addr = aligned_addr(
@@ -399,6 +433,14 @@ module axi_dw_upsizer #(
                           ),
                           AxiMstPortMaxSize
                       );
+=======
+                      automatic addr_t start_addr;
+                      automatic addr_t end_addr;
+                      start_addr = aligned_addr(r_req_d.ar.addr, AxiMstPortMaxSize);
+                      end_addr   = aligned_addr(beat_addr(r_req_d.ar.addr,
+                          r_req_d.orig_ar_size, r_req_d.burst_len, r_req_d.ar.burst,
+                          r_req_d.burst_len), AxiMstPortMaxSize);
+>>>>>>> main
                       r_req_d.ar.len  = (end_addr - start_addr) >> AxiMstPortMaxSize;
                       r_req_d.ar.size = AxiMstPortMaxSize;
                       r_state_d       = R_INCR_UPSIZE;
@@ -419,6 +461,8 @@ module axi_dw_upsizer #(
                   // ... but might if this is a single-beat transaction
                   if (r_req_d.ar.len == '0) r_req_d.ar_throw_error = 1'b0;
                 end
+
+                default: ;
               endcase
             end
           end
@@ -445,13 +489,14 @@ module axi_dw_upsizer #(
           // Default state
           r_state_d            = R_PASSTHROUGH;
 
-          case (r_req_d.ar.burst)
+          unique case (r_req_d.ar.burst)
             axi_pkg::BURST_INCR: begin
               // Modifiable transaction
               if (modifiable(r_req_d.ar.cache)) begin
                 // No need to upsize single-beat transactions.
                 if (r_req_d.ar.len != '0) begin
                   // Evaluate output burst length
+<<<<<<< HEAD
                   automatic addr_t start_addr = aligned_addr(r_req_d.ar.addr, AxiMstPortMaxSize);
                   automatic
                   addr_t
@@ -465,6 +510,14 @@ module axi_dw_upsizer #(
                       ),
                       AxiMstPortMaxSize
                   );
+=======
+                  automatic addr_t start_addr;
+                  automatic addr_t end_addr;
+                  start_addr = aligned_addr(r_req_d.ar.addr, AxiMstPortMaxSize);
+                  end_addr   = aligned_addr(beat_addr(r_req_d.ar.addr,
+                      r_req_d.orig_ar_size, r_req_d.burst_len, r_req_d.ar.burst,
+                      r_req_d.burst_len), AxiMstPortMaxSize);
+>>>>>>> main
                   r_req_d.ar.len  = (end_addr - start_addr) >> AxiMstPortMaxSize;
                   r_req_d.ar.size = AxiMstPortMaxSize;
                   r_state_d       = R_INCR_UPSIZE;
@@ -485,6 +538,8 @@ module axi_dw_upsizer #(
               // ... but might if this is a single-beat transaction
               if (r_req_d.ar.len == '0) r_req_d.ar_throw_error = 1'b0;
             end
+
+            default: ;
           endcase
         end
 
@@ -492,6 +547,7 @@ module axi_dw_upsizer #(
           // Request was accepted
           if (!r_req_q.ar_valid)
             if (mst_resp.r_valid && (idx_r_upsizer == t) && r_upsizer_valid) begin
+<<<<<<< HEAD
               automatic
               addr_t
               mst_port_offset = AxiMstPortStrbWidth == 1 ? '0 : r_req_q.ar.addr[idx_width(
@@ -504,6 +560,12 @@ module axi_dw_upsizer #(
               )-1:0];
 
               automatic slv_data_t r_data = slv_r_tran[t].data;
+=======
+              automatic logic [idx_width(AxiMstPortStrbWidth)-1:0] mst_port_offset;
+              automatic logic [idx_width(AxiSlvPortStrbWidth)-1:0] slv_port_offset;
+              mst_port_offset = AxiMstPortStrbWidth == 1 ? '0 : r_req_q.ar.addr[idx_width(AxiMstPortStrbWidth)-1:0];
+              slv_port_offset = AxiSlvPortStrbWidth == 1 ? '0 : r_req_q.ar.addr[idx_width(AxiSlvPortStrbWidth)-1:0];
+>>>>>>> main
 
               // Valid output
               slv_r_valid_tran[t] = 1'b1;
@@ -523,7 +585,7 @@ module axi_dw_upsizer #(
               if (slv_r_ready_tran[t]) begin
                 r_req_d.burst_len = r_req_q.burst_len - 1;
 
-                case (r_req_q.ar.burst)
+                unique case (r_req_q.ar.burst)
                   axi_pkg::BURST_INCR: begin
                     r_req_d.ar.addr = aligned_addr(r_req_q.ar.addr, r_req_q.orig_ar_size) +
                         (1 << r_req_q.orig_ar_size);
@@ -531,8 +593,10 @@ module axi_dw_upsizer #(
                   axi_pkg::BURST_FIXED: begin
                     r_req_d.ar.addr = r_req_q.ar.addr;
                   end
+                  default: ;
                 endcase
 
+<<<<<<< HEAD
                 case (r_state_q)
                   R_PASSTHROUGH: mst_r_ready_tran[t] = 1'b1;
 
@@ -543,12 +607,25 @@ module axi_dw_upsizer #(
                           r_req_q.ar.addr, AxiMstPortMaxSize
                       )))
                     mst_r_ready_tran[t] = 1'b1;
+=======
+                unique case (r_state_q)
+                  R_PASSTHROUGH:
+                    mst_r_ready_tran[t] = 1'b1;
+
+                  R_INCR_UPSIZE:
+                    if (r_req_q.burst_len == 0 || (aligned_addr(r_req_d.ar.addr, AxiMstPortMaxSize) != aligned_addr(r_req_q.ar.addr, AxiMstPortMaxSize)))
+                      mst_r_ready_tran[t] = 1'b1;
+
+                  default: ;
+>>>>>>> main
                 endcase
 
                 if (r_req_q.burst_len == '0) r_state_d = R_IDLE;
               end
             end
         end
+
+        default: ;
       endcase
     end
 
@@ -575,6 +652,9 @@ module axi_dw_upsizer #(
 
   w_state_e w_state_d, w_state_q;
 
+  // Byte-grouped data signal for the serialization step
+  mst_data_t w_data;
+
   always_comb begin
     inject_aw_into_ar_req = 1'b0;
 
@@ -595,6 +675,9 @@ module axi_dw_upsizer #(
     mst_req.w_valid       = w_req_q.w_valid;
     slv_resp_o.w_ready    = '0;
 
+    // Initialize w_data
+    w_data = w_req_q.w.data;
+
     // B Channel (No latency)
     slv_resp_o.b          = mst_resp.b;
     slv_resp_o.b_valid    = mst_resp.b_valid;
@@ -606,11 +689,16 @@ module axi_dw_upsizer #(
       w_req_d.aw_throw_error = 1'b0;
     end
 
-    case (w_state_q)
+    unique case (w_state_q)
       W_PASSTHROUGH, W_INCR_UPSIZE: begin
         // Got a grant on the W channel
         if (mst_req.w_valid && mst_resp.w_ready) begin
+<<<<<<< HEAD
           w_req_d.w       = '0;
+=======
+          w_data          = '0  ;
+          w_req_d.w       = '0  ;
+>>>>>>> main
           w_req_d.w_valid = 1'b0;
         end
 
@@ -620,6 +708,7 @@ module axi_dw_upsizer #(
           slv_resp_o.w_ready = ~mst_req.w_valid || mst_resp.w_ready;
 
           if (slv_req_i.w_valid && slv_resp_o.w_ready) begin
+<<<<<<< HEAD
             automatic
             addr_t
             mst_port_offset = AxiMstPortStrbWidth == 1 ? '0 : w_req_q.aw.addr[idx_width(
@@ -632,6 +721,12 @@ module axi_dw_upsizer #(
             )-1:0];
 
             automatic mst_data_t w_data = w_req_d.w.data;
+=======
+            automatic addr_t mst_port_offset;
+            automatic addr_t slv_port_offset;
+            mst_port_offset = AxiMstPortStrbWidth == 1 ? '0 : w_req_q.aw.addr[idx_width(AxiMstPortStrbWidth)-1:0];
+            slv_port_offset = AxiSlvPortStrbWidth == 1 ? '0 : w_req_q.aw.addr[idx_width(AxiSlvPortStrbWidth)-1:0];
+>>>>>>> main
 
             // Serialization
             for (int b = 0; b < AxiMstPortStrbWidth; b++)
@@ -647,7 +742,7 @@ module axi_dw_upsizer #(
             w_req_d.w.last    = (w_req_q.burst_len == 0);
             w_req_d.w.user    = slv_req_i.w.user;
 
-            case (w_req_q.aw.burst)
+            unique case (w_req_q.aw.burst)
               axi_pkg::BURST_INCR: begin
                 w_req_d.aw.addr = aligned_addr(w_req_q.aw.addr, w_req_q.orig_aw_size) +
                     (1 << w_req_q.orig_aw_size);
@@ -655,14 +750,16 @@ module axi_dw_upsizer #(
               axi_pkg::BURST_FIXED: begin
                 w_req_d.aw.addr = w_req_q.aw.addr;
               end
+              default: ;
             endcase
 
-            case (w_state_q)
+            unique case (w_state_q)
               W_PASSTHROUGH:
               // Forward data as soon as we can
               w_req_d.w_valid = 1'b1;
 
               W_INCR_UPSIZE:
+<<<<<<< HEAD
               // Forward when the burst is finished, or after filling up a word
               if (w_req_q.burst_len == 0 || (aligned_addr(
                       w_req_d.aw.addr, AxiMstPortMaxSize
@@ -670,6 +767,12 @@ module axi_dw_upsizer #(
                       w_req_q.aw.addr, AxiMstPortMaxSize
                   )))
                 w_req_d.w_valid = 1'b1;
+=======
+                // Forward when the burst is finished, or after filling up a word
+                if (w_req_q.burst_len == 0 || (aligned_addr(w_req_d.aw.addr, AxiMstPortMaxSize) != aligned_addr(w_req_q.aw.addr, AxiMstPortMaxSize)))
+                  w_req_d.w_valid = 1'b1;
+              default: ;
+>>>>>>> main
             endcase
           end
         end
@@ -680,6 +783,7 @@ module axi_dw_upsizer #(
             w_state_d          = W_IDLE;
           end
       end
+      default: ;
     endcase
 
     // Can start a new request as soon as w_state_d is W_IDLE
@@ -691,8 +795,13 @@ module axi_dw_upsizer #(
       w_req_d.w              = '0;
       w_req_d.w_valid        = 1'b0;
 
+<<<<<<< HEAD
       if (slv_req_i.aw_valid && slv_req_i.aw.atop[5]) begin  // ATOP with an R response
         inject_aw_into_ar_req = 1'b1;
+=======
+      if (slv_req_i.aw_valid && slv_req_i.aw.atop[axi_pkg::ATOP_R_RESP]) begin // ATOP with an R response
+        inject_aw_into_ar_req = 1'b1                 ;
+>>>>>>> main
         slv_resp_o.aw_ready   = inject_aw_into_ar_gnt;
       end else begin  // Regular AW
         slv_resp_o.aw_ready = 1'b1;
@@ -710,13 +819,14 @@ module axi_dw_upsizer #(
         w_req_d.burst_len    = slv_req_i.aw.len;
         w_req_d.orig_aw_size = slv_req_i.aw.size;
 
-        case (slv_req_i.aw.burst)
+        unique case (slv_req_i.aw.burst)
           axi_pkg::BURST_INCR: begin
             // Modifiable transaction
             if (modifiable(slv_req_i.aw.cache))
               // No need to upsize single-beat transactions.
               if (slv_req_i.aw.len != '0) begin
                 // Evaluate output burst length
+<<<<<<< HEAD
                 automatic addr_t start_addr = aligned_addr(slv_req_i.aw.addr, AxiMstPortMaxSize);
                 automatic
                 addr_t
@@ -730,6 +840,14 @@ module axi_dw_upsizer #(
                     ),
                     AxiMstPortMaxSize
                 );
+=======
+                automatic addr_t start_addr;
+                automatic addr_t end_addr;
+                start_addr = aligned_addr(slv_req_i.aw.addr, AxiMstPortMaxSize);
+                end_addr   = aligned_addr(beat_addr(slv_req_i.aw.addr,
+                    slv_req_i.aw.size, slv_req_i.aw.len, slv_req_i.aw.burst, slv_req_i.aw.len),
+                    AxiMstPortMaxSize);
+>>>>>>> main
 
                 w_req_d.aw.len  = (end_addr - start_addr) >> AxiMstPortMaxSize;
                 w_req_d.aw.size = AxiMstPortMaxSize;
@@ -750,6 +868,8 @@ module axi_dw_upsizer #(
             // ... but might if this is a single-beat transaction
             if (slv_req_i.aw.len == '0) w_req_d.aw_throw_error = 1'b0;
           end
+
+          default: ;
         endcase
       end
     end

@@ -266,7 +266,12 @@ module cve2_id_stage #(
   logic [31:0] alu_operand_b;
 
   // CV-X-IF
+<<<<<<< HEAD
   logic        stall_coproc;
+=======
+  logic stall_coproc;
+  logic scoreboard_busy;
+>>>>>>> main
 
   ///////////////
   // ID-EX FSM //
@@ -290,20 +295,79 @@ module cve2_id_stage #(
   if (XInterface) begin : gen_xif
 
     logic coproc_done;
+    logic [X_INSTR_INFLIGHT-1:0] scoreboard_d, scoreboard_q;
+    id_t x_instr_id_d, x_instr_id_q;
+
+    logic scoreboard_free;
+
+    // The cve2 can issue up to X_INSTR_INFLIGHT instructions over the X-IF 
+    // without waiting for their completion.
+    //
+    // Each issued instruction, identified by a unique ID, sets its corresponding 
+    // scoreboard bit to `1`. When the instruction completes, that bit is cleared 
+    // back to `0`.
+    //
+    // The cve2 always issues instructions in order, but the co-processor may 
+    // complete (commit) them out of order.
+    //
+    // Once the scoreboard has issued the X_INSTR_INFLIGHT-th instruction, 
+    // the instruction ID counter wraps around to 0.
+    //
+    // If the previous instruction with ID 0 has already completed 
+    // (i.e., scoreboard[0] == 0), the cve2 can issue a new instruction with ID 0. 
+    // Otherwise, it waits for the instruction with ID 0 to finish before reusing it.
+    //
+    // This behavior applies similarly to all other instruction IDs.
+
+    assign scoreboard_free = ~scoreboard_q[x_instr_id_q];
+
+
+    assign scoreboard_busy = (scoreboard_q != '0);
+
+
+    always_comb begin
+      scoreboard_d = scoreboard_q;
+      x_instr_id_d = x_instr_id_q;
+      if (x_issue_valid_o && x_issue_ready_i && x_issue_resp_i.accept) begin
+        scoreboard_d[x_instr_id_q] = 1'b1;
+        x_instr_id_d = x_instr_id_q + 1'b1;
+      end
+      if (x_result_valid_i) begin
+        scoreboard_d[x_result_i.id] = 1'b0;
+      end
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin : x_scoreboard
+      if (!rst_ni) begin
+        scoreboard_q <= '0;
+        x_instr_id_q <= '0;
+      end else begin
+        scoreboard_q <= scoreboard_d;
+        x_instr_id_q <= x_instr_id_d;
+      end
+    end
+
     assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i : (illegal_insn_dec ? coproc_done : ex_valid_i);
 
     assign coproc_done = (x_issue_valid_o & x_issue_ready_i & ~x_issue_resp_i.writeback) | (x_result_valid_i & x_result_i.we);
 
     // Issue Interface
+<<<<<<< HEAD
     assign x_issue_valid_o = instr_executing & illegal_insn_dec & (id_fsm_q == FIRST_CYCLE);
     assign x_issue_req_o.instr = instr_rdata_i;
     assign x_issue_req_o.id = '0;
+=======
+    assign x_issue_valid_o      = instr_executing & illegal_insn_dec & (id_fsm_q == FIRST_CYCLE) & scoreboard_free;
+    assign x_issue_req_o.instr  = instr_rdata_i;
+    assign x_issue_req_o.id     = x_instr_id_q;
+>>>>>>> main
     assign x_issue_req_o.hartid = hart_id_i;
 
     // Register Interface
     assign x_register_o.rs[0] = rf_rdata_a_fwd;
     assign x_register_o.rs[1] = rf_rdata_b_fwd;
     assign x_register_o.rs_valid = '1;
+<<<<<<< HEAD
     assign x_register_o.id = '0;
     assign x_register_o.hartid = hart_id_i;
 
@@ -312,6 +376,14 @@ module cve2_id_stage #(
     assign x_commit_o.commit_kill = 1'b0;
     assign x_commit_o.id = '0;
     assign x_commit_o.hartid = hart_id_i;
+=======
+    assign x_register_o.id       = x_instr_id_q;
+    assign x_register_o.hartid   = hart_id_i;
+    assign x_commit_valid_o       = x_issue_valid_o & x_issue_ready_i;
+    assign x_commit_o.commit_kill = 1'b0;
+    assign x_commit_o.id          = x_instr_id_q;
+    assign x_commit_o.hartid      = hart_id_i;
+>>>>>>> main
 
     // Result Interface
     assign x_result_ready_o = 1'b1;
@@ -324,7 +396,12 @@ module cve2_id_stage #(
     x_result_t     unused_x_result;
 
 
+<<<<<<< HEAD
     assign multicycle_done       = lsu_req_dec ? lsu_resp_valid_i : ex_valid_i;
+=======
+    assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i : ex_valid_i;
+    assign scoreboard_busy = 1'b0;
+>>>>>>> main
 
     // Issue Interface
     assign x_issue_valid_o       = 1'b0;
@@ -567,6 +644,7 @@ module cve2_id_stage #(
       .ebrk_insn_i     (ebrk_insn),
       .csr_pipe_flush_i(csr_pipe_flush),
 
+<<<<<<< HEAD
       // from IF-ID pipeline
       .instr_valid_i          (instr_valid_i),
       .instr_i                (instr_rdata_i),
@@ -575,6 +653,18 @@ module cve2_id_stage #(
       .instr_fetch_err_i      (instr_fetch_err_i),
       .instr_fetch_err_plus2_i(instr_fetch_err_plus2_i),
       .pc_id_i                (pc_id_i),
+=======
+    .xif_scoreboard_busy_i(scoreboard_busy),
+
+    // from IF-ID pipeline
+    .instr_valid_i          (instr_valid_i),
+    .instr_i                (instr_rdata_i),
+    .instr_compressed_i     (instr_rdata_c_i),
+    .instr_is_compressed_i  (instr_is_compressed_i),
+    .instr_fetch_err_i      (instr_fetch_err_i),
+    .instr_fetch_err_plus2_i(instr_fetch_err_plus2_i),
+    .pc_id_i                (pc_id_i),
+>>>>>>> main
 
       // to IF-ID pipeline
       .instr_valid_clear_o(instr_valid_clear_o),
@@ -709,7 +799,6 @@ module cve2_id_stage #(
   // MULTI_CYCLE if it requires multiple cycles to complete regardless of stalls and other
   // considerations. An instruction may be held in FIRST_CYCLE if it's unable to begin executing
   // (this is controlled by instr_executing).
-
   always_comb begin
     id_fsm_d         = id_fsm_q;
     rf_we_raw        = rf_we_dec;

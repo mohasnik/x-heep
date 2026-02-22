@@ -10,10 +10,8 @@
 // specific language governing permissions and limitations under the License.
 //
 // Authors:
+// - Luca Valente <luca.valente@unibo.it>
 // - Andreas Kurth <akurth@iis.ee.ethz.ch>
-// - Fabian Schuiki <fschuiki@iis.ee.ethz.ch>
-// - Florian Zaruba <zarubaf@iis.ee.ethz.ch>
-// - Luca Valente <luca.valente2@unibo.it>
 
 `include "axi/assign.svh"
 `include "axi/typedef.svh"
@@ -24,6 +22,7 @@
 /// a CDC FIFO.  IMPORTANT: For each AXI channel, you MUST properly constrain three paths through
 /// the FIFO; see the header of `cdc_fifo_gray` for instructions.
 module axi_cdc_dst #(
+<<<<<<< HEAD
     /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
     parameter int unsigned LogDepth = 1,
     parameter type aw_chan_t = logic,
@@ -33,6 +32,19 @@ module axi_cdc_dst #(
     parameter type r_chan_t = logic,
     parameter type axi_req_t = logic,
     parameter type axi_resp_t = logic
+=======
+  /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
+  parameter int unsigned LogDepth = 1,
+  /// Number of synchronization registers to insert on the async pointers
+  parameter int unsigned SyncStages = 2,
+  parameter type aw_chan_t = logic,
+  parameter type w_chan_t = logic,
+  parameter type b_chan_t = logic,
+  parameter type ar_chan_t = logic,
+  parameter type r_chan_t = logic,
+  parameter type axi_req_t = logic,
+  parameter type axi_resp_t = logic
+>>>>>>> main
 ) (
     // asynchronous slave port
     input  aw_chan_t  [2**LogDepth-1:0] async_data_slave_aw_data_i,
@@ -58,8 +70,20 @@ module axi_cdc_dst #(
 );
 
   cdc_fifo_gray_dst #(
+<<<<<<< HEAD
       .T        (logic [$bits(aw_chan_t)-1:0]),
       .LOG_DEPTH(LogDepth)
+=======
+`ifdef QUESTA
+    // Workaround for a bug in Questa: Pass flat logic vector instead of struct to type parameter.
+    .T          ( logic [$bits(aw_chan_t)-1:0]  ),
+`else
+    // Other tools, such as VCS, have problems with type parameters constructed through `$bits()`.
+    .T          ( aw_chan_t                     ),
+`endif
+    .LOG_DEPTH   ( LogDepth                     ),
+    .SYNC_STAGES ( SyncStages                   )
+>>>>>>> main
   ) i_cdc_fifo_gray_dst_aw (
       .async_data_i(async_data_slave_aw_data_i),
       .async_wptr_i(async_data_slave_aw_wptr_i),
@@ -72,8 +96,18 @@ module axi_cdc_dst #(
   );
 
   cdc_fifo_gray_dst #(
+<<<<<<< HEAD
       .T        (logic [$bits(w_chan_t)-1:0]),
       .LOG_DEPTH(LogDepth)
+=======
+`ifdef QUESTA
+    .T          ( logic [$bits(w_chan_t)-1:0] ),
+`else
+    .T          ( w_chan_t                    ),
+`endif
+    .LOG_DEPTH   ( LogDepth                    ),
+    .SYNC_STAGES ( SyncStages                  )
+>>>>>>> main
   ) i_cdc_fifo_gray_dst_w (
       .async_data_i(async_data_slave_w_data_i),
       .async_wptr_i(async_data_slave_w_wptr_i),
@@ -86,8 +120,18 @@ module axi_cdc_dst #(
   );
 
   cdc_fifo_gray_src #(
+<<<<<<< HEAD
       .T        (logic [$bits(b_chan_t)-1:0]),
       .LOG_DEPTH(LogDepth)
+=======
+`ifdef QUESTA
+    .T          ( logic [$bits(b_chan_t)-1:0] ),
+`else
+    .T          ( b_chan_t                    ),
+`endif
+    .LOG_DEPTH   ( LogDepth                    ),
+    .SYNC_STAGES ( SyncStages                  )
+>>>>>>> main
   ) i_cdc_fifo_gray_src_b (
       .src_clk_i   (dst_clk_i),
       .src_rst_ni  (dst_rst_ni),
@@ -100,8 +144,18 @@ module axi_cdc_dst #(
   );
 
   cdc_fifo_gray_dst #(
+<<<<<<< HEAD
       .T        (logic [$bits(ar_chan_t)-1:0]),
       .LOG_DEPTH(LogDepth)
+=======
+`ifdef QUESTA
+    .T          ( logic [$bits(ar_chan_t)-1:0]  ),
+`else
+    .T          ( ar_chan_t                     ),
+`endif
+    .LOG_DEPTH   ( LogDepth                     ),
+    .SYNC_STAGES ( SyncStages                   )
+>>>>>>> main
   ) i_cdc_fifo_gray_dst_ar (
       .dst_clk_i,
       .dst_rst_ni,
@@ -114,8 +168,18 @@ module axi_cdc_dst #(
   );
 
   cdc_fifo_gray_src #(
+<<<<<<< HEAD
       .T        (logic [$bits(r_chan_t)-1:0]),
       .LOG_DEPTH(LogDepth)
+=======
+`ifdef QUESTA
+    .T          ( logic [$bits(r_chan_t)-1:0] ),
+`else
+    .T          ( r_chan_t                    ),
+`endif
+    .LOG_DEPTH   ( LogDepth                    ),
+    .SYNC_STAGES ( SyncStages                  )
+>>>>>>> main
   ) i_cdc_fifo_gray_src_r (
       .src_clk_i   (dst_clk_i),
       .src_rst_ni  (dst_rst_ni),
@@ -131,12 +195,23 @@ endmodule
 
 
 module axi_cdc_dst_intf #(
+<<<<<<< HEAD
     parameter int unsigned AXI_ID_WIDTH = 0,
     parameter int unsigned AXI_ADDR_WIDTH = 0,
     parameter int unsigned AXI_DATA_WIDTH = 0,
     parameter int unsigned AXI_USER_WIDTH = 0,
     /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
     parameter int unsigned LOG_DEPTH = 1
+=======
+  parameter int unsigned AXI_ID_WIDTH = 0,
+  parameter int unsigned AXI_ADDR_WIDTH = 0,
+  parameter int unsigned AXI_DATA_WIDTH = 0,
+  parameter int unsigned AXI_USER_WIDTH = 0,
+  /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
+  parameter int unsigned LOG_DEPTH = 1,
+  /// Number of synchronization registers to insert on the async pointers
+  parameter int unsigned SYNC_STAGES = 2
+>>>>>>> main
 ) (
     // asynchronous slave port
           AXI_BUS_ASYNC_GRAY.Slave src,
@@ -163,6 +238,7 @@ module axi_cdc_dst_intf #(
   resp_t dst_resp;
 
   axi_cdc_dst #(
+<<<<<<< HEAD
       .aw_chan_t (aw_chan_t),
       .w_chan_t  (w_chan_t),
       .b_chan_t  (b_chan_t),
@@ -171,6 +247,17 @@ module axi_cdc_dst_intf #(
       .axi_req_t (req_t),
       .axi_resp_t(resp_t),
       .LogDepth  (LOG_DEPTH)
+=======
+    .aw_chan_t  ( aw_chan_t   ),
+    .w_chan_t   ( w_chan_t    ),
+    .b_chan_t   ( b_chan_t    ),
+    .ar_chan_t  ( ar_chan_t   ),
+    .r_chan_t   ( r_chan_t    ),
+    .axi_req_t  ( req_t       ),
+    .axi_resp_t ( resp_t      ),
+    .LogDepth   ( LOG_DEPTH   ),
+    .SyncStages ( SYNC_STAGES )
+>>>>>>> main
   ) i_axi_cdc_dst (
       .async_data_slave_aw_data_i(src.aw_data),
       .async_data_slave_aw_wptr_i(src.aw_wptr),
@@ -200,10 +287,19 @@ endmodule
 
 
 module axi_lite_cdc_dst_intf #(
+<<<<<<< HEAD
     parameter int unsigned AXI_ADDR_WIDTH = 0,
     parameter int unsigned AXI_DATA_WIDTH = 0,
     /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
     parameter int unsigned LOG_DEPTH = 1
+=======
+  parameter int unsigned AXI_ADDR_WIDTH = 0,
+  parameter int unsigned AXI_DATA_WIDTH = 0,
+  /// Depth of the FIFO crossing the clock domain, given as 2**LOG_DEPTH.
+  parameter int unsigned LOG_DEPTH = 1,
+  /// Number of synchronization registers to insert on the async pointers
+  parameter int unsigned SYNC_STAGES = 2
+>>>>>>> main
 ) (
     // asynchronous slave port
           AXI_LITE_ASYNC_GRAY.Slave src,
@@ -228,6 +324,7 @@ module axi_lite_cdc_dst_intf #(
   resp_t dst_resp;
 
   axi_cdc_dst #(
+<<<<<<< HEAD
       .aw_chan_t (aw_chan_t),
       .w_chan_t  (w_chan_t),
       .b_chan_t  (b_chan_t),
@@ -236,6 +333,17 @@ module axi_lite_cdc_dst_intf #(
       .axi_req_t (req_t),
       .axi_resp_t(resp_t),
       .LogDepth  (LOG_DEPTH)
+=======
+    .aw_chan_t  ( aw_chan_t   ),
+    .w_chan_t   ( w_chan_t    ),
+    .b_chan_t   ( b_chan_t    ),
+    .ar_chan_t  ( ar_chan_t   ),
+    .r_chan_t   ( r_chan_t    ),
+    .axi_req_t  ( req_t       ),
+    .axi_resp_t ( resp_t      ),
+    .LogDepth   ( LOG_DEPTH   ),
+    .SyncStages ( SYNC_STAGES )
+>>>>>>> main
   ) i_axi_cdc_dst (
       .async_data_slave_aw_data_i(src.aw_data),
       .async_data_slave_aw_wptr_i(src.aw_wptr),

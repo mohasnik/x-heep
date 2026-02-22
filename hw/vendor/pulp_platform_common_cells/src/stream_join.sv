@@ -28,11 +28,17 @@ module stream_join #(
     input  logic             oup_ready_i
 );
 
-  assign oup_valid_o = (&inp_valid_i);
-  for (genvar i = 0; i < N_INP; i++) begin : gen_inp_ready
-    assign inp_ready_o[i] = oup_valid_o & oup_ready_i;
-  end
+  stream_join_dynamic #(
+    .N_INP(N_INP)
+  ) i_stream_join_dynamic (
+    .inp_valid_i(inp_valid_i),
+    .inp_ready_o(inp_ready_o),
+    .sel_i      ({N_INP{1'b1}}),
+    .oup_valid_o(oup_valid_o),
+    .oup_ready_i(oup_ready_i)
+  );
 
+<<<<<<< HEAD
   // pragma translate_off
 `ifndef VERILATOR
   initial begin : p_assertions
@@ -41,4 +47,6 @@ module stream_join #(
   end
 `endif
   // pragma translate_on
+=======
+>>>>>>> main
 endmodule

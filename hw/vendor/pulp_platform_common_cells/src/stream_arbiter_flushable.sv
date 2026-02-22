@@ -54,11 +54,19 @@ module stream_arbiter_flushable #(
 
   end else if (ARBITER == "prio") begin : gen_prio_arb
     rr_arb_tree #(
+<<<<<<< HEAD
         .NumIn    (N_INP),
         .DataType (DATA_T),
         .ExtPrio  (1'b1),
         .AxiVldRdy(1'b1),
         .LockIn   (1'b1)
+=======
+      .NumIn      (N_INP),
+      .DataType   (DATA_T),
+      .ExtPrio    (1'b1),
+      .AxiVldRdy  (1'b1),
+      .LockIn     (1'b0)
+>>>>>>> main
     ) i_arbiter (
         .clk_i,
         .rst_ni,
@@ -74,9 +82,9 @@ module stream_arbiter_flushable #(
     );
 
   end else begin : gen_arb_error
-    // pragma translate_off
+    `ifndef SYNTHESIS
     $fatal(1, "Invalid value for parameter 'ARBITER'!");
-    // pragma translate_on
+    `endif
   end
 
 endmodule

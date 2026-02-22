@@ -2,6 +2,8 @@
 // Solderpad Hardware License, Version 0.51, see LICENSE for details.
 // SPDX-License-Identifier: SHL-0.51
 
+`include "common_cells/assertions.svh"
+
 /// A trailing zero counter / leading zero counter.
 /// Set MODE to 0 for trailing zero counter => cnt_o is the number of trailing zeros (from the LSB)
 /// Set MODE to 1 for leading zero counter  => cnt_o is the number of leading zeros  (from the MSB)
@@ -39,6 +41,7 @@ module lzc #(
 
     localparam int unsigned NumLevels = $clog2(WIDTH);
 
+<<<<<<< HEAD
 `ifndef VERILATOR
     // pragma translate_off
     initial begin
@@ -47,6 +50,11 @@ module lzc #(
     end
     // pragma translate_on
 `endif
+=======
+  `ifndef COMMON_CELLS_ASSERTS_OFF
+    `ASSERT_INIT(width_0, WIDTH > 0, "input must be at least one bit wide")
+  `endif
+>>>>>>> main
 
     logic [WIDTH-1:0][NumLevels-1:0] index_lut;
     logic [2**NumLevels-1:0] sel_nodes;
@@ -102,6 +110,7 @@ module lzc #(
 
   end : gen_lzc
 
+<<<<<<< HEAD
   // pragma translate_off
 `ifndef VERILATOR
   initial begin : validate_params
@@ -110,5 +119,10 @@ module lzc #(
   end
 `endif
   // pragma translate_on
+=======
+`ifndef COMMON_CELLS_ASSERTS_OFF
+  `ASSERT_INIT(width_0, WIDTH >= 1, "The WIDTH must at least be one bit wide!")
+`endif
+>>>>>>> main
 
 endmodule : lzc

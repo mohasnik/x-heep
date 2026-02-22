@@ -11,10 +11,13 @@
 // Author: Manuel Eggimann <meggimann@iis.ee.ethz.ch>
 
 // Description: This module calculates the hamming weight (number of ones) in
-// its input vector using a balanced binary adder tree. Recursive instantiation
-// is used to build the tree.  Any unsigned INPUT_WIDTH larger or equal 2 is
-// legal.  The module pads the signal internally to the next power of two.  The
-// output result width is ceil(log2(INPUT_WIDTH))+1.
+// its input vector. Any unsigned INPUT_WIDTH larger or equal 1 is legal. The output result
+// width is ceil(log2(INPUT_WIDTH))+1.
+//
+// This module used to be implemented using a binary added tree. However,
+// the heuristics of modern logic Synthesizers work much better with a flat high
+// level description using a for loop and yield exactly the same or even better results.
+
 
 module popcount #(
     parameter  int unsigned INPUT_WIDTH   = 256,
@@ -24,6 +27,7 @@ module popcount #(
     output logic [PopcountWidth-1:0] popcount_o
 );
 
+<<<<<<< HEAD
   localparam int unsigned PaddedWidth = 1 << $clog2(INPUT_WIDTH);
 
   logic [PaddedWidth-1:0] padded_input;
@@ -60,5 +64,16 @@ module popcount #(
 
   //Output assignment
   assign popcount_o = left_child_result + right_child_result;
+=======
+  if (INPUT_WIDTH < 1)
+    $error("INPUT_WIDTH must be larger or equal to 1.");
+
+  always_comb begin
+    popcount_o = 0;
+    for (int i = 0; i < INPUT_WIDTH; i++) begin
+      popcount_o += data_i[i];
+    end
+  end
+>>>>>>> main
 
 endmodule : popcount

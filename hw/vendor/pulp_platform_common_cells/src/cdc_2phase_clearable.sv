@@ -49,6 +49,7 @@
 /* verilator lint_off DECLFILENAME */
 
 `include "common_cells/registers.svh"
+`include "common_cells/assertions.svh"
 
 module cdc_2phase_clearable #(
     parameter type T = logic,
@@ -187,10 +188,14 @@ module cdc_2phase_clearable #(
   assign dst_clear_pending_o = s_dst_isolate_req;
 
 
-`ifndef VERILATOR
+`ifndef COMMON_CELLS_ASSERTS_OFF
 
+<<<<<<< HEAD
   no_valid_i_during_clear_i :
   assert property (@(posedge src_clk_i) disable iff (!src_rst_ni) src_clear_i |-> !src_valid_i);
+=======
+  `ASSERT(no_valid_i_during_clear_i, src_clear_i |-> !src_valid_i, src_clk_i, !src_rst_ni)
+>>>>>>> main
 
 `endif
 
@@ -257,6 +262,7 @@ module cdc_2phase_src_clearable #(
   assign async_req_o = req_src_q;
   assign async_data_o = data_src_q;
 
+<<<<<<< HEAD
   // Assertions
 `ifndef VERILATOR
   // pragma translate_off
@@ -265,6 +271,12 @@ module cdc_2phase_src_clearable #(
   else $fatal(1, "No request allowed while clear_i is asserted.");
 
   // pragma translate_on
+=======
+// Assertions
+`ifndef COMMON_CELLS_ASSERTS_OFF
+  `ASSUME(no_clear_and_request, clear_i |-> ~valid_i, clk_i, !rst_ni,
+          "No request allowed while clear_i is asserted.")
+>>>>>>> main
 `endif
 
 endmodule

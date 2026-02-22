@@ -13,8 +13,14 @@
 // - Andreas Kurth <akurth@iis.ee.ethz.ch>
 
 `include "common_cells/registers.svh"
+
 /// Serialize all AXI transactions to a single ID (zero).
+///
+/// This module contains one queue with slave port IDs for the read direction and one for the write
+/// direction.  These queues are used to reconstruct the ID of responses at the slave port.  The
+/// depth of each queue is defined by `MaxReadTxns` and `MaxWriteTxns`, respectively.
 module axi_serializer #(
+<<<<<<< HEAD
     /// Maximum number of in flight read transactions.
     parameter int unsigned MaxReadTxns  = 32'd0,
     /// Maximum number of in flight write transactions.
@@ -38,6 +44,31 @@ module axi_serializer #(
     output req_t  mst_req_o,
     /// Master port response
     input  resp_t mst_resp_i
+=======
+  /// Maximum number of in flight read transactions.
+  parameter int unsigned MaxReadTxns  = 32'd0,
+  /// Maximum number of in flight write transactions.
+  parameter int unsigned MaxWriteTxns = 32'd0,
+  /// AXI4+ATOP ID width.
+  parameter int unsigned AxiIdWidth   = 32'd0,
+  /// AXI4+ATOP request struct definition.
+  parameter type         axi_req_t    = logic,
+  /// AXI4+ATOP response struct definition.
+  parameter type         axi_resp_t   = logic
+) (
+  /// Clock
+  input  logic      clk_i,
+  /// Asynchronous reset, active low
+  input  logic      rst_ni,
+  /// Slave port request
+  input  axi_req_t  slv_req_i,
+  /// Slave port response
+  output axi_resp_t slv_resp_o,
+  /// Master port request
+  output axi_req_t  mst_req_o,
+  /// Master port response
+  input  axi_resp_t mst_resp_i
+>>>>>>> main
 );
 
   typedef logic [AxiIdWidth-1:0] id_t;
@@ -260,21 +291,36 @@ module axi_serializer_intf #(
   `AXI_TYPEDEF_B_CHAN_T(b_chan_t, id_t, user_t)
   `AXI_TYPEDEF_AR_CHAN_T(ar_chan_t, addr_t, id_t, user_t)
   `AXI_TYPEDEF_R_CHAN_T(r_chan_t, data_t, id_t, user_t)
+<<<<<<< HEAD
   `AXI_TYPEDEF_REQ_T(req_t, aw_chan_t, w_chan_t, ar_chan_t)
   `AXI_TYPEDEF_RESP_T(resp_t, b_chan_t, r_chan_t)
   req_t slv_req, mst_req;
   resp_t slv_resp, mst_resp;
+=======
+  `AXI_TYPEDEF_REQ_T(axi_req_t, aw_chan_t, w_chan_t, ar_chan_t)
+  `AXI_TYPEDEF_RESP_T(axi_resp_t, b_chan_t, r_chan_t)
+  axi_req_t  slv_req,  mst_req;
+  axi_resp_t slv_resp, mst_resp;
+>>>>>>> main
   `AXI_ASSIGN_TO_REQ(slv_req, slv)
   `AXI_ASSIGN_FROM_RESP(slv, slv_resp)
   `AXI_ASSIGN_FROM_REQ(mst, mst_req)
   `AXI_ASSIGN_TO_RESP(mst_resp, mst)
 
   axi_serializer #(
+<<<<<<< HEAD
       .MaxReadTxns (MAX_READ_TXNS),
       .MaxWriteTxns(MAX_WRITE_TXNS),
       .AxiIdWidth  (AXI_ID_WIDTH),
       .req_t       (req_t),
       .resp_t      (resp_t)
+=======
+    .MaxReadTxns  ( MAX_READ_TXNS  ),
+    .MaxWriteTxns ( MAX_WRITE_TXNS ),
+    .AxiIdWidth   ( AXI_ID_WIDTH   ),
+    .axi_req_t    ( axi_req_t      ),
+    .axi_resp_t   ( axi_resp_t     )
+>>>>>>> main
   ) i_axi_serializer (
       .clk_i,
       .rst_ni,

@@ -8,7 +8,9 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-// Author: Wolfgang Roenninger <wroennin@ethz.ch>
+// Authors:
+// - Wolfgang Roenninger <wroennin@ethz.ch>
+// - Thomas Benz <tbenz@iis.ee.ethz.ch>
 
 /// Address Decoder: Maps the input address combinatorially to an index.
 /// The address map `addr_map_i` is a packed array of rule_t structs.
@@ -88,6 +90,7 @@ module addr_decode #(
     input  idx_t                default_idx_i
 );
 
+<<<<<<< HEAD
   logic [NoRules-1:0] matched_rules;  // purely for address map debugging
 
   always_comb begin
@@ -223,4 +226,24 @@ module addr_decode #(
   // pragma translate_on
 `endif
 `endif
+=======
+  // wraps the dynamic configuration version of the address decoder
+  addr_decode_dync #(
+    .NoIndices ( NoIndices ),
+    .NoRules   ( NoRules   ),
+    .addr_t    ( addr_t    ),
+    .rule_t    ( rule_t    ),
+    .Napot     ( Napot     )
+  ) i_addr_decode_dync (
+    .addr_i,
+    .addr_map_i,
+    .idx_o,
+    .dec_valid_o,
+    .dec_error_o,
+    .en_default_idx_i,
+    .default_idx_i,
+    .config_ongoing_i ( 1'b0 )
+  );
+
+>>>>>>> main
 endmodule

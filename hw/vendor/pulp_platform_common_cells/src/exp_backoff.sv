@@ -20,6 +20,8 @@
 // a successful trial (clr_i).
 //
 
+`include "common_cells/assertions.svh"
+
 module exp_backoff #(
     /// Seed for 16bit LFSR
     parameter int unsigned Seed   = 'hffff,
@@ -75,6 +77,7 @@ module exp_backoff #(
   // assertions
   ///////////////////////////////////////////////////////
 
+<<<<<<< HEAD
   //pragma translate_off
 `ifndef VERILATOR
   initial begin
@@ -88,5 +91,13 @@ module exp_backoff #(
   end
 `endif
   //pragma translate_on
+=======
+`ifndef COMMON_CELLS_ASSERTS_OFF
+  // assert wrong parameterizations
+  `ASSERT_INIT(max_exp_0, MaxExp>0, "MaxExp must be greater than 0")
+  `ASSERT_INIT(max_exp_gt_16, MaxExp<=16, "MaxExp cannot be greater than 16")
+  `ASSERT_INIT(seed_0, Seed>0, "Zero seed is not allowed for LFSR")
+`endif
+>>>>>>> main
 
 endmodule  // exp_backoff
