@@ -14,26 +14,26 @@
 // Description: Simple shift register for arbitrary depth and types
 
 module shift_reg #(
-    parameter type         dtype = logic,
+    parameter type dtype         = logic,
     parameter int unsigned Depth = 1
-) (
-    input  logic clk_i,   // Clock
-    input  logic rst_ni,  // Asynchronous reset active low
+)(
+    input  logic clk_i,    // Clock
+    input  logic rst_ni,   // Asynchronous reset active low
     input  dtype d_i,
     output dtype d_o
 );
 
-  shift_reg_gated #(
-      .Depth(Depth),
-      .dtype(dtype)
-  ) i_shift_reg_gated (
-      .clk_i  (clk_i),
-      .rst_ni (rst_ni),
-      .valid_i(1'b1),
-      .data_i (d_i),
-      .valid_o(),
-      .data_o (d_o)
-  );
+    shift_reg_gated #(
+        .Depth(Depth),
+        .dtype(dtype)
+    ) i_shift_reg_gated (
+        .clk_i  (clk_i),
+        .rst_ni (rst_ni),
+        .valid_i(1'b1),
+        .data_i (d_i),
+        .valid_o(),
+        .data_o (d_o)
+    );
 
 
 endmodule

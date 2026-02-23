@@ -26,32 +26,30 @@
 ///
 /// [1] https://en.wikipedia.org/wiki/Hamming_code
 
-module ecc_decode
-  import ecc_pkg::*;
-#(
-    /// Data width of unencoded word.
-    parameter int unsigned DataWidth = 64,
-    // Do not change
-    parameter type data_t = logic [DataWidth-1:0],
-    parameter type parity_t = logic [get_parity_width(DataWidth)-1:0],
-    parameter type code_word_t = logic [get_cw_width(DataWidth)-1:0],
-    parameter type encoded_data_t = struct packed {
-      logic parity;
-      code_word_t code_word;
-    }
-) (
-    /// Encoded data in
-    input  encoded_data_t data_i,
-    /// Corrected data out
-    output data_t         data_o,
-    /// Error syndrome indicates the erroneous bit position
-    output parity_t       syndrome_o,
-    /// A single error occurred
-    output logic          single_error_o,
-    /// Error received in parity bit (MSB)
-    output logic          parity_error_o,
-    /// A double error occurred
-    output logic          double_error_o
+module ecc_decode import ecc_pkg::*; #(
+  /// Data width of unencoded word.
+  parameter  int unsigned DataWidth   = 64,
+  // Do not change
+  parameter type data_t         = logic [DataWidth-1:0],
+  parameter type parity_t       = logic [get_parity_width(DataWidth)-1:0],
+  parameter type code_word_t    = logic [get_cw_width(DataWidth)-1:0],
+  parameter type encoded_data_t = struct packed {
+                                    logic parity;
+                                    code_word_t code_word;
+                                  }
+  ) (
+  /// Encoded data in
+  input  encoded_data_t data_i,
+  /// Corrected data out
+  output data_t         data_o,
+  /// Error syndrome indicates the erroneous bit position
+  output parity_t       syndrome_o,
+  /// A single error occurred
+  output logic          single_error_o,
+  /// Error received in parity bit (MSB)
+  output logic          parity_error_o,
+  /// A double error occurred
+  output logic          double_error_o
 );
 
   logic       parity;
@@ -85,7 +83,7 @@ module ecc_decode
     syndrome = 0;
     for (int unsigned i = 0; i < unsigned'($bits(parity_t)); i++) begin
       for (int unsigned j = 0; j < unsigned'($bits(code_word_t)); j++) begin
-        if (|(unsigned'(2 ** i) & (j + 1))) syndrome[i] = syndrome[i] ^ data_i.code_word[j];
+        if (|(unsigned'(2**i) & (j + 1))) syndrome[i] = syndrome[i] ^ data_i.code_word[j];
       end
     end
   end
@@ -96,7 +94,7 @@ module ecc_decode
   always_comb begin
     correct_data = data_i.code_word;
     if (syndrome_not_zero) begin
-      correct_data[syndrome-1] = ~data_i.code_word[syndrome-1];
+      correct_data[syndrome - 1] = ~data_i.code_word[syndrome - 1];
     end
   end
 
@@ -112,14 +110,14 @@ module ecc_decode
 
   // Extract data vector
   always_comb begin
-    automatic int unsigned idx;  // bit index
+    automatic int unsigned idx; // bit index
     data_wo_parity = '0;
     idx = 0;
 
     for (int unsigned i = 1; i < unsigned'($bits(code_word_t)) + 1; i++) begin
       // if i is a power of two we are indexing a parity bit
-      if (unsigned'(2 ** $clog2(i)) != i) begin
-        data_wo_parity[idx] = correct_data[i-1];
+      if (unsigned'(2**$clog2(i)) != i) begin
+        data_wo_parity[idx] = correct_data[i - 1];
         idx++;
       end
     end

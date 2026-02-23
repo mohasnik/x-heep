@@ -18,13 +18,13 @@ module rstgen (
     output logic init_no
 );
 
-  rstgen_bypass i_rstgen_bypass (
-      .clk_i           (clk_i),
-      .rst_ni          (rst_ni),
-      .rst_test_mode_ni(rst_ni),
-      .test_mode_i     (test_mode_i),
-      .rst_no          (rst_no),
-      .init_no         (init_no)
-  );
+    rstgen_bypass i_rstgen_bypass (
+        .clk_i            ( clk_i       ),
+        .rst_ni           ( rst_ni      ),
+        .rst_test_mode_ni ( rst_ni      ),
+        .test_mode_i      ( test_mode_i ),
+        .rst_no           ( rst_no      ),
+        .init_no          ( init_no     )
+    );
 
 endmodule

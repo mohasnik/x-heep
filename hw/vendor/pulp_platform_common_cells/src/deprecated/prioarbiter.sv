@@ -16,19 +16,19 @@
 
 // Dependencies: relies on fast leading zero counter tree "onehot_to_bin" in common_cells
 module prioarbiter #(
-    parameter int unsigned NUM_REQ = 13,
-    parameter int unsigned LOCK_IN = 0
+  parameter int unsigned NUM_REQ = 13,
+  parameter int unsigned LOCK_IN = 0
 ) (
-    input logic clk_i,
-    input logic rst_ni,
+  input logic                         clk_i,
+  input logic                         rst_ni,
 
-    input logic               flush_i,  // clears the fsm and control signal registers
-    input logic               en_i,     // arbiter enable
-    input logic [NUM_REQ-1:0] req_i,    // request signals
+  input logic                         flush_i, // clears the fsm and control signal registers
+  input logic                         en_i,    // arbiter enable
+  input logic [NUM_REQ-1:0]           req_i,   // request signals
 
-    output logic [        NUM_REQ-1:0] ack_o,  // acknowledge signals
-    output logic                       vld_o,  // request ack'ed
-    output logic [$clog2(NUM_REQ)-1:0] idx_o   // idx output
+  output logic [NUM_REQ-1:0]          ack_o,   // acknowledge signals
+  output logic                        vld_o,   // request ack'ed
+  output logic [$clog2(NUM_REQ)-1:0]  idx_o    // idx output
 );
 
   localparam SEL_WIDTH = $clog2(NUM_REQ);
@@ -40,22 +40,22 @@ module prioarbiter #(
 
   // shared
   assign vld_o = (|req_i) & en_i;
-  assign idx_o = (lock_q) ? arb_sel_lock_q : idx;
+  assign idx_o  = (lock_q) ? arb_sel_lock_q : idx;
 
   // Arbiter
   // Port 0 has priority over all other ports
   assign ack_o[0] = (req_i[0]) ? en_i : 1'b0;
   // check that the priorities
   for (genvar i = 1; i < NUM_REQ; i++) begin : gen_arb_req_ports
-    // for every subsequent port check the priorities of the previous port
-    assign ack_o[i] = (req_i[i] & ~(|ack_o[i-1:0])) ? en_i : 1'b0;
+      // for every subsequent port check the priorities of the previous port
+      assign ack_o[i] = (req_i[i] & ~(|ack_o[i-1:0])) ? en_i : 1'b0;
   end
 
   onehot_to_bin #(
-      .ONEHOT_WIDTH(NUM_REQ)
+    .ONEHOT_WIDTH ( NUM_REQ )
   ) i_onehot_to_bin (
-      .onehot(ack_o),
-      .bin   (idx)
+    .onehot ( ack_o ),
+    .bin    ( idx   )
   );
 
   if (LOCK_IN) begin : gen_lock_in

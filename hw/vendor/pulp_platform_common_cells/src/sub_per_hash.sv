@@ -37,26 +37,26 @@
 //                 however one should look that both keys have a greatest common divisor of 1.
 
 module sub_per_hash #(
-    parameter int unsigned InpWidth   = 32'd11,
-    parameter int unsigned HashWidth  = 32'd5,
-    parameter int unsigned NoRounds   = 32'd1,
-    parameter int unsigned PermuteKey = 32'd299034753,
-    parameter int unsigned XorKey     = 32'd4094834
+  parameter int unsigned InpWidth   = 32'd11,
+  parameter int unsigned HashWidth  = 32'd5,
+  parameter int unsigned NoRounds   = 32'd1,
+  parameter int unsigned PermuteKey = 32'd299034753,
+  parameter int unsigned XorKey     = 32'd4094834
 ) (
-    // is purely combinational
-    input  logic [    InpWidth-1:0] data_i,
-    output logic [   HashWidth-1:0] hash_o,
-    output logic [2**HashWidth-1:0] hash_onehot_o
+  // is purely combinational
+  input  logic [InpWidth-1:0]     data_i,
+  output logic [HashWidth-1:0]    hash_o,
+  output logic [2**HashWidth-1:0] hash_onehot_o
 );
 
   // typedefs and respective localparams
-  typedef int unsigned perm_lists_t[NoRounds][InpWidth];
+  typedef int unsigned perm_lists_t [NoRounds][InpWidth];
   perm_lists_t Permutations;
   assign Permutations = get_permutations(PermuteKey);
   // encoding for inner most array:
   // position 0 indicates the number of inputs, 2 or 3
   // the other positions 1 - 3 indicate the inputs
-  typedef int unsigned xor_stages_t[NoRounds][InpWidth][3];
+  typedef int unsigned xor_stages_t [NoRounds][InpWidth][3];
   xor_stages_t XorStages;
   assign XorStages = get_xor_stages(XorKey);
 
@@ -66,7 +66,7 @@ module sub_per_hash #(
   // for each round
   for (genvar r = 0; r < NoRounds; r++) begin : gen_round
     // for each bit
-    for (genvar i = 0; i < InpWidth; i++) begin : gen_sub_per
+    for (genvar i = 0; i < InpWidth ; i++) begin : gen_sub_per
 
       // assign the permutation
       if (r == 0) begin : gen_input
@@ -99,8 +99,8 @@ module sub_per_hash #(
     perm_lists_t perm_array;
     longint unsigned A = 2147483629;
     longint unsigned C = 2147483587;
-    longint unsigned M = 2 ** 31 - 1;
-    longint unsigned index = 0;
+    longint unsigned M = 2**31 - 1;
+    longint unsigned index   = 0;
     longint unsigned advance = 0;
     longint unsigned rand_number = (A * seed + C) % M;
 
@@ -143,8 +143,8 @@ module sub_per_hash #(
     xor_stages_t xor_array;
     longint unsigned A = 1664525;
     longint unsigned C = 1013904223;
-    longint unsigned M = 2 ** 32;
-    longint unsigned index = 0;
+    longint unsigned M = 2**32;
+    longint unsigned index   = 0;
     // int unsigned even    = 0;
     longint unsigned advance = 0;
     longint unsigned rand_number = (A * seed + C) % M;
