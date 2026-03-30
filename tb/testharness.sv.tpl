@@ -540,6 +540,8 @@ module testharness #(
           .reg_rsp_t (reg_pkg::reg_rsp_t),
           .obi_req_t (obi_pkg::obi_req_t),
           .obi_resp_t(obi_pkg::obi_resp_t),
+          .fifo_resp_t(fifo_pkg::fifo_resp_t),
+          .fifo_req_t(fifo_pkg::fifo_req_t),
           .SLOT_NUM  (DMA_TRIGGER_SLOT_NUM)
       ) dma_i (
           .clk_i,
@@ -766,7 +768,6 @@ module testharness #(
       % if user_peripheral_domain.contains_peripheral('serial_link'):
       serial_link_xheep_wrapper #(
           .MaxClkDiv(32),
-          .AddrWidth(32),
           .DataWidth(32)
       ) serial_link_xheep_wrapper_i (
           .clk_i        (clk_i),

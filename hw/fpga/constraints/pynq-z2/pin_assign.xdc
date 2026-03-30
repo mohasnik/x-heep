@@ -49,8 +49,8 @@ set_property -dict {PACKAGE_PIN W16 IOSTANDARD LVCMOS33} [get_ports jtag_tck_i] 
 set_property -dict {PACKAGE_PIN W19 IOSTANDARD LVCMOS33} [get_ports jtag_trst_ni] ; # Pmoda[7]
 
 # I2C
-set_property -dict {PACKAGE_PIN W13 IOSTANDARD LVCMOS33} [get_ports i2c_scl_io]
-set_property -dict {PACKAGE_PIN T10 IOSTANDARD LVCMOS33} [get_ports i2c_sda_io]
+set_property -dict {PACKAGE_PIN P15 IOSTANDARD LVCMOS33} [get_ports i2c_scl_io]
+set_property -dict {PACKAGE_PIN P16 IOSTANDARD LVCMOS33} [get_ports i2c_sda_io]
 
 # SPI SD
 set_property -dict {PACKAGE_PIN F16 IOSTANDARD LVCMOS33} [get_ports spi_csb_o]
@@ -91,7 +91,7 @@ set_property -dict {PACKAGE_PIN A20 IOSTANDARD LVCMOS33} [get_ports pdm2pcm_pdm_
 # I2S
 set_property -dict {PACKAGE_PIN B19 IOSTANDARD LVCMOS33} [get_ports i2s_sck_io]
 set_property -dict {PACKAGE_PIN B20 IOSTANDARD LVCMOS33} [get_ports i2s_ws_io]
-set_property -dict {PACKAGE_PIN P15 IOSTANDARD LVCMOS33} [get_ports i2s_sd_io]
+set_property -dict {PACKAGE_PIN W9  IOSTANDARD LVCMOS33} [get_ports i2s_sd_io]
 
 # SPI2
 set_property -dict {PACKAGE_PIN W6 IOSTANDARD LVCMOS33} [get_ports {spi2_csb_o[0]}]
