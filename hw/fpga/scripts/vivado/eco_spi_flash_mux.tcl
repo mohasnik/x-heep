@@ -1,3 +1,17 @@
+# Copyright 2026 Politecnico di Torino.
+#
+# File: eco_spi_flash_mux.tcl
+# Author: Christian Conti {christian.conti@polito.it}
+# Date: 31/03/2026
+#
+# This script implements an ECO to add a multiplexer to the SPI flash interface, 
+# allowing to switch between the PS and PL SPI controllers
+# It deatach the SPI flash pins from the pad ring, and connects them to the PS 
+# or PL SPI controller through LUT-based multiplexers controlled by a SEL signal
+#
+# IMPORTANT: The scripts work based on the hyerarchical names of the pad_ring,
+#            if the name of the modules is changed the script may not work 
+#            correctly and may require adjustments to the names insde the script
 
 set keep_sel_pin [lindex [get_pins -quiet -hier -filter {NAME =~ "*u_keep_ps_spi_flash_sel/I0"}] 0]
 if {$keep_sel_pin eq ""} {

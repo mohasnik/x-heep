@@ -1,3 +1,13 @@
+# Copyright 2026 Politecnico di Torino.
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# File: xilinx_generate_ps_wizard.tcl
+# Author: Christian Conti {christian.conti@polito.it}
+# Date: 31/03/2026
+#
+# Define design macros
+
 set_property BOARD_PART tul.com.tw:pynq-z2:part0:1.0 [current_project]
 
 # Block design
