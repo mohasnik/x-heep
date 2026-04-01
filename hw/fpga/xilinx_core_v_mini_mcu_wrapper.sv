@@ -139,6 +139,7 @@ module xilinx_core_v_mini_mcu_wrapper
   wire [0:0] ps_quadspi_io_ss_io;
 `endif
 
+  // low active reset
 `ifdef FPGA_NEXYS
   assign rst_n = rst_i;
 `elsif FPGA_GENESYS2
