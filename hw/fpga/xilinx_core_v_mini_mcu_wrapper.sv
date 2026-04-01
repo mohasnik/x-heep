@@ -84,12 +84,12 @@ module xilinx_core_v_mini_mcu_wrapper
     inout  logic exit_valid_o,
 
     inout logic [3:0] spi_flash_sd_io,
-    inout logic       spi_flash_csb_o,
-    inout logic       spi_flash_sck_o,
+    inout logic spi_flash_csb_o,
+    inout logic spi_flash_sck_o,
 
     inout logic [3:0] spi_sd_io,
-    inout logic       spi_csb_o,
-    inout logic       spi_sck_o,
+    inout logic spi_csb_o,
+    inout logic spi_sck_o,
 
     inout logic spi_slave_sck_io,
     inout logic spi_slave_cs_io,
@@ -98,7 +98,7 @@ module xilinx_core_v_mini_mcu_wrapper
 
     inout logic [3:0] spi2_sd_io,
     inout logic [1:0] spi2_csb_o,
-    inout logic       spi2_sck_o,
+    inout logic spi2_sck_o,
 
     inout logic i2c_scl_io,
     inout logic i2c_sda_io,
@@ -115,27 +115,27 @@ module xilinx_core_v_mini_mcu_wrapper
 );
 
   wire                               clk_gen;
-  wire                               rst_n;
   logic [                      31:0] exit_value;
+  wire                               rst_n;
   logic [CLK_LED_COUNT_LENGTH - 1:0] clk_count;
 
 `ifdef PS_ENABLE
-  wire       exit_valid;
+  wire exit_valid;
 
   wire [1:0] ps_x_heep_i;
   wire [4:0] ps_x_heep_o;
-  wire       ps_tck;
-  wire       ps_tdi;
-  wire       ps_tdo;
-  wire       ps_tms;
-  wire       ps_uart_rx;
-  wire       ps_uart_tx;
+  wire ps_tck;
+  wire ps_tdi;
+  wire ps_tdo;
+  wire ps_tms;
+  wire ps_uart_rx;
+  wire ps_uart_tx;
 
-  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
-  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
-  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
-  (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io3_io;
-  wire       ps_quadspi_io_sck_io;
+  (* DONT_TOUCH = "TRUE" *) wire ps_quadspi_io_io0_io;
+  (* DONT_TOUCH = "TRUE" *) wire ps_quadspi_io_io1_io;
+  (* DONT_TOUCH = "TRUE" *) wire ps_quadspi_io_io2_io;
+  (* DONT_TOUCH = "TRUE" *) wire ps_quadspi_io_io3_io;
+  wire ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
 `endif
 
@@ -290,6 +290,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .external_subsystem_rst_no(),
       .external_ram_banks_set_retentive_no(),
       .external_subsystem_clkgate_en_no(),
+      .exit_value_o(exit_value),
       .clk_i(clk_gen),
 `ifdef PS_ENABLE
       .rst_ni(ps_x_heep_o[0] & rst_n),
@@ -316,7 +317,6 @@ module xilinx_core_v_mini_mcu_wrapper
       .uart_tx_o(uart_tx_o),
       .exit_valid_o(exit_valid_o),
 `endif
-      .exit_value_o(exit_value),
       .gpio_0_io(gpio_io[0]),
       .gpio_1_io(gpio_io[1]),
       .gpio_2_io(gpio_io[2]),
@@ -337,13 +337,13 @@ module xilinx_core_v_mini_mcu_wrapper
       .spi_slave_cs_io(spi_slave_cs_io),
       .spi_slave_miso_io(spi_slave_miso_io),
       .spi_slave_mosi_io(spi_slave_mosi_io),
-      .spi_flash_cs_0_io(spi_flash_csb_o),
-      .spi_flash_sck_io(spi_flash_sck_o),
       .spi_flash_sd_0_io(spi_flash_sd_io[0]),
       .spi_flash_sd_1_io(spi_flash_sd_io[1]),
       .spi_flash_sd_2_io(spi_flash_sd_io[2]),
       .spi_flash_sd_3_io(spi_flash_sd_io[3]),
+      .spi_flash_cs_0_io(spi_flash_csb_o),
       .spi_flash_cs_1_io(),
+      .spi_flash_sck_io(spi_flash_sck_o),
       .spi_sd_0_io(spi_sd_io[0]),
       .spi_sd_1_io(spi_sd_io[1]),
       .spi_sd_2_io(spi_sd_io[2]),
@@ -351,8 +351,8 @@ module xilinx_core_v_mini_mcu_wrapper
       .spi_cs_0_io(spi_csb_o),
       .spi_cs_1_io(),
       .spi_sck_io(spi_sck_o),
-      .i2c_scl_io(i2c_scl_io),
-      .i2c_sda_io(i2c_sda_io),
+      .i2c_scl_io,
+      .i2c_sda_io,
       .spi2_sd_0_io(spi2_sd_io[0]),
       .spi2_sd_1_io(spi2_sd_io[1]),
       .spi2_sd_2_io(spi2_sd_io[2]),
@@ -360,8 +360,8 @@ module xilinx_core_v_mini_mcu_wrapper
       .spi2_cs_0_io(spi2_csb_o[0]),
       .spi2_cs_1_io(spi2_csb_o[1]),
       .spi2_sck_io(spi2_sck_o),
-      .pdm2pcm_clk_io(pdm2pcm_clk_io),
-      .pdm2pcm_pdm_io(pdm2pcm_pdm_io),
+      .pdm2pcm_clk_io,
+      .pdm2pcm_pdm_io,
       .i2s_sck_io(i2s_sck_io),
       .i2s_ws_io(i2s_ws_io),
       .i2s_sd_io(i2s_sd_io),
