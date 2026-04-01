@@ -147,14 +147,21 @@ module xilinx_core_v_mini_mcu_wrapper
   assign rst_n = !rst_i;
 `endif
 
+  // reset LED for debugging
   assign rst_led_o = rst_n;
+
+  // counter to blink an LED
   assign clk_led_o = clk_count[CLK_LED_COUNT_LENGTH-1];
 
-  always_ff @(posedge clk_gen or negedge rst_n) begin
-    if (!rst_n) clk_count <= '0;
-    else clk_count <= clk_count + 1;
+  always_ff @(posedge clk_gen or negedge rst_n) begin : clk_count_process
+    if (!rst_n) begin
+      clk_count <= '0;
+    end else begin
+      clk_count <= clk_count + 1;
+    end
   end
 
+  // eXtension Interface
   if_xif #() ext_if ();
 
 `ifdef FPGA_ZCU104
@@ -186,7 +193,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .clk_100MHz(clk_i),
       .clk_out1_0(clk_gen)
   );
-`else
+`else  // FPGA PYNQ-Z2
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .clk_125MHz(clk_i),
       .clk_out1_0(clk_gen)
