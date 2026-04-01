@@ -82,6 +82,7 @@ module xilinx_core_v_mini_mcu_wrapper
 );
 
   wire                               clk_gen;
+  wire                               cips_rst_n;  // TODO: move to ifdef scope
   logic [                      31:0] exit_value;
   wire                               rst_n;
   logic [CLK_LED_COUNT_LENGTH - 1:0] clk_count;
@@ -91,6 +92,8 @@ module xilinx_core_v_mini_mcu_wrapper
   assign rst_n = rst_i;
 `elsif FPGA_GENESYS2
   assign rst_n = rst_i;
+`elsif FPGA_VPK180
+  assign rst_n = cips_rst_n;
 `else
   assign rst_n = !rst_i;
 `endif
@@ -138,7 +141,8 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_cips_wrapper xilinx_cips_wrapper_i (
-      .clk_out1_0(clk_gen)
+      .clk_out1_0(clk_gen),
+      .pl0_resetn(cips_rst_n)
   );
 `elsif FPGA_NEXYS
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (

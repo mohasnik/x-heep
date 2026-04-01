@@ -9,15 +9,23 @@ module xilinx_clk_gating (
     output logic clk_o
 );
 
-  // In Zynq7000, just bypass the clock gating because there are not enough BUFGs that can be 
+`ifdef FPGA_VPK180
+  // In Versal, BUFGCE is recommended for better timing on the large die
+  BUFGCE i_BUFGCE (
+      .I (clk_i),
+      .CE(en_i | test_en_i),
+      .O (clk_o)
+  );
+`else
+  // In Zynq7000, just bypass the clock gating because there are not enough BUFGs that can be
   // cascaded with the BUFG of the MMCM.
   // In the Zynq UltraScale+, it can be implemented as BUFGCE without trouble, since there
   // are > 500 BUFGCEs and the rules for cascading are more relaxed.
   // NOTE: This **cannot** be substituted by a latch+and
   assign clk_o = clk_i;
+`endif
 
 endmodule
-
 module xilinx_clk_inverter (
     input  logic clk_i,
     output logic clk_o

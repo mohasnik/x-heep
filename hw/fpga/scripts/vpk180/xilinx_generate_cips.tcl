@@ -8,23 +8,33 @@ set design_name xilinx_cips
 # Create block design
 create_bd_design $design_name
 
-# Create CIPS instance (minimal config: PL clock + reset only)
+# Create CIPS instance
 create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips versal_cips_0
 
+# Apply VPK180 Board Presets and Essential Configurations
+# Even for PL-only designs (Option B), CIPS must initialize the board's PMC and MIOs
 set_property -dict [list \
   CONFIG.PS_PMC_CONFIG { \
     CLOCK_MODE {Custom} \
     PS_NUM_FABRIC_RESETS {1} \
     PS_USE_PMCPL_CLK0 {1} \
     PS_PL_CLK0_BUF {1} \
-    PS_USE_PMCPL_CLK1 {0} \
-    PS_USE_PMCPL_CLK2 {0} \
-    PS_USE_PMCPL_CLK3 {0} \
     PMC_CRP_PL0_REF_CTRL_FREQMHZ {100} \
+    # Enable PMC UART (hardwired to USB-UART bridge on VPK180)
+    # This allows monitoring the board even if PL UART is not yet configured
+    PMC_USE_UART0 {1} \
+    PMC_UART0_PERIPHERAL_ENABLE {1} \
+    PMC_UART0_PERIPHERAL_IO {PMC_MIO 42 .. 43} \
+    # Disable unused AXI interfaces to save area
+    PS_USE_M_AXI_FPD {0} \
+    PS_USE_S_AXI_FPD {0} \
+    # Ensure PMC-MIO voltages are correct for VPK180 (1.8V)
+    PMC_MIO_37_DIRECTION {out} \
+    PMC_MIO_37_SCHMITT {1} \
   } \
 ] [get_bd_cells versal_cips_0]
 
-# Create output ports matching the clk_wizard wrapper interface
+# Create output ports matching the wrapper interface
 create_bd_port -dir O -type clk clk_out1_0
 create_bd_port -dir O -type rst pl0_resetn
 
