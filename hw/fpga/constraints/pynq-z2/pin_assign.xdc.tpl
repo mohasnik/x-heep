@@ -1,3 +1,6 @@
+<%
+  user_peripheral_domain = xheep.get_user_peripheral_domain()
+%>
 # Copyright 2022 EPFL
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -52,6 +55,7 @@ set_property -dict {PACKAGE_PIN W19 IOSTANDARD LVCMOS33} [get_ports jtag_trst_ni
 set_property -dict {PACKAGE_PIN P15 IOSTANDARD LVCMOS33} [get_ports i2c_scl_io]
 set_property -dict {PACKAGE_PIN P16 IOSTANDARD LVCMOS33} [get_ports i2c_sda_io]
 
+
 # SPI SD
 set_property -dict {PACKAGE_PIN F16 IOSTANDARD LVCMOS33} [get_ports spi_csb_o]
 set_property -dict {PACKAGE_PIN H15 IOSTANDARD LVCMOS33} [get_ports spi_sck_o]
@@ -61,17 +65,17 @@ set_property -dict {PACKAGE_PIN P18 IOSTANDARD LVCMOS33} [get_ports {spi_sd_io[2
 set_property -dict {PACKAGE_PIN N17 IOSTANDARD LVCMOS33} [get_ports {spi_sd_io[3]}]
 
 # GPIOs
-set_property -dict {PACKAGE_PIN T14 IOSTANDARD LVCMOS33} [get_ports {gpio_io[0]}]
-set_property -dict {PACKAGE_PIN Y8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[1]}]
-set_property -dict {PACKAGE_PIN W8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[2]}]
-set_property -dict {PACKAGE_PIN Y7 IOSTANDARD LVCMOS33} [get_ports {gpio_io[3]}]
-set_property -dict {PACKAGE_PIN Y6 IOSTANDARD LVCMOS33} [get_ports {gpio_io[4]}]
-set_property -dict {PACKAGE_PIN U12 IOSTANDARD LVCMOS33} [get_ports {gpio_io[5]}]
-set_property -dict {PACKAGE_PIN W10 IOSTANDARD LVCMOS33} [get_ports {gpio_io[6]}]
-set_property -dict {PACKAGE_PIN V10 IOSTANDARD LVCMOS33} [get_ports {gpio_io[7]}]
-set_property -dict {PACKAGE_PIN V8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[8]}]
-set_property -dict {PACKAGE_PIN U8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[9]}]
-set_property -dict {PACKAGE_PIN V7 IOSTANDARD LVCMOS33} [get_ports {gpio_io[10]}]
+set_property -dict {PACKAGE_PIN T14 IOSTANDARD LVCMOS33} [get_ports {gpio_io[0]}] ;#            | # arduino_gpio_tri_io[0]
+set_property -dict {PACKAGE_PIN Y8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[1]}] ; #   ddr_i_0  | # rpi_gpio_tri_io[11]
+set_property -dict {PACKAGE_PIN W8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[2]}] ; #   ddr_i_1  | # rpi_gpio_tri_io[5]
+set_property -dict {PACKAGE_PIN Y7 IOSTANDARD LVCMOS33} [get_ports {gpio_io[3]}] ; #   ddr_i_2  | # rpi_gpio_tri_io[16]
+set_property -dict {PACKAGE_PIN Y6 IOSTANDARD LVCMOS33} [get_ports {gpio_io[4]}] ; #            | # rpi_gpio_tri_io[7]
+set_property -dict {PACKAGE_PIN U12 IOSTANDARD LVCMOS33} [get_ports {gpio_io[5]}] ;#            | # arduino_gpio_tri_io[1]
+set_property -dict {PACKAGE_PIN W10 IOSTANDARD LVCMOS33} [get_ports {gpio_io[6]}] ;#   ddr_i_3  | # rpi_gpio_tri_io[3]
+set_property -dict {PACKAGE_PIN V10 IOSTANDARD LVCMOS33} [get_ports {gpio_io[7]}] ;#   ddr_o_0  | # rpi_gpio_tri_io[1]
+set_property -dict {PACKAGE_PIN V8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[8]}] ; #   ddr_o_1  | # rpi_gpio_tri_io[2]
+set_property -dict {PACKAGE_PIN U8 IOSTANDARD LVCMOS33} [get_ports {gpio_io[9]}] ; #   ddr_o_2  | # rpi_gpio_tri_io[14]
+set_property -dict {PACKAGE_PIN V7 IOSTANDARD LVCMOS33} [get_ports {gpio_io[10]}] ;#   ddr_o_3  | # rpi_gpio_tri_io[19]
 
 # Tri-color LEDs for TARGET_PYNQ_Z2
 set_property -dict {PACKAGE_PIN M15 IOSTANDARD LVCMOS33} [get_ports {gpio_io[11]}]
@@ -94,11 +98,17 @@ set_property -dict {PACKAGE_PIN B20 IOSTANDARD LVCMOS33} [get_ports i2s_ws_io]
 set_property -dict {PACKAGE_PIN W9  IOSTANDARD LVCMOS33} [get_ports i2s_sd_io]
 
 # SPI2
-set_property -dict {PACKAGE_PIN W6 IOSTANDARD LVCMOS33} [get_ports {spi2_csb_o[0]}]
-set_property -dict {PACKAGE_PIN T15 IOSTANDARD LVCMOS33} [get_ports {spi2_csb_o[1]}]
-set_property -dict {PACKAGE_PIN C20 IOSTANDARD LVCMOS33} [get_ports spi2_sck_o]
-set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[0]}]
-set_property -dict {PACKAGE_PIN V18 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[1]}]
-set_property -dict {PACKAGE_PIN T16 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[2]}]
-set_property -dict {PACKAGE_PIN R17 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[3]}]
+set_property -dict {PACKAGE_PIN W6 IOSTANDARD LVCMOS33} [get_ports {spi2_csb_o[0]}] ; # rpi_gpio_tri_io[15]
+set_property -dict {PACKAGE_PIN T15 IOSTANDARD LVCMOS33} [get_ports {spi2_csb_o[1]}] ; # arduino_gpio_tri_io[5]
+set_property -dict {PACKAGE_PIN C20 IOSTANDARD LVCMOS33} [get_ports {spi2_sck_o}] ; # rpi_gpio_tri_io[10]
+set_property -dict {PACKAGE_PIN V17 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[0]}] ; # arduino__gpio_tri_io[8]
+set_property -dict {PACKAGE_PIN V18 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[1]}] ; # arduino_gpio_tri_io[9]
+set_property -dict {PACKAGE_PIN T16 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[2]}] ; # arduino_gpio_tri_io[10]
+set_property -dict {PACKAGE_PIN R17 IOSTANDARD LVCMOS33} [get_ports {spi2_sd_io[3]}] ; # arduino_gpio_tri_io[11]
 
+set_property -dict {PACKAGE_PIN Y17 IOSTANDARD LVCMOS33} [get_ports {ddr_rcv_clk_i_i}] ; # rpi_gpio_tri_io[17]
+set_property -dict {PACKAGE_PIN F20 IOSTANDARD LVCMOS33} [get_ports {ddr_rcv_clk_o_o}] ; # rpi_gpio_tri_io[11]
+% if user_peripheral_domain.contains_peripheral('serial_link'):
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets ddr_rcv_clk_i_i_IBUF]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets ddr_rcv_clk_o_o_OBUF]
+%endif
