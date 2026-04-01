@@ -21,6 +21,8 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_GENESYS2
     inout logic clk_200mhz_n,
     inout logic clk_200mhz_p,
+`elsif FPGA_VPK180
+    // Clock provided by CIPS internally, no external clock ports needed
 `else
     inout logic clk_i,
 `endif
@@ -128,6 +130,10 @@ module xilinx_core_v_mini_mcu_wrapper
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .CLK_IN1_D_0_clk_n(clk_200mhz_n),
       .CLK_IN1_D_0_clk_p(clk_200mhz_p),
+      .clk_out1_0(clk_gen)
+  );
+`elsif FPGA_VPK180
+  xilinx_cips_wrapper xilinx_cips_wrapper_i (
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_NEXYS

@@ -58,6 +58,11 @@ filesets:
     - scripts/genesys2/xilinx_generate_clk_wizard.tcl
     file_type: tclSource
 
+  ip-fpga-vpk180:
+    files:
+    - scripts/vpk180/xilinx_generate_cips.tcl
+    file_type: tclSource
+
   xdc-fpga-nexys:
     files:
     - constraints/nexys/pin_assign.xdc
@@ -112,6 +117,15 @@ filesets:
     - constraints/common/sync.xdc
     file_type: xdc
 
+  xdc-fpga-vpk180:
+    files:
+    - constraints/vpk180/pin_assign.xdc
+    - constraints/vpk180/constraints.xdc
+    - constraints/common/spi_slave.xdc
+    - constraints/common/jtag.xdc
+    - constraints/common/sync.xdc
+    file_type: xdc
+
 targets:
   default: &default_target
     filesets:
@@ -129,3 +143,5 @@ targets:
     - target_aup-zu3 ? (ip-fpga-aup-zu3)
     - target_genesys2 ? (ip-fpga-genesys2)
     - target_genesys2 ? (xdc-fpga-genesys2)
+    - target_vpk180 ? (ip-fpga-vpk180)
+    - target_vpk180 ? (xdc-fpga-vpk180)
