@@ -55,7 +55,7 @@ and choose the file `openhwgroup.org_systems_core-v-mini-mcu_<version>.bit` in t
 
 Or simply type:
 
-```
+```sh
 make vivado-fpga-pgm FPGA_BOARD=<BOARD_NAME>
 ```
 
@@ -65,7 +65,7 @@ The Processing System (PS) enables remote access to the SoC over SSH. With the P
 
 Enabling the FuseSoC flag `PS_ENABLE` instantiates the PS in the design (currently supported only on `pynq-z2` and `aup-zu3`):
 
-```
+```sh
 make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_FLAGS="--flag PS_ENABLE"
 ```
 
@@ -73,18 +73,23 @@ make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_FLAGS="--flag PS_ENABLE"
 
 To program the bitstream upload both the `.bit` and the `.hwh` file to the board,
 
-```
+```sh
 scp ./build/<project_name>_<version>/<board_target>-vivado/<project_name>.runs/impl_1/<project_name>_wrapper.bit board@remote-host:/path/to/bitstream/
 scp ./build/<project_name>_<version>/<board_target>-vivado/<project_name>.gen/sources_1/bd/<project_name>/hw_handoff/xilinx_ps_wizzard.hwh board@remote-host:/path/to/bitstream/<project_name>_wrapper.hwh
 ```
 
 Or simply type:
 
-```
+```sh
 make vivado-fpga-remote-pgm FPGA_BOARD=<BOARD_NAME> REMOTE=board@remote-host REMOTE_DIR=/path/to/bitstream
 ```
 
-**Important:** the `.bit` and `.hwh` files must have the same base name and be located in the same directory, otherwise the bitstream will not load correctly.
+```{warning}
+Important: The `*.bit` and `*.hwh` files must:
+   1. Have the same base name (`ex.bit` & `ex.hwh`).
+   2. Be in the same directory.
+This ensure the bitstream to be loaded correctly through the PYNQ drivers.
+```
 
 **Program the FPGA on the remote board**
 
