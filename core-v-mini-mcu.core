@@ -542,6 +542,23 @@ targets:
         board_repo_paths: [../../../hw/fpga/board_files/vendor/genesys2]
     toplevel: [xilinx_core_v_mini_mcu_wrapper]
 
+  vpk180:
+    <<: *default_target
+    default_tool: vivado
+    description: Xilinx VPK180 Versal Evaluation Board
+    filesets_append:
+    - x_heep_system
+    - rtl-fpga
+    parameters:
+    - SYNTHESIS=true
+    - REMOVE_OBI_FIFO
+    - FPGA_SYNTHESIS=true
+    - FPGA_VPK180=true
+    tools:
+      vivado:
+        part: xcvp1802-lsvc4072-2MP-e-S
+    toplevel: [xilinx_core_v_mini_mcu_wrapper]
+
   asic_synthesis:
     <<: *default_target
     default_tool: design_compiler

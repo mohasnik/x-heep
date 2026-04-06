@@ -21,6 +21,9 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_GENESYS2
     inout logic clk_200mhz_n,
     inout logic clk_200mhz_p,
+`elsif FPGA_VPK180
+    // clock added by CIPS internally
+    // TODO : double check this
 `else
     inout logic clk_i,
 `endif
@@ -138,6 +141,9 @@ module xilinx_core_v_mini_mcu_wrapper
   assign rst_n = rst_i;
 `elsif FPGA_GENESYS2
   assign rst_n = rst_i;
+`elsif FPGA_VPK180
+  wire cips_rst_n;
+  assign rst_n = cips_rst_n;
 `else
   assign rst_n = !rst_i;
 `endif
@@ -175,6 +181,11 @@ module xilinx_core_v_mini_mcu_wrapper
       .CLK_IN1_D_0_clk_n(clk_200mhz_n),
       .CLK_IN1_D_0_clk_p(clk_200mhz_p),
       .clk_out1_0(clk_gen)
+  );
+`elsif FPGA_VPK180
+  xilinx_cips_wrapper xilinx_cips_wrapper_i (
+      .clk_out1_0(clk_gen),
+      .pl0_resetn(cips_rst_n)
   );
 `elsif FPGA_NEXYS
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
