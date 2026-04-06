@@ -53,6 +53,7 @@ filesets:
   ip-fpga-vpk180:
     files:
     - scripts/vpk180/xilinx_generate_cips.tcl
+    - "PS_ENABLE ? (scripts/vpk180/xilinx_generate_ps_wizard.tcl)"
     file_type: tclSource
 
   ip-fpga-aup-zu3:

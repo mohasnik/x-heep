@@ -554,6 +554,7 @@ targets:
     - REMOVE_OBI_FIFO
     - FPGA_SYNTHESIS=true
     - FPGA_VPK180=true
+    - PS_ENABLE=true
     tools:
       vivado:
         part: xcvp1802-lsvc4072-2MP-e-S
