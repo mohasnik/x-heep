@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # File: xilinx_generate_ps_wizard.tcl
-# Author: Ghazal Nikkhah
+# Author: Mohammadhossein Nikkhahghomi
 # Date: 06/04/2026
 #
 

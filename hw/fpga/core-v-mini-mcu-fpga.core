@@ -54,6 +54,7 @@ filesets:
     files:
     - scripts/vpk180/xilinx_generate_cips.tcl
     - "PS_ENABLE ? (scripts/vpk180/xilinx_generate_ps_wizard.tcl)"
+    - "PS_ENABLE ? (scripts/vivado/set_eco_hook.tcl)"
     file_type: tclSource
 
   ip-fpga-aup-zu3:
@@ -141,6 +142,11 @@ filesets:
     - "PS_ENABLE ? (scripts/vivado/eco_spi_flash_mux.tcl)"
     file_type: user
 
+  eco-fpga-vpk180:
+    files:
+    - "PS_ENABLE ? (scripts/vivado/eco_spi_flash_mux.tcl)"
+    file_type: user
+
 
 parameters:
   PS_ENABLE:
@@ -164,6 +170,7 @@ targets:
     - target_zcu102 ? (xdc-fpga-zcu102)
     - target_vpk180 ? (ip-fpga-vpk180)
     - target_vpk180 ? (xdc-fpga-vpk180)
+    - target_vpk180 ? (eco-fpga-vpk180)
     - target_aup-zu3 ? (xdc-fpga-aup-zu3)
     - target_aup-zu3 ? (ip-fpga-aup-zu3)
     - target_aup-zu3 ? (eco-fpga-aup-zu3)
