@@ -106,6 +106,9 @@ $ sudo -i
 >>> ol = Overlay("/path/to/bitstream.bit")
 ```
 
+Additionally, you can find utilities to program the bitstream on the FPGA and run programs from the Processing System at the following repository: [xheep-Xilinx-SoCs-interface](https://github.com/x-heep/xheep-Xilinx-SoCs-interface).
+
+
 ## Running firmware on the FPGA
 
 To run SW, follow the [Debug](./../How_to/Debug.md) guide to load the binaries with the HS2 cable over JTAG,
