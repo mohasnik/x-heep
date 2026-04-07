@@ -36,7 +36,6 @@ set_property -dict [list \
     CLOCK_MODE {Custom} \
     PS_NUM_FABRIC_RESETS {1} \
     PS_USE_PMCPL_CLK0 {1} \
-    PS_PL_CLK0_BUF {1} \
     PS_USE_PMCPL_CLK1 {0} \
     PS_USE_PMCPL_CLK2 {0} \
     PS_USE_PMCPL_CLK3 {0} \
@@ -44,9 +43,12 @@ set_property -dict [list \
     PS_USE_M_AXI_FPD {1} \
     PS_M_AXI_FPD_DATA_WIDTH {32} \
     PS_USE_S_AXI_FPD {0} \
+    PS_PL_CONNECTIVITY_MODE {Custom} \
+    PS_IRQ_USAGE {{CH0 1} {CH1 0} {CH2 0} {CH3 0} {CH4 0} {CH5 0} {CH6 0} {CH7 0} {CH8 0} {CH9 0} {CH10 0} {CH11 0} {CH12 0} {CH13 0} {CH14 0} {CH15 0}} \
   } \
   CONFIG.DDR_MEMORY_MODE {NO_DDR} \
 ] $versal_cips_0
+
 
 
 set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc axi_noc_0 ]
@@ -61,6 +63,7 @@ set_property -dict [list \
 ] $axi_noc_0
 
 
+## TODO : review the following configurations :
 set_property -dict [list \
   CONFIG.CONNECTIONS {M00_AXI {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}} \
   CONFIG.CATEGORY {ps_pmc} \
