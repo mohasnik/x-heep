@@ -25,6 +25,10 @@ set ps_tdo_i     [ create_bd_port -dir I ps_tdo_i ]
 set ps_gpio_i    [ create_bd_port -dir I -from 1 -to 0 ps_gpio_i ]
 set ps_gpio_o    [ create_bd_port -dir O -from 4 -to 0 ps_gpio_o ]
 
+# Create output ports matching the wrapper interface
+create_bd_port -dir O -type clk clk_out1_0
+create_bd_port -dir O -type rst pl0_resetn
+
 
 set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips versal_cips_0 ]
 set_property -dict [list \

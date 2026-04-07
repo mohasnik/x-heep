@@ -38,6 +38,7 @@ module xilinx_core_v_mini_mcu_wrapper
 `ifndef FPGA_ZCU102
 `ifndef FPGA_AUP_ZU3
 `ifndef FPGA_GENESYS2
+`ifndef FPGA_VPK180
     inout [14:0] DDR_addr,
     inout [2:0] DDR_ba,
     inout DDR_cas_n,
@@ -59,6 +60,7 @@ module xilinx_core_v_mini_mcu_wrapper
     inout FIXED_IO_ps_clk,
     inout FIXED_IO_ps_porb,
     inout FIXED_IO_ps_srstb,
+`endif
 `endif
 `endif
 `endif
@@ -183,10 +185,12 @@ module xilinx_core_v_mini_mcu_wrapper
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_VPK180
+`ifndef PS_ENABLE
   xilinx_cips_wrapper xilinx_cips_wrapper_i (
       .clk_out1_0(clk_gen),
       .pl0_resetn(cips_rst_n)
   );
+`endif
 `elsif FPGA_NEXYS
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .clk_100MHz(clk_i),
@@ -202,6 +206,25 @@ module xilinx_core_v_mini_mcu_wrapper
 `ifdef PS_ENABLE
 `ifdef FPGA_AUP_ZU3
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
+      .ps_gpio_i(ps_x_heep_i),
+      .ps_gpio_o(ps_x_heep_o),
+      .ps_tck_o(ps_tck),
+      .ps_tdi_o(ps_tdi),
+      .ps_tdo_i(ps_tdo),
+      .ps_tms_o(ps_tms),
+      .ps_uart_rx_i(ps_uart_rx),
+      .ps_uart_tx_o(ps_uart_tx),
+      .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
+      .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
+      .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
+      .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
+      .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
+      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io)
+  );
+`elsif FPGA_VPK180
+  xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
+      .clk_out1_0(clk_gen),
+      .pl0_resetn(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
       .ps_tck_o(ps_tck),
