@@ -16,13 +16,13 @@ module xilinx_clk_gating (
   // NOTE: This **cannot** be substituted by a latch+and
 
 `ifdef FPGA_VPK180
-    BUFGCE i_BUFGCE (
-        .I (clk_i),
-        .CE(en_i | test_en_i),
-        .O (clk_o)
-    );
+  BUFGCE i_BUFGCE (
+      .I (clk_i),
+      .CE(en_i | test_en_i),
+      .O (clk_o)
+  );
 `else
-    assign clk_o = clk_i;
+  assign clk_o = clk_i;
 `endif
 
 

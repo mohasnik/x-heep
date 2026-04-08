@@ -241,6 +241,10 @@ parameters:
     datatype: bool
     paramtype: vlogdefine
     default: false
+  FPGA_VPK180:
+    datatype: bool
+    paramtype: vlogdefine
+    default: false
   # Make the parameter known to FuseSoC to enable overrides from the
   # command line. If not overwritten, use the generic technology library.
   PRIM_DEFAULT_IMPL:
@@ -554,7 +558,6 @@ targets:
     - REMOVE_OBI_FIFO
     - FPGA_SYNTHESIS=true
     - FPGA_VPK180=true
-    - PS_ENABLE=true
     tools:
       vivado:
         part: xcvp1802-lsvc4072-2MP-e-S

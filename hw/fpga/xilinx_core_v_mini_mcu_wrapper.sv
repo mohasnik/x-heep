@@ -223,22 +223,20 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
-      .clk_out1_0(clk_gen),
-      .pl0_resetn(cips_rst_n),
+      .pl0_resetn(clk_gen),
+      .pl1_ref_clk_0(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
-      .ps_tck_o(ps_tck),
-      .ps_tdi_o(ps_tdi),
-      .ps_tdo_i(ps_tdo),
-      .ps_tms_o(ps_tms),
-      .ps_uart_rx_i(ps_uart_rx),
-      .ps_uart_tx_o(ps_uart_tx),
       .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
       .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
       .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
       .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
       .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
-      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io)
+      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
+      .ps_tck_o(ps_tck),
+      .ps_tdi_o(ps_tdi),
+      .ps_tdo_i(ps_tdo),
+      .ps_tms_o(ps_tms)
   );
 `else
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
