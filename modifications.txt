@@ -1,0 +1,10 @@
+- core-v-mini-mcu.core:
+	- No board part added
+
+- xilinx_core_v_mini_mcu_wrapper.sv
+	- VPK180 gets clock from CIPS (100MHz) directly (no MMCM/PLL). 
+	- If you need 15MHz like OTHER BOARDS, you'll need to either add a clk_wizard after CIPS or configure CIPS to output 15MHz. For now, starting with 100MHz is fine for bring-up.
+
+
+- xilinx_generate_cips.tcl
+	- clock frequency is set here to 100 MHZ

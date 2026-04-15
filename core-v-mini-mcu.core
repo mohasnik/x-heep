@@ -286,6 +286,12 @@ scripts:
     - python
     - ../../../scripts/sim/vcs/patch_vcs_ams_Makefile.py
 
+  #path-vpk180 run process:
+  patch_vpk_run:
+    cmd:
+    - sh
+    - ../../../scripts/building/patch_vpk180.sh
+
   # Simulation utils
   remove_uart_log:
     cmd: [sh, -c, rm -f uart0.log]
@@ -558,6 +564,11 @@ targets:
     - REMOVE_OBI_FIFO
     - FPGA_SYNTHESIS=true
     - FPGA_VPK180=true
+    flags:
+      PS_ENABLE: true
+    hooks:
+      pre_build:
+      - patch_vpk_run
     tools:
       vivado:
         part: xcvp1802-lsvc4072-2MP-e-S
