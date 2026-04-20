@@ -9,7 +9,7 @@ create_clock -add -name spi_slave_clk_pin -period 16.00 -waveform {0 8} [get_por
 # False paths for cross-clock domain synchronization
 set_false_path -from [get_cells -hierarchical -filter {NAME =~ *dmcontrol_q_reg[ndmreset]}]
 set_false_path -from [get_cells -hierarchical -filter {NAME =~ *synch_regs_q_reg[3]}]
-et_property -dict {PACKAGE_PIN BE31 IOSTANDARD LVCMOS18} [get_ports exit_value_o]
+set_property -dict {PACKAGE_PIN BE31 IOSTANDARD LVCMOS18} [get_ports exit_value_o]
 
 # # PERIPHERALS (I2C, GPIO)
 # These remain as top-level ports in the wrapper even with PS_ENABLE=1.
@@ -33,5 +33,18 @@ set_property -dict {PACKAGE_PIN AY32 IOSTANDARD LVCMOS18} [get_ports {gpio_io[12
 set_property -dict {PACKAGE_PIN AY33 IOSTANDARD LVCMOS18} [get_ports {gpio_io[13]}]
 
 # # Note: UART, JTAG, and Boot Switches are routed internally to the PS/CIPS.
-# Physical pin mapping for these is handled by CIPS MIO configuration 
+# Physical pin mapping for these is handled by CIPS MIO configuration
 # or is not applicable for the virtualized PL interfaces.
+
+# -----------------------------------------------------------------------------
+# AXI Quad SPI (PL-side) — exposes the ps_wizard SPI_0 to board pins so the
+# wizard-generated IOBUFs have a destination and DRC passes. Placeholder pins
+# from the same FMC+ LA bank family as the GPIOs above; replace with the real
+# target pins from VPK180 UG1366 once the physical destination is known.
+# -----------------------------------------------------------------------------
+set_property -dict {PACKAGE_PIN BA32 IOSTANDARD LVCMOS18} [get_ports {ps_quadspi_io_io0_io}]
+set_property -dict {PACKAGE_PIN BA33 IOSTANDARD LVCMOS18} [get_ports {ps_quadspi_io_io1_io}]
+set_property -dict {PACKAGE_PIN BB32 IOSTANDARD LVCMOS18} [get_ports {ps_quadspi_io_io2_io}]
+set_property -dict {PACKAGE_PIN BB33 IOSTANDARD LVCMOS18} [get_ports {ps_quadspi_io_io3_io}]
+set_property -dict {PACKAGE_PIN BC32 IOSTANDARD LVCMOS18} [get_ports {ps_quadspi_io_sck_io}]
+set_property -dict {PACKAGE_PIN BC33 IOSTANDARD LVCMOS18} [get_ports {ps_quadspi_io_ss_io[0]}]

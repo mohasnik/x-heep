@@ -24,6 +24,15 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_VPK180
     // clock added by CIPS internally
     // TODO : double check this
+`ifdef PS_ENABLE
+    // AXI Quad SPI (PL-side) routed from ps_wizard to board pins
+    inout logic       ps_quadspi_io_io0_io,
+    inout logic       ps_quadspi_io_io1_io,
+    inout logic       ps_quadspi_io_io2_io,
+    inout logic       ps_quadspi_io_io3_io,
+    inout logic       ps_quadspi_io_sck_io,
+    inout logic [0:0] ps_quadspi_io_ss_io,
+`endif
 `else
     inout logic clk_i,
 `endif
@@ -131,6 +140,7 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
+`ifndef FPGA_VPK180
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
@@ -138,12 +148,14 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
 `endif
+`endif
 
 `ifdef FPGA_NEXYS
   assign rst_n = rst_i;
 `elsif FPGA_GENESYS2
   assign rst_n = rst_i;
 `elsif FPGA_VPK180
+  wire ps_clk;
   wire cips_rst_n;
   assign rst_n = cips_rst_n;
 `else
@@ -185,12 +197,10 @@ module xilinx_core_v_mini_mcu_wrapper
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_VPK180
-`ifndef PS_ENABLE
-  xilinx_cips_wrapper xilinx_cips_wrapper_i (
-      .clk_out1_0(clk_gen),
-      .pl0_resetn(cips_rst_n)
+  xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
+      .clk_100MHz(ps_clk),
+      .clk_out1_0(clk_gen)
   );
-`endif
 `elsif FPGA_NEXYS
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .clk_100MHz(clk_i),
@@ -223,8 +233,10 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
-      .pl0_resetn(clk_gen),
-      .pl1_ref_clk_0(cips_rst_n),
+      // .pl0_resetn(clk_gen),
+      // .pl1_ref_clk_0(cips_rst_n),
+      .pl0_resetn(cips_rst_n),
+      .pl0_ref_clk(ps_clk),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
       .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
