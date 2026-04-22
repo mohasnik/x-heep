@@ -10,20 +10,20 @@ module xilinx_core_v_mini_mcu_wrapper
 ) (
 
 `ifdef FPGA_ZCU104
-    inout logic clk_300mhz_n,
-    inout logic clk_300mhz_p,
+    inout logic       clk_300mhz_n,
+    inout logic       clk_300mhz_p,
 `elsif FPGA_ZCU102
-    inout logic clk_125mhz_n,
-    inout logic clk_125mhz_p,
+    inout logic       clk_125mhz_n,
+    inout logic       clk_125mhz_p,
 `elsif FPGA_AUP_ZU3
-    inout logic clk_100mhz_n,
-    inout logic clk_100mhz_p,
+    inout logic       clk_100mhz_n,
+    inout logic       clk_100mhz_p,
 `elsif FPGA_GENESYS2
-    inout logic clk_200mhz_n,
-    inout logic clk_200mhz_p,
+    inout logic       clk_200mhz_n,
+    inout logic       clk_200mhz_p,
 `elsif FPGA_VPK180
-    // clock added by CIPS internally
-    // TODO : double check this
+    input logic       lpddr4_clk1_clk_n,
+    input logic       lpddr4_clk1_clk_p,
 `ifdef PS_ENABLE
     // AXI Quad SPI (PL-side) routed from ps_wizard to board pins
     inout logic       ps_quadspi_io_io0_io,
@@ -34,7 +34,7 @@ module xilinx_core_v_mini_mcu_wrapper
     inout logic [0:0] ps_quadspi_io_ss_io,
 `endif
 `else
-    inout logic clk_i,
+    inout logic       clk_i,
 `endif
 
     inout logic rst_i,
@@ -155,7 +155,6 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_GENESYS2
   assign rst_n = rst_i;
 `elsif FPGA_VPK180
-  wire ps_clk;
   wire cips_rst_n;
   assign rst_n = cips_rst_n;
 `else
@@ -198,7 +197,8 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
-      .clk_100MHz(ps_clk),
+      .CLK_IN1_D_0_clk_n(lpddr4_clk1_clk_n),
+      .CLK_IN1_D_0_clk_p(lpddr4_clk1_clk_p),
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_NEXYS
@@ -236,7 +236,6 @@ module xilinx_core_v_mini_mcu_wrapper
       // .pl0_resetn(clk_gen),
       // .pl1_ref_clk_0(cips_rst_n),
       .pl0_resetn(cips_rst_n),
-      .pl0_ref_clk(ps_clk),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
       .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),

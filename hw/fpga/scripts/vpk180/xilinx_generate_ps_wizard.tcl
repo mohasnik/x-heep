@@ -185,8 +185,7 @@ assign_bd_address -offset 0xA4030000 -range 0x00010000 -with_name SEG_axi_quad_s
 # Export PL clock 1 as external port
 # -----------------------------------------------------------------------------
 
-set pl0_ref_clk_o [create_bd_port -dir O -type clk pl0_ref_clk]
-connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] [get_bd_ports pl0_ref_clk]
+
 
 create_bd_port -dir O -type rst pl0_resetn
 connect_bd_net [get_bd_ports pl0_resetn] [get_bd_pins rst_versal_cips/peripheral_aresetn]

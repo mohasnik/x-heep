@@ -14,17 +14,7 @@ module xilinx_clk_gating (
   // In the Zynq UltraScale+, it can be implemented as BUFGCE without trouble, since there
   // are > 500 BUFGCEs and the rules for cascading are more relaxed.
   // NOTE: This **cannot** be substituted by a latch+and
-
-`ifdef FPGA_VPK180
-  BUFGCE i_BUFGCE (
-      .I (clk_i),
-      .CE(en_i | test_en_i),
-      .O (clk_o)
-  );
-`else
   assign clk_o = clk_i;
-`endif
-
 
 endmodule
 

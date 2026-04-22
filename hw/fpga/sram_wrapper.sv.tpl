@@ -32,6 +32,25 @@ module sram_wrapper #(
 
 assign pwrgate_ack_no = pwrgate_ni;
 
+`ifdef FPGA_VPK180
+  // Classical inferred block RAM (byte-enabled, single-port, 1-cycle read latency)
+  (* ram_style = "block" *) logic [31:0] mem [0:NumWords-1];
+  logic [31:0] rdata_q;
+
+  always_ff @(posedge clk_i) begin
+    if (req_i) begin
+      if (we_i) begin
+        if (be_i[0]) mem[addr_i][ 7: 0] <= wdata_i[ 7: 0];
+        if (be_i[1]) mem[addr_i][15: 8] <= wdata_i[15: 8];
+        if (be_i[2]) mem[addr_i][23:16] <= wdata_i[23:16];
+        if (be_i[3]) mem[addr_i][31:24] <= wdata_i[31:24];
+      end
+      rdata_q <= mem[addr_i];
+    end
+  end
+
+  assign rdata_o = rdata_q;
+`else
 <%el = ""%>
 % for num_words in xheep.memory_ss().iter_bank_numwords():
   ${el}if (NumWords == 32'd${num_words}) begin
@@ -50,4 +69,5 @@ assign pwrgate_ack_no = pwrgate_ni;
   else begin
     $error("Bank size not generated.");
   end
+`endif
 endmodule
