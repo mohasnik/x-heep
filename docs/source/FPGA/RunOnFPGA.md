@@ -63,7 +63,7 @@ make vivado-fpga-pgm FPGA_BOARD=<BOARD_NAME>
 
 The Processing System (PS) enables remote access to the SoC over SSH. With the PYNQ utilities, you can connect to the board and program the FPGA by loading the bitstream from Python.
 
-Setting `PS_ENABLE` instantiates the PS in the design for the supported boards:
+Setting the `PS_ENABLE` argument instantiates the PS in the design for the supported boards:
 
 ```sh
 make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_ARGS="--PS_ENABLE"
