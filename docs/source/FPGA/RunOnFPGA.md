@@ -63,10 +63,10 @@ make vivado-fpga-pgm FPGA_BOARD=<BOARD_NAME>
 
 The Processing System (PS) enables remote access to the SoC over SSH. With the PYNQ utilities, you can connect to the board and program the FPGA by loading the bitstream from Python.
 
-Enabling the FuseSoC flag `PS_ENABLE` instantiates the PS in the design (currently supported only on `pynq-z2` and `aup-zu3`):
+Setting `PS_ENABLE` to `1` instantiates the PS in the design on the supported boards:
 
 ```sh
-make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_FLAGS="--flag PS_ENABLE"
+make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_ARGS="--PS_ENABLE=1"
 ```
 
 **Upload the bitstream to the remote board**
@@ -106,7 +106,7 @@ $ sudo -i
 >>> ol = Overlay("/path/to/bitstream.bit")
 ```
 
-Additionally, you can find utilities to program the bitstream on the FPGA and run programs from the Processing System at the following repository: [xheep-Xilinx-SoCs-interface](https://github.com/x-heep/xheep-Xilinx-SoCs-interface).
+Additionally, you can find utilities to program the bitstream on the FPGA and run programs from the Processing System in the following repository: [xheep-Xilinx-SoCs-interface](https://github.com/x-heep/xheep-Xilinx-SoCs-interface).
 
 
 ## Running firmware on the FPGA
