@@ -2,6 +2,8 @@
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
+
+
 module xilinx_core_v_mini_mcu_wrapper
   import obi_pkg::*;
   import reg_pkg::*;
@@ -19,22 +21,24 @@ module xilinx_core_v_mini_mcu_wrapper
     inout logic       clk_100mhz_n,
     inout logic       clk_100mhz_p,
 `elsif FPGA_GENESYS2
-    inout logic       clk_200mhz_n,
-    inout logic       clk_200mhz_p,
-`elsif FPGA_VPK180
-    input logic       lpddr4_clk1_clk_n,
-    input logic       lpddr4_clk1_clk_p,
-`ifdef PS_ENABLE
-    // AXI Quad SPI (PL-side) routed from ps_wizard to board pins
-    inout logic       ps_quadspi_io_io0_io,
-    inout logic       ps_quadspi_io_io1_io,
-    inout logic       ps_quadspi_io_io2_io,
-    inout logic       ps_quadspi_io_io3_io,
-    inout logic       ps_quadspi_io_sck_io,
-    inout logic [0:0] ps_quadspi_io_ss_io,
-`endif
+    inout logic clk_200mhz_n,
+    inout logic clk_200mhz_p,
+`elsif FPGA_NEXYS
+    inout logic clk_i,
 `else
     inout logic       clk_i,
+`endif
+
+`ifndef NO_DDR_CLK_PORTS
+    // Serial Link DDR clock ports for PYNQ Z2 board (set in .core file)
+    input  wire ddr_rcv_clk_i,
+    output wire ddr_snd_clk_o,
+`endif
+
+`ifndef NO_DDR_CLK_PORTS
+    // Serial Link DDR clock ports for PYNQ Z2 board (set in .core file)
+    input  wire ddr_rcv_clk_i,
+    output wire ddr_snd_clk_o,
 `endif
 
     inout logic rst_i,
@@ -96,12 +100,12 @@ module xilinx_core_v_mini_mcu_wrapper
     inout  logic exit_valid_o,
 
     inout logic [3:0] spi_flash_sd_io,
-    inout logic       spi_flash_csb_o,
-    inout logic       spi_flash_sck_o,
+    inout logic spi_flash_csb_o,
+    inout logic spi_flash_sck_o,
 
     inout logic [3:0] spi_sd_io,
-    inout logic       spi_csb_o,
-    inout logic       spi_sck_o,
+    inout logic spi_csb_o,
+    inout logic spi_sck_o,
 
     inout logic spi_slave_sck_io,
     inout logic spi_slave_cs_io,
@@ -110,7 +114,7 @@ module xilinx_core_v_mini_mcu_wrapper
 
     inout logic [3:0] spi2_sd_io,
     inout logic [1:0] spi2_csb_o,
-    inout logic       spi2_sck_o,
+    inout logic spi2_sck_o,
 
     inout logic i2c_scl_io,
     inout logic i2c_sda_io,
@@ -121,26 +125,27 @@ module xilinx_core_v_mini_mcu_wrapper
     inout logic i2s_sck_io,
     inout logic i2s_ws_io,
     inout logic i2s_sd_io
+
 );
 
   wire                               clk_gen;
-  wire                               rst_n;
   logic [                      31:0] exit_value;
+  wire                               rst_n;
   logic [CLK_LED_COUNT_LENGTH - 1:0] clk_count;
 
 `ifdef PS_ENABLE
-  wire       exit_valid;
+  wire exit_valid;
 
   wire [1:0] ps_x_heep_i;
   wire [4:0] ps_x_heep_o;
-  wire       ps_tck;
-  wire       ps_tdi;
-  wire       ps_tdo;
-  wire       ps_tms;
-  wire       ps_uart_rx;
-  wire       ps_uart_tx;
+  wire ps_tck;
+  wire ps_tdi;
+  wire ps_tdo;
+  wire ps_tms;
+  wire ps_uart_rx;
+  wire ps_uart_tx;
 
-`ifndef FPGA_VPK180
+
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
@@ -148,8 +153,8 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
 `endif
-`endif
 
+  // low active reset
 `ifdef FPGA_NEXYS
   assign rst_n = rst_i;
 `elsif FPGA_GENESYS2
@@ -161,14 +166,21 @@ module xilinx_core_v_mini_mcu_wrapper
   assign rst_n = !rst_i;
 `endif
 
+  // reset LED for debugging
   assign rst_led_o = rst_n;
+
+  // counter to blink an LED
   assign clk_led_o = clk_count[CLK_LED_COUNT_LENGTH-1];
 
-  always_ff @(posedge clk_gen or negedge rst_n) begin
-    if (!rst_n) clk_count <= '0;
-    else clk_count <= clk_count + 1;
+  always_ff @(posedge clk_gen or negedge rst_n) begin : clk_count_process
+    if (!rst_n) begin
+      clk_count <= '0;
+    end else begin
+      clk_count <= clk_count + 1;
+    end
   end
 
+  // eXtension Interface
   if_xif #() ext_if ();
 
 `ifdef FPGA_ZCU104
@@ -206,7 +218,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .clk_100MHz(clk_i),
       .clk_out1_0(clk_gen)
   );
-`else
+`else  // FPGA PYNQ-Z2
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .clk_125MHz(clk_i),
       .clk_out1_0(clk_gen)
@@ -328,6 +340,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .external_subsystem_rst_no(),
       .external_ram_banks_set_retentive_no(),
       .external_subsystem_clkgate_en_no(),
+      .exit_value_o(exit_value),
       .clk_i(clk_gen),
 `ifdef PS_ENABLE
       .rst_ni(ps_x_heep_o[0] & rst_n),
@@ -354,7 +367,6 @@ module xilinx_core_v_mini_mcu_wrapper
       .uart_tx_o(uart_tx_o),
       .exit_valid_o(exit_valid_o),
 `endif
-      .exit_value_o(exit_value),
       .gpio_0_io(gpio_io[0]),
       .gpio_1_io(gpio_io[1]),
       .gpio_2_io(gpio_io[2]),
@@ -369,17 +381,24 @@ module xilinx_core_v_mini_mcu_wrapper
       .gpio_11_io(gpio_io[11]),
       .gpio_12_io(gpio_io[12]),
       .gpio_13_io(gpio_io[13]),
+`ifndef NO_DDR_CLK_PORTS
+      .ddr_rcv_clk_i,
+      .ddr_snd_clk_o,
+`else
+      .ddr_rcv_clk_i(1'b0),
+      .ddr_snd_clk_o(),
+`endif
       .spi_slave_sck_io(spi_slave_sck_io),
       .spi_slave_cs_io(spi_slave_cs_io),
       .spi_slave_miso_io(spi_slave_miso_io),
       .spi_slave_mosi_io(spi_slave_mosi_io),
-      .spi_flash_cs_0_io(spi_flash_csb_o),
-      .spi_flash_sck_io(spi_flash_sck_o),
       .spi_flash_sd_0_io(spi_flash_sd_io[0]),
       .spi_flash_sd_1_io(spi_flash_sd_io[1]),
       .spi_flash_sd_2_io(spi_flash_sd_io[2]),
       .spi_flash_sd_3_io(spi_flash_sd_io[3]),
+      .spi_flash_cs_0_io(spi_flash_csb_o),
       .spi_flash_cs_1_io(),
+      .spi_flash_sck_io(spi_flash_sck_o),
       .spi_sd_0_io(spi_sd_io[0]),
       .spi_sd_1_io(spi_sd_io[1]),
       .spi_sd_2_io(spi_sd_io[2]),
@@ -387,8 +406,8 @@ module xilinx_core_v_mini_mcu_wrapper
       .spi_cs_0_io(spi_csb_o),
       .spi_cs_1_io(),
       .spi_sck_io(spi_sck_o),
-      .i2c_scl_io(i2c_scl_io),
-      .i2c_sda_io(i2c_sda_io),
+      .i2c_scl_io,
+      .i2c_sda_io,
       .spi2_sd_0_io(spi2_sd_io[0]),
       .spi2_sd_1_io(spi2_sd_io[1]),
       .spi2_sd_2_io(spi2_sd_io[2]),
@@ -396,8 +415,8 @@ module xilinx_core_v_mini_mcu_wrapper
       .spi2_cs_0_io(spi2_csb_o[0]),
       .spi2_cs_1_io(spi2_csb_o[1]),
       .spi2_sck_io(spi2_sck_o),
-      .pdm2pcm_clk_io(pdm2pcm_clk_io),
-      .pdm2pcm_pdm_io(pdm2pcm_pdm_io),
+      .pdm2pcm_clk_io,
+      .pdm2pcm_pdm_io,
       .i2s_sck_io(i2s_sck_io),
       .i2s_ws_io(i2s_ws_io),
       .i2s_sd_io(i2s_sd_io),
@@ -407,6 +426,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .intr_ext_peripheral_i('0),
       .hw_fifo_done_i('0),
       .dma_done_o()
+
   );
 
   assign exit_value_o = exit_value[0];
