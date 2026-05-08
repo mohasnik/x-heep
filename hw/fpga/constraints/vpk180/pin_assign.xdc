@@ -56,43 +56,43 @@ set_property -dict {PACKAGE_PIN BW50 IOSTANDARD LVCMOS15} [get_ports {gpio_io[13
 # -----------------------------------------------------------------------------
 # SPI master from x-heep_system
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN CC49 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[0]}] ; # FMCP1_LA13_P
-set_property -dict {PACKAGE_PIN CD50 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[1]}] ; # FMCP1_LA13_N
-set_property -dict {PACKAGE_PIN BY51 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[2]}] ; # FMCP1_LA14_P
-set_property -dict {PACKAGE_PIN CA52 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[3]}] ; # FMCP1_LA14_N
-set_property -dict {PACKAGE_PIN CD51 IOSTANDARD LVCMOS15} [get_ports {spi_csb_o}]     ; # FMCP1_LA15_P
-set_property -dict {PACKAGE_PIN CD52 IOSTANDARD LVCMOS15} [get_ports {spi_sck_o}]     ; # FMCP1_LA15_N
+# set_property -dict {PACKAGE_PIN CC49 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[0]}] ; # FMCP1_LA13_P
+# set_property -dict {PACKAGE_PIN CD50 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[1]}] ; # FMCP1_LA13_N
+# set_property -dict {PACKAGE_PIN BY51 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[2]}] ; # FMCP1_LA14_P
+# set_property -dict {PACKAGE_PIN CA52 IOSTANDARD LVCMOS15} [get_ports {spi_sd_io[3]}] ; # FMCP1_LA14_N
+# set_property -dict {PACKAGE_PIN CD51 IOSTANDARD LVCMOS15} [get_ports {spi_csb_o}]     ; # FMCP1_LA15_P
+# set_property -dict {PACKAGE_PIN CD52 IOSTANDARD LVCMOS15} [get_ports {spi_sck_o}]     ; # FMCP1_LA15_N
 
 # -----------------------------------------------------------------------------
 # SPI slave/debug port
 # Use clock-capable FMC LA pins for the externally-driven clock domain.
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN BU41 IOSTANDARD LVCMOS15} [get_ports {spi_slave_sck_io}]  ; # FMCP1_LA17_CC_P
-set_property -dict {PACKAGE_PIN BU42 IOSTANDARD LVCMOS15} [get_ports {spi_slave_cs_io}]   ; # FMCP1_LA17_CC_N
-set_property -dict {PACKAGE_PIN BW39 IOSTANDARD LVCMOS15} [get_ports {spi_slave_mosi_io}] ; # FMCP1_LA18_CC_P
-set_property -dict {PACKAGE_PIN BY39 IOSTANDARD LVCMOS15} [get_ports {spi_slave_miso_io}] ; # FMCP1_LA18_CC_N
+# set_property -dict {PACKAGE_PIN BU41 IOSTANDARD LVCMOS15} [get_ports {spi_slave_sck_io}]  ; # FMCP1_LA17_CC_P
+# set_property -dict {PACKAGE_PIN BU42 IOSTANDARD LVCMOS15} [get_ports {spi_slave_cs_io}]   ; # FMCP1_LA17_CC_N
+# set_property -dict {PACKAGE_PIN BW39 IOSTANDARD LVCMOS15} [get_ports {spi_slave_mosi_io}] ; # FMCP1_LA18_CC_P
+# set_property -dict {PACKAGE_PIN BY39 IOSTANDARD LVCMOS15} [get_ports {spi_slave_miso_io}] ; # FMCP1_LA18_CC_N
 
 # -----------------------------------------------------------------------------
 # SPI2
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN CA51 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[0]}]  ; # FMCP1_LA16_P
-set_property -dict {PACKAGE_PIN CB52 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[1]}]  ; # FMCP1_LA16_N
-set_property -dict {PACKAGE_PIN BN40 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[2]}]  ; # FMCP1_LA19_P
-set_property -dict {PACKAGE_PIN BP40 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[3]}]  ; # FMCP1_LA19_N
-set_property -dict {PACKAGE_PIN BR42 IOSTANDARD LVCMOS15} [get_ports {spi2_csb_o[0]}]  ; # FMCP1_LA20_P
-set_property -dict {PACKAGE_PIN BT41 IOSTANDARD LVCMOS15} [get_ports {spi2_csb_o[1]}]  ; # FMCP1_LA20_N
-set_property -dict {PACKAGE_PIN CD40 IOSTANDARD LVCMOS15} [get_ports {spi2_sck_o}]      ; # FMCP1_LA21_P
+# set_property -dict {PACKAGE_PIN CA51 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[0]}]  ; # FMCP1_LA16_P
+# set_property -dict {PACKAGE_PIN CB52 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[1]}]  ; # FMCP1_LA16_N
+# set_property -dict {PACKAGE_PIN BN40 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[2]}]  ; # FMCP1_LA19_P
+# set_property -dict {PACKAGE_PIN BP40 IOSTANDARD LVCMOS15} [get_ports {spi2_sd_io[3]}]  ; # FMCP1_LA19_N
+# set_property -dict {PACKAGE_PIN BR42 IOSTANDARD LVCMOS15} [get_ports {spi2_csb_o[0]}]  ; # FMCP1_LA20_P
+# set_property -dict {PACKAGE_PIN BT41 IOSTANDARD LVCMOS15} [get_ports {spi2_csb_o[1]}]  ; # FMCP1_LA20_N
+# set_property -dict {PACKAGE_PIN CD40 IOSTANDARD LVCMOS15} [get_ports {spi2_sck_o}]      ; # FMCP1_LA21_P
 
 # -----------------------------------------------------------------------------
 # Shared external flash pins used by x-heep_system and then muxed against PS
 # QuadSPI by the ECO hook.
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN CD41 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[0]}] ; # FMCP1_LA21_N
-set_property -dict {PACKAGE_PIN CD42 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[1]}] ; # FMCP1_LA22_P
-set_property -dict {PACKAGE_PIN CD43 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[2]}] ; # FMCP1_LA22_N
-set_property -dict {PACKAGE_PIN CB40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[3]}] ; # FMCP1_LA23_P
-set_property -dict {PACKAGE_PIN CC40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_csb_o}]     ; # FMCP1_LA23_N
-set_property -dict {PACKAGE_PIN BY40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sck_o}]     ; # FMCP1_LA24_P
+# set_property -dict {PACKAGE_PIN CD41 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[0]}] ; # FMCP1_LA21_N
+# set_property -dict {PACKAGE_PIN CD42 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[1]}] ; # FMCP1_LA22_P
+# set_property -dict {PACKAGE_PIN CD43 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[2]}] ; # FMCP1_LA22_N
+# set_property -dict {PACKAGE_PIN CB40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[3]}] ; # FMCP1_LA23_P
+# set_property -dict {PACKAGE_PIN CC40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_csb_o}]     ; # FMCP1_LA23_N
+# set_property -dict {PACKAGE_PIN BY40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sck_o}]     ; # FMCP1_LA24_P
 
 # -----------------------------------------------------------------------------
 # PS QuadSPI parking pins
@@ -100,9 +100,9 @@ set_property -dict {PACKAGE_PIN BY40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_
 # wizard-generated top-level IOBUFs are placeable before the ECO SPI-flash mux
 # removes them from the final routed interface.
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN CA39 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io0_io}]    ; # FMCP1_LA24_N
-set_property -dict {PACKAGE_PIN CC38 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io1_io}]    ; # FMCP1_LA25_P
-set_property -dict {PACKAGE_PIN CC39 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io2_io}]    ; # FMCP1_LA25_N
-set_property -dict {PACKAGE_PIN CB41 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io3_io}]    ; # FMCP1_LA26_P
-set_property -dict {PACKAGE_PIN CC42 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_sck_io}]    ; # FMCP1_LA26_N
-set_property -dict {PACKAGE_PIN CA38 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_ss_io[0]}]  ; # FMCP1_LA27_P
+# set_property -dict {PACKAGE_PIN CA39 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io0_io}]    ; # FMCP1_LA24_N
+# set_property -dict {PACKAGE_PIN CC38 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io1_io}]    ; # FMCP1_LA25_P
+# set_property -dict {PACKAGE_PIN CC39 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io2_io}]    ; # FMCP1_LA25_N
+# set_property -dict {PACKAGE_PIN CB41 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io3_io}]    ; # FMCP1_LA26_P
+# set_property -dict {PACKAGE_PIN CC42 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_sck_io}]    ; # FMCP1_LA26_N
+# set_property -dict {PACKAGE_PIN CA38 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_ss_io[0]}]  ; # FMCP1_LA27_P
