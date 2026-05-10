@@ -72,6 +72,16 @@ set_property -dict [list \
   } \
 ] $versal_cips_0
 
+
+
+# -----------------------------------------------------------------------------
+# AXI Uartlite
+# -----------------------------------------------------------------------------
+
+create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 axi_uartlite_0
+make_bd_intf_pins_external  [get_bd_intf_pins axi_uartlite_0/UART]
+make_bd_pins_external  [get_bd_pins axi_uartlite_0/interrupt]
+
 # -----------------------------------------------------------------------------
 # AXI helper plane in PL
 # -----------------------------------------------------------------------------
@@ -80,7 +90,7 @@ set axi_jtag [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_jtag:1.0 axi_jtag]
 
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list \
-  CONFIG.NUM_MI {3} \
+  CONFIG.NUM_MI {4} \
   CONFIG.NUM_SI {1} \
 ] $axi_smc
 
@@ -117,6 +127,7 @@ connect_bd_intf_net [get_bd_intf_pins versal_cips_0/M_AXI_FPD] [get_bd_intf_pins
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins axi_gpio/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins axi_jtag/s_axi]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins axi_quad_spi/AXI_LITE]
+connect_bd_intf_net [get_bd_intf_pins axi_smc/M03_AXI] [get_bd_intf_pins axi_uartlite_0/S_AXI]
 
 connect_bd_intf_net [get_bd_intf_ports ps_quadspi_io] [get_bd_intf_pins axi_quad_spi/SPI_0]
 
@@ -131,8 +142,9 @@ connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] \
   [get_bd_pins rst_versal_cips/slowest_sync_clk] \
   [get_bd_pins axi_jtag/s_axi_aclk] \
   [get_bd_pins axi_gpio/s_axi_aclk] \
+  [get_bd_pins axi_uartlite_0/s_axi_aclk] \
   [get_bd_pins axi_quad_spi/s_axi_aclk] \
-  [get_bd_pins axi_quad_spi/ext_spi_clk]
+  [get_bd_pins axi_quad_spi/ext_spi_clk] 
 
 # -----------------------------------------------------------------------------
 # Reset
@@ -146,7 +158,8 @@ connect_bd_net [get_bd_pins rst_versal_cips/peripheral_aresetn] \
   [get_bd_pins axi_smc/aresetn] \
   [get_bd_pins axi_jtag/s_axi_aresetn] \
   [get_bd_pins axi_gpio/s_axi_aresetn] \
-  [get_bd_pins axi_quad_spi/s_axi_aresetn]
+  [get_bd_pins axi_uartlite_0/s_axi_aresetn] \
+  [get_bd_pins axi_quad_spi/s_axi_aresetn] 
 
 # -----------------------------------------------------------------------------
 # GPIO / JTAG / IRQ connections
@@ -176,6 +189,11 @@ assign_bd_address -offset 0xA4020000 -range 0x00010000 -with_name SEG_axi_gpio_R
 assign_bd_address -offset 0xA4000000 -range 0x00010000 \
   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
   [get_bd_addr_segs axi_jtag/s_axi/reg0] -force
+
+
+assign_bd_address -offset 0xA4040000 -range 0x00010000 -with_name SEG_axi_uartlite_Reg \
+  -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
+  [get_bd_addr_segs axi_uartlite_0/S_AXI/Reg] -force
 
 assign_bd_address -offset 0xA4030000 -range 0x00010000 -with_name SEG_axi_quad_spi_Reg \
   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \

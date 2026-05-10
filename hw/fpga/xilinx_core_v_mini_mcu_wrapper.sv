@@ -12,21 +12,24 @@ module xilinx_core_v_mini_mcu_wrapper
 ) (
 
 `ifdef FPGA_ZCU104
-    inout logic       clk_300mhz_n,
-    inout logic       clk_300mhz_p,
+    inout logic clk_300mhz_n,
+    inout logic clk_300mhz_p,
 `elsif FPGA_ZCU102
-    inout logic       clk_125mhz_n,
-    inout logic       clk_125mhz_p,
+    inout logic clk_125mhz_n,
+    inout logic clk_125mhz_p,
 `elsif FPGA_AUP_ZU3
-    inout logic       clk_100mhz_n,
-    inout logic       clk_100mhz_p,
+    inout logic clk_100mhz_n,
+    inout logic clk_100mhz_p,
 `elsif FPGA_GENESYS2
     inout logic clk_200mhz_n,
     inout logic clk_200mhz_p,
+`elsif FPGA_VPK180
+    inout logic lpddr4_clk1_clk_n,
+    inout logic lpddr4_clk1_clk_p,
 `elsif FPGA_NEXYS
     inout logic clk_i,
 `else
-    inout logic       clk_i,
+    inout logic clk_i,
 `endif
 
 `ifndef NO_DDR_CLK_PORTS
@@ -35,14 +38,7 @@ module xilinx_core_v_mini_mcu_wrapper
     output wire ddr_snd_clk_o,
 `endif
 
-`ifndef NO_DDR_CLK_PORTS
-    // Serial Link DDR clock ports for PYNQ Z2 board (set in .core file)
-    input  wire ddr_rcv_clk_i,
-    output wire ddr_snd_clk_o,
-`endif
-
-    inout logic rst_i,
-
+    inout  logic rst_i,
     output logic rst_led_o,
     output logic clk_led_o,
 
@@ -134,16 +130,16 @@ module xilinx_core_v_mini_mcu_wrapper
   logic [CLK_LED_COUNT_LENGTH - 1:0] clk_count;
 
 `ifdef PS_ENABLE
-  wire exit_valid;
+  wire       exit_valid;
 
   wire [1:0] ps_x_heep_i;
   wire [4:0] ps_x_heep_o;
-  wire ps_tck;
-  wire ps_tdi;
-  wire ps_tdo;
-  wire ps_tms;
-  wire ps_uart_rx;
-  wire ps_uart_tx;
+  wire       ps_tck;
+  wire       ps_tdi;
+  wire       ps_tdo;
+  wire       ps_tms;
+  wire       ps_uart_rx;
+  wire       ps_uart_tx;
 
 
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
@@ -247,19 +243,22 @@ module xilinx_core_v_mini_mcu_wrapper
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
       // .pl0_resetn(clk_gen),
       // .pl1_ref_clk_0(cips_rst_n),
+
       .pl0_resetn(cips_rst_n),
-      .ps_gpio_i(ps_x_heep_i),
-      .ps_gpio_o(ps_x_heep_o),
+      .ps_gpio_i (ps_x_heep_i),
+      .ps_gpio_o (ps_x_heep_o),
+      .UART_0_rxd(ps_uart_rx),
+      .UART_0_txd(ps_uart_tx),
       .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
       .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
       .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
       .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
       .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
       .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
-      .ps_tck_o(ps_tck),
-      .ps_tdi_o(ps_tdi),
-      .ps_tdo_i(ps_tdo),
-      .ps_tms_o(ps_tms)
+      .ps_tck_o  (ps_tck),
+      .ps_tdi_o  (ps_tdi),
+      .ps_tdo_i  (ps_tdo),
+      .ps_tms_o  (ps_tms)
   );
 `else
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (

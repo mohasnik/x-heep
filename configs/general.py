@@ -79,11 +79,11 @@ def config():
 
     # User peripherals. All are optional. They must be added with "add_peripheral".
     user_peripheral_domain.add_peripheral(RV_plic(0x00000000))
-    user_peripheral_domain.add_peripheral(SPI_host(0x00010000))
+    # user_peripheral_domain.add_peripheral(SPI_host(0x00010000))
     user_peripheral_domain.add_peripheral(GPIO(0x00020000))
     user_peripheral_domain.add_peripheral(I2C(0x00030000))
     user_peripheral_domain.add_peripheral(RV_timer(0x00040000))
-    user_peripheral_domain.add_peripheral(SPI2(0x00050000))
+    # user_peripheral_domain.add_peripheral(SPI2(0x00050000))
     user_peripheral_domain.add_peripheral(I2S(0x00070000))
     user_peripheral_domain.add_peripheral(UART(0x00080000))
 
