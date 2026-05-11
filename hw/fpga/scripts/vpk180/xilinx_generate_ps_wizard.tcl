@@ -16,7 +16,7 @@ current_bd_instance /
 # External PL-facing ports for the SV wrapper
 # -----------------------------------------------------------------------------
 
-set ps_quadspi_io [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:spi_rtl:1.0 ps_quadspi_io]
+# set ps_quadspi_io [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:spi_rtl:1.0 ps_quadspi_io]
 
 # UART intentionally not exported in this script yet.
 # Native CIPS UART-through-EMIO should be added once the exact Vivado-generated
@@ -106,16 +106,19 @@ set_property -dict [list \
 ] $axi_gpio
 
 set ilconcat_0 [create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat:1.0 ilconcat_0]
-set_property CONFIG.NUM_PORTS {2} $ilconcat_0
+
+# set_property CONFIG.NUM_PORTS {2} $ilconcat_0
+set_property CONFIG.NUM_PORTS {1} $ilconcat_0
+
 
 set ilconstant_0 [create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant:1.0 ilconstant_0]
 set_property CONFIG.CONST_VAL {0} $ilconstant_0
 
-set axi_quad_spi [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 axi_quad_spi]
-set_property -dict [list \
-  CONFIG.C_SPI_MODE {2} \
-  CONFIG.C_USE_STARTUP {0} \
-] $axi_quad_spi
+# set axi_quad_spi [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 axi_quad_spi]
+# set_property -dict [list \
+#   CONFIG.C_SPI_MODE {2} \
+#   CONFIG.C_USE_STARTUP {0} \
+# ] $axi_quad_spi
 
 # -----------------------------------------------------------------------------
 # AXI interface connections
@@ -126,10 +129,10 @@ connect_bd_intf_net [get_bd_intf_pins versal_cips_0/M_AXI_FPD] [get_bd_intf_pins
 
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins axi_gpio/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins axi_jtag/s_axi]
-connect_bd_intf_net [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins axi_quad_spi/AXI_LITE]
+# connect_bd_intf_net [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins axi_quad_spi/AXI_LITE]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M03_AXI] [get_bd_intf_pins axi_uartlite_0/S_AXI]
 
-connect_bd_intf_net [get_bd_intf_ports ps_quadspi_io] [get_bd_intf_pins axi_quad_spi/SPI_0]
+# connect_bd_intf_net [get_bd_intf_ports ps_quadspi_io] [get_bd_intf_pins axi_quad_spi/SPI_0]
 
 # -----------------------------------------------------------------------------
 # Clocking
@@ -142,9 +145,9 @@ connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] \
   [get_bd_pins rst_versal_cips/slowest_sync_clk] \
   [get_bd_pins axi_jtag/s_axi_aclk] \
   [get_bd_pins axi_gpio/s_axi_aclk] \
-  [get_bd_pins axi_uartlite_0/s_axi_aclk] \
-  [get_bd_pins axi_quad_spi/s_axi_aclk] \
-  [get_bd_pins axi_quad_spi/ext_spi_clk] 
+  [get_bd_pins axi_uartlite_0/s_axi_aclk] 
+#  [get_bd_pins axi_quad_spi/s_axi_aclk] \
+#  [get_bd_pins axi_quad_spi/ext_spi_clk] 
 
 # -----------------------------------------------------------------------------
 # Reset
@@ -158,8 +161,8 @@ connect_bd_net [get_bd_pins rst_versal_cips/peripheral_aresetn] \
   [get_bd_pins axi_smc/aresetn] \
   [get_bd_pins axi_jtag/s_axi_aresetn] \
   [get_bd_pins axi_gpio/s_axi_aresetn] \
-  [get_bd_pins axi_uartlite_0/s_axi_aresetn] \
-  [get_bd_pins axi_quad_spi/s_axi_aresetn] 
+  [get_bd_pins axi_uartlite_0/s_axi_aresetn] 
+#  [get_bd_pins axi_quad_spi/s_axi_aresetn] 
 
 # -----------------------------------------------------------------------------
 # GPIO / JTAG / IRQ connections
@@ -175,7 +178,7 @@ connect_bd_net [get_bd_ports ps_tdo_i]    [get_bd_pins axi_jtag/tdo]
 
 # Only SPI interrupt used for now
 connect_bd_net [get_bd_pins ilconstant_0/dout]         [get_bd_pins ilconcat_0/In0]
-connect_bd_net [get_bd_pins axi_quad_spi/ip2intc_irpt] [get_bd_pins ilconcat_0/In1]
+# connect_bd_net [get_bd_pins axi_quad_spi/ip2intc_irpt] [get_bd_pins ilconcat_0/In1]
 connect_bd_net [get_bd_pins ilconcat_0/dout]           [get_bd_pins versal_cips_0/pl_ps_irq0]
 
 # -----------------------------------------------------------------------------
@@ -195,9 +198,9 @@ assign_bd_address -offset 0xA4040000 -range 0x00010000 -with_name SEG_axi_uartli
   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
   [get_bd_addr_segs axi_uartlite_0/S_AXI/Reg] -force
 
-assign_bd_address -offset 0xA4030000 -range 0x00010000 -with_name SEG_axi_quad_spi_Reg \
-  -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
-  [get_bd_addr_segs axi_quad_spi/AXI_LITE/Reg] -force
+# assign_bd_address -offset 0xA4030000 -range 0x00010000 -with_name SEG_axi_quad_spi_Reg \
+#   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
+#   [get_bd_addr_segs axi_quad_spi/AXI_LITE/Reg] -force
 
 # -----------------------------------------------------------------------------
 # Export PL clock 1 as external port

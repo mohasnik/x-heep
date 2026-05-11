@@ -21,7 +21,8 @@ set_property -dict {PACKAGE_PIN BK5 IOSTANDARD DIFF_LVSTL_11} [get_ports {lpddr4
 # -----------------------------------------------------------------------------
 # Status, low-speed I/O, and shared wrapper ports
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN BV49 IOSTANDARD LVCMOS15} [get_ports {rst_i}]        ; # FMCP1_LA00_CC_P
+# set_property -dict {PACKAGE_PIN BV49 IOSTANDARD LVCMOS15} [get_ports {rst_i}]        ; # FMCP1_LA00_CC_P
+set_property -dict {PACKAGE_PIN BT48 IOSTANDARD LVCMOS15} [get_ports {rst_i}]
 set_property -dict {PACKAGE_PIN BV50 IOSTANDARD LVCMOS15} [get_ports {rst_led_o}]    ; # FMCP1_LA00_CC_N
 set_property -dict {PACKAGE_PIN BW51 IOSTANDARD LVCMOS15} [get_ports {clk_led_o}]    ; # FMCP1_LA01_CC_P
 set_property -dict {PACKAGE_PIN BW52 IOSTANDARD LVCMOS15} [get_ports {exit_valid_o}] ; # FMCP1_LA01_CC_N
@@ -93,16 +94,3 @@ set_property -dict {PACKAGE_PIN CD43 IOSTANDARD LVCMOS15} [get_ports {spi_flash_
 set_property -dict {PACKAGE_PIN CB40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[3]}] ; # FMCP1_LA23_P
 set_property -dict {PACKAGE_PIN CC40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_csb_o}]     ; # FMCP1_LA23_N
 set_property -dict {PACKAGE_PIN BY40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sck_o}]     ; # FMCP1_LA24_P
-
-# -----------------------------------------------------------------------------
-# PS QuadSPI parking pins
-# In the PS-enabled VPK180 flow these ports need real LOCs so the
-# wizard-generated top-level IOBUFs are placeable before the ECO SPI-flash mux
-# removes them from the final routed interface.
-# -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN CA39 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io0_io}]    ; # FMCP1_LA24_N
-set_property -dict {PACKAGE_PIN CC38 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io1_io}]    ; # FMCP1_LA25_P
-set_property -dict {PACKAGE_PIN CC39 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io2_io}]    ; # FMCP1_LA25_N
-set_property -dict {PACKAGE_PIN CB41 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_io3_io}]    ; # FMCP1_LA26_P
-set_property -dict {PACKAGE_PIN CC42 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_sck_io}]    ; # FMCP1_LA26_N
-set_property -dict {PACKAGE_PIN CA38 IOSTANDARD LVCMOS15} [get_ports {ps_quadspi_io_ss_io[0]}]  ; # FMCP1_LA27_P

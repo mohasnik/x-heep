@@ -141,13 +141,14 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
-
+`ifndef FPGA_VPK180
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io3_io;
   wire       ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
+`endif
 `endif
 
   // low active reset
@@ -157,7 +158,8 @@ module xilinx_core_v_mini_mcu_wrapper
   assign rst_n = rst_i;
 `elsif FPGA_VPK180
   wire cips_rst_n;
-  assign rst_n = cips_rst_n;
+  // TODO: for now system reset of pl is ignored.
+  assign rst_n = rst_i;
 `else
   assign rst_n = !rst_i;
 `endif
@@ -241,20 +243,17 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
-      // .pl0_resetn(clk_gen),
-      // .pl1_ref_clk_0(cips_rst_n),
-
       .pl0_resetn(cips_rst_n),
       .ps_gpio_i (ps_x_heep_i),
       .ps_gpio_o (ps_x_heep_o),
       .UART_0_rxd(ps_uart_rx),
       .UART_0_txd(ps_uart_tx),
-      .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
-      .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
-      .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
-      .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
-      .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
-      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
+      // .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
+      // .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
+      // .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
+      // .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
+      // .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
+      // .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
       .ps_tck_o  (ps_tck),
       .ps_tdi_o  (ps_tdi),
       .ps_tdo_i  (ps_tdo),
@@ -342,7 +341,11 @@ module xilinx_core_v_mini_mcu_wrapper
       .exit_value_o(exit_value),
       .clk_i(clk_gen),
 `ifdef PS_ENABLE
+`ifdef FPGA_VPK180
+      .rst_ni(rst_n),
+`else
       .rst_ni(ps_x_heep_o[0] & rst_n),
+`endif
       .boot_select_i(ps_x_heep_o[1]),
       .execute_from_flash_i(ps_x_heep_o[2]),
       .jtag_tck_i(ps_tck),
@@ -387,7 +390,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .ddr_rcv_clk_i(1'b0),
       .ddr_snd_clk_o(),
 `endif
-      .spi_slave_sck_io(spi_slave_sck_io),
+      .spi_slave_sck_i(spi_slave_sck_io),
       .spi_slave_cs_io(spi_slave_cs_io),
       .spi_slave_miso_io(spi_slave_miso_io),
       .spi_slave_mosi_io(spi_slave_mosi_io),
@@ -435,6 +438,7 @@ module xilinx_core_v_mini_mcu_wrapper
   assign ps_x_heep_i[1] = exit_value[0];
 
   assign exit_valid_o   = exit_valid;
+`ifndef FPGA_VPK180
 
   // QuadSPI flash mux hook
   (* DONT_TOUCH = "TRUE" *)
@@ -460,5 +464,6 @@ module xilinx_core_v_mini_mcu_wrapper
       .I0(ps_quadspi_io_ss_io[0]),
       .O ()
   );
+`endif
 `endif
 endmodule

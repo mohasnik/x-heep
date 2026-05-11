@@ -35,7 +35,26 @@ module rstgen_bypass #(
         .clk_sel_i  ( test_mode_i ),
         .clk_o      ( rst_n )
     );
+`ifdef FPGA_VPK180
+    logic synch_reg_buf;
+    BUFGCE #(
+        .CE_TYPE("ASYNC"),            // ASYNC, HARDSYNC, SYNC
+        .IS_CE_INVERTED(1'b0),       // Programmable inversion on CE
+        .IS_I_INVERTED(1'b0),        // Programmable inversion on I
+        .SIM_DEVICE("VERSAL_PRIME")  // VERSAL_PRIME, VERSAL_PRIME_ES1
+    ) BUFGCE_inst (
+        .O(synch_reg_buf),   // 1-bit output: Buffer
+        .CE(1'b1), // 1-bit input: Buffer enable
+        .I( synch_regs_q[NumRegs-1] )    // 1-bit input: Buffer
+    );
 
+    tc_clk_mux2 i_tc_clk_mux2_rst_no (
+        .clk0_i     (synch_reg_buf),
+        .clk1_i     ( rst_test_mode_ni ),
+        .clk_sel_i  ( test_mode_i ),
+        .clk_o      ( rst_no )
+    );
+`else
     tc_clk_mux2 i_tc_clk_mux2_rst_no (
         .clk0_i     ( synch_regs_q[NumRegs-1] ),
         .clk1_i     ( rst_test_mode_ni ),
@@ -43,6 +62,7 @@ module rstgen_bypass #(
         .clk_o      ( rst_no )
     );
 
+`endif
     tc_clk_mux2 i_tc_clk_mux2_init_no (
         .clk0_i     ( synch_regs_q[NumRegs-1] ),
         .clk1_i     ( 1'b1 ),
