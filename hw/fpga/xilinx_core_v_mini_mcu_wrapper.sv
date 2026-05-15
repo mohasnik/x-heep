@@ -2,6 +2,7 @@
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
+`define NO_DDR_CLK_PORTS
 
 
 module xilinx_core_v_mini_mcu_wrapper
@@ -257,8 +258,12 @@ module xilinx_core_v_mini_mcu_wrapper
       .ps_tck_o  (ps_tck),
       .ps_tdi_o  (ps_tdi),
       .ps_tdo_i  (ps_tdo),
-      .ps_tms_o  (ps_tms)
+      .ps_tms_o  (ps_tms),
+      .lpddr4_clk1_clk_n(lpddr4_clk1_clk_n)
+      .lpddr4_clk1_clk_p(lpddr4_clk1_clk_p)
   );
+
+  
 `else
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
       .DDR_addr(DDR_addr),
@@ -341,11 +346,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .exit_value_o(exit_value),
       .clk_i(clk_gen),
 `ifdef PS_ENABLE
-`ifdef FPGA_VPK180
-      .rst_ni(rst_n),
-`else
       .rst_ni(ps_x_heep_o[0] & rst_n),
-`endif
       .boot_select_i(ps_x_heep_o[1]),
       .execute_from_flash_i(ps_x_heep_o[2]),
       .jtag_tck_i(ps_tck),
