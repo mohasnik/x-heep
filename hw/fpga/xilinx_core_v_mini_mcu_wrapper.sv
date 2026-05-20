@@ -25,8 +25,10 @@ module xilinx_core_v_mini_mcu_wrapper
     inout logic clk_200mhz_n,
     inout logic clk_200mhz_p,
 `elsif FPGA_VPK180
-    inout logic lpddr4_clk1_clk_n,
-    inout logic lpddr4_clk1_clk_p,
+    input logic lpddr4_clk1_clk_n,
+    input logic lpddr4_clk1_clk_p,
+    input logic lpddr4_clk3_clk_n,
+    input logic lpddr4_clk3_clk_p,
     output logic [5:0] ch0_lpddr4_trip1_ca_a,
     output logic [5:0] ch0_lpddr4_trip1_ca_b,
     output logic ch0_lpddr4_trip1_ck_c_a,
@@ -198,7 +200,7 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_VPK180
   wire cips_rst_n;
   // TODO: for now system reset of pl is ignored.
-  assign rst_n = rst_i;
+  assign rst_n = ~rst_i;
 `else
   assign rst_n = !rst_i;
 `endif
@@ -246,8 +248,8 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
-      .CLK_IN1_D_0_clk_n(lpddr4_clk1_clk_n),
-      .CLK_IN1_D_0_clk_p(lpddr4_clk1_clk_p),
+      .CLK_IN1_D_0_clk_n(lpddr4_clk3_clk_n),
+      .CLK_IN1_D_0_clk_p(lpddr4_clk3_clk_p),
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_NEXYS

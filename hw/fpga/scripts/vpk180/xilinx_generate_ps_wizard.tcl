@@ -60,6 +60,7 @@ set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
       DDR_MEMORY_MODE {Connectivity to DDR via NOC} \
       DESIGN_MODE {1} \
       DEVICE_INTEGRITY_MODE {Sysmon temperature voltage and external IO monitoring} \
+      PMC_CRP_PL0_REF_CTRL_FREQMHZ {100} \
       PMC_GPIO0_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 0 .. 25}}} \
       PMC_GPIO1_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 26 .. 51}}} \
       PMC_MIO37 {{AUX_IO 0} {DIRECTION out} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA high} {PULL pullup} {SCHMITT 0} {SLEW slow} {USAGE GPIO}} \
@@ -181,6 +182,7 @@ connect_bd_intf_net [get_bd_intf_ports UART_0] [get_bd_intf_pins axi_uartlite_0/
 # -----------------------------------------------------------------------------
 
 set axi_jtag [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_jtag:1.0 axi_jtag]
+set_property CONFIG.C_TCK_CLOCK_RATIO {25} [get_bd_cells axi_jtag]
 
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list \

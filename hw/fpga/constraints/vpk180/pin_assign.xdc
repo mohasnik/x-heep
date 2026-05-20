@@ -3,20 +3,24 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # VPK180 pin plan for the PS-enabled flow.
-# - Use the real LPDDR4_CLK1 pins from AMD's VPK180 master XDC.
+# - Use the real LPDDR4 clock pins from AMD's VPK180 master XDC.
 # - Route all PL-side user I/O to the FMCP1 LA bank so the design can be wired
 #   out through the FMC+ connector without touching board-management nets.
 # - FMCP1 LA banks on VPK180 use VADJ_FMC, so the matching I/O standard from the
 #   master XDC is LVCMOS15.
 
 # -----------------------------------------------------------------------------
-# LPDDR4 clock used as external PL reference
+# LPDDR4 clocks
 # Master XDC:
-#   LPDDR4_CLK1_P -> BK6
+#   LPDDR4_CLK1_P -> BK6   (NoC LPDDR4 reference)
 #   LPDDR4_CLK1_N -> BK5
+#   LPDDR4_CLK3_P -> BV32  (X-HEEP system clock reference)
+#   LPDDR4_CLK3_N -> BW33
 # -----------------------------------------------------------------------------
 set_property -dict {PACKAGE_PIN BK6 IOSTANDARD DIFF_LVSTL_11} [get_ports {lpddr4_clk1_clk_p}]
 set_property -dict {PACKAGE_PIN BK5 IOSTANDARD DIFF_LVSTL_11} [get_ports {lpddr4_clk1_clk_n}]
+set_property -dict {PACKAGE_PIN BV32 IOSTANDARD DIFF_LVSTL_11} [get_ports {lpddr4_clk3_clk_p}]
+set_property -dict {PACKAGE_PIN BW33 IOSTANDARD DIFF_LVSTL_11} [get_ports {lpddr4_clk3_clk_n}]
 
 # -----------------------------------------------------------------------------
 # NoC LPDDR4 memory channels
@@ -160,8 +164,8 @@ set_property -dict {PACKAGE_PIN BL6 IOSTANDARD LVSTL_11} [get_ports {ch1_lpddr4_
 # -----------------------------------------------------------------------------
 # set_property -dict {PACKAGE_PIN BV49 IOSTANDARD LVCMOS15} [get_ports {rst_i}]        ; # FMCP1_LA00_CC_P
 set_property -dict {PACKAGE_PIN BT48 IOSTANDARD LVCMOS15} [get_ports {rst_i}]
-set_property -dict {PACKAGE_PIN BV50 IOSTANDARD LVCMOS15} [get_ports {rst_led_o}]    ; # FMCP1_LA00_CC_N
-set_property -dict {PACKAGE_PIN BW51 IOSTANDARD LVCMOS15} [get_ports {clk_led_o}]    ; # FMCP1_LA01_CC_P
+set_property -dict {PACKAGE_PIN BA49 IOSTANDARD LVCMOS15} [get_ports {rst_led_o}] ; # GPIO_LED_0_LS
+set_property -dict {PACKAGE_PIN AY50 IOSTANDARD LVCMOS15} [get_ports {clk_led_o}] ; # GPIO_LED_1_LS
 set_property -dict {PACKAGE_PIN BW52 IOSTANDARD LVCMOS15} [get_ports {exit_valid_o}] ; # FMCP1_LA01_CC_N
 set_property -dict {PACKAGE_PIN CB46 IOSTANDARD LVCMOS15} [get_ports {exit_value_o}] ; # FMCP1_LA02_P
 
