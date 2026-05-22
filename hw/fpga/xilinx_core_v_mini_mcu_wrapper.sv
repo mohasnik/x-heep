@@ -206,7 +206,7 @@ module xilinx_core_v_mini_mcu_wrapper
 `endif
 
   // reset LED for debugging
-  assign rst_led_o = rst_n;
+  assign rst_led_o = ~rst_n;
 
   // counter to blink an LED
   assign clk_led_o = clk_count[CLK_LED_COUNT_LENGTH-1];

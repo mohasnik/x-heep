@@ -182,7 +182,7 @@ connect_bd_intf_net [get_bd_intf_ports UART_0] [get_bd_intf_pins axi_uartlite_0/
 # -----------------------------------------------------------------------------
 
 set axi_jtag [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_jtag:1.0 axi_jtag]
-set_property CONFIG.C_TCK_CLOCK_RATIO {25} [get_bd_cells axi_jtag]
+set_property CONFIG.C_TCK_CLOCK_RATIO {10} [get_bd_cells axi_jtag]
 
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list \
@@ -322,6 +322,24 @@ endgroup
 create_bd_port -dir O -type rst pl0_resetn
 connect_bd_net [get_bd_ports pl0_resetn] [get_bd_pins rst_versal_cips/peripheral_aresetn]
 
+
+## UPDATES TO CLOCK WIZARD OF JTAG. COMBINE WITH THE MODULE INSTANTIATION LATER:
+startgroup
+set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC USER] [get_bd_cells clk_wizard_0]
+set_property -dict [list \
+  CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
+  CONFIG.CLKOUT_DYN_PS {None,None,None,None,None,None,None} \
+  CONFIG.CLKOUT_GROUPING {Auto,Auto,Auto,Auto,Auto,Auto,Auto} \
+  CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
+  CONFIG.CLKOUT_PORT {clk_out1,clk_out2,clk_out3,clk_out4,clk_out5,clk_out6,clk_out7} \
+  CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
+  CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {10,100.000,100.000,100.000,100.000,100.000,100.000} \
+  CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
+  CONFIG.CLKOUT_USED {true,false,false,false,false,false,false} \
+  CONFIG.PRIMITIVE_TYPE {MMCM} \
+  CONFIG.PRIM_IN_FREQ {10} \
+] [get_bd_cells clk_wizard_0]
+endgroup
 
 # -----------------------------------------------------------------------------
 # Finalize
