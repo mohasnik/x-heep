@@ -20,10 +20,11 @@ current_bd_instance /
 
 set ps_tdi_o  [create_bd_port -dir O ps_tdi_o]
 set ps_tms_o  [create_bd_port -dir O ps_tms_o]
-set ps_tck_o  [create_bd_port -dir O ps_tck_o]
+set ps_tck_o  [create_bd_port -dir O -from 0 -to 0 ps_tck_o]
 set ps_tdo_i  [create_bd_port -dir I ps_tdo_i]
 set ps_gpio_i [create_bd_port -dir I -from 1 -to 0 ps_gpio_i]
 set ps_gpio_o [create_bd_port -dir O -from 4 -to 0 ps_gpio_o]
+set pl0_resetn [create_bd_port -dir O -from 0 -to 0 -type rst pl0_resetn]
 
 set UART_0 [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 UART_0]
 set ch0_lpddr4_trip1 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:lpddr4_rtl:1.0 ch0_lpddr4_trip1 ]
@@ -40,15 +41,8 @@ set_property -dict [list CONFIG.FREQ_HZ {200000000}] $lpddr4_clk1
 set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips:3.4 versal_cips_0 ]
 
 # Full System mode so M_AXI_FPD / IRQs / PL clocks-resets are available
+
 set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
-
-# NOTE:
-# - For VPK180 onboard LPDDR4, use proper CIPS/board/block automation later,
-#   not manual generic DDR4/NoC construction.
-# - UART is NOT configured here yet, because the exact EMIO Tcl token should
-#   be taken from Vivado-generated CIPS Tcl for this version.
-
-
   set_property -dict [list \
     CONFIG.CLOCK_MODE {Custom} \
     CONFIG.DDR_MEMORY_MODE {Custom} \
@@ -57,10 +51,12 @@ set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
     CONFIG.PS_BOARD_INTERFACE {ps_pmc_fixed_io} \
     CONFIG.PS_PL_CONNECTIVITY_MODE {Custom} \
     CONFIG.PS_PMC_CONFIG { \
+      CLOCK_MODE {Custom} \
       DDR_MEMORY_MODE {Connectivity to DDR via NOC} \
       DESIGN_MODE {1} \
       DEVICE_INTEGRITY_MODE {Sysmon temperature voltage and external IO monitoring} \
-      PMC_CRP_PL0_REF_CTRL_FREQMHZ {100} \
+      PMC_CRP_PL0_REF_CTRL_FREQMHZ {10} \
+      PMC_CRP_PL1_REF_CTRL_FREQMHZ {334} \
       PMC_GPIO0_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 0 .. 25}}} \
       PMC_GPIO1_MIO_PERIPHERAL {{ENABLE 1} {IO {PMC_MIO 26 .. 51}}} \
       PMC_MIO37 {{AUX_IO 0} {DIRECTION out} {DRIVE_STRENGTH 8mA} {OUTPUT_DATA high} {PULL pullup} {SCHMITT 0} {SLEW slow} {USAGE GPIO}} \
@@ -208,6 +204,14 @@ set_property CONFIG.NUM_PORTS {1} $ilconcat_0
 connect_bd_net [get_bd_pins axi_uartlite_0/interrupt] [get_bd_pins ilconcat_0/In0]
 
 
+# -----------------------------------------------------------------------------
+# UTILITY BUFFER 
+# -----------------------------------------------------------------------------
+
+set util_ds_buf_0 [create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_0]
+set_property CONFIG.C_BUF_TYPE {BUFG} $util_ds_buf_0
+
+
 
 # set axi_quad_spi [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 axi_quad_spi]
 # set_property -dict [list \
@@ -256,7 +260,8 @@ connect_bd_net [get_bd_pins rst_versal_cips/peripheral_aresetn] \
   [get_bd_pins axi_smc/aresetn] \
   [get_bd_pins axi_jtag/s_axi_aresetn] \
   [get_bd_pins axi_gpio/s_axi_aresetn] \
-  [get_bd_pins axi_uartlite_0/s_axi_aresetn] 
+  [get_bd_pins axi_uartlite_0/s_axi_aresetn] \
+  [get_bd_ports pl0_resetn]
 #  [get_bd_pins axi_quad_spi/s_axi_aresetn] 
 
 # -----------------------------------------------------------------------------
@@ -266,7 +271,8 @@ connect_bd_net [get_bd_pins rst_versal_cips/peripheral_aresetn] \
 connect_bd_net [get_bd_pins axi_gpio/gpio_io_o]  [get_bd_ports ps_gpio_o]
 connect_bd_net [get_bd_ports ps_gpio_i]          [get_bd_pins axi_gpio/gpio2_io_i]
 
-connect_bd_net [get_bd_pins axi_jtag/tck] [get_bd_ports ps_tck_o]
+connect_bd_net [get_bd_pins axi_jtag/tck] [get_bd_pins util_ds_buf_0/BUFG_I]
+connect_bd_net [get_bd_pins util_ds_buf_0/BUFG_O] [get_bd_ports ps_tck_o]
 connect_bd_net [get_bd_pins axi_jtag/tdi] [get_bd_ports ps_tdi_o]
 connect_bd_net [get_bd_pins axi_jtag/tms] [get_bd_ports ps_tms_o]
 connect_bd_net [get_bd_ports ps_tdo_i]    [get_bd_pins axi_jtag/tdo]
@@ -303,43 +309,6 @@ assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_s
 assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_3] [get_bd_addr_segs axi_noc_0/S03_AXI/C1_DDR_LOW1] -force
 assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW1] -force
 assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW1] -force
-
-# -----------------------------------------------------------------------------
-# Export PL clock 1 as external port
-# -----------------------------------------------------------------------------
-
-delete_bd_objs [get_bd_nets axi_jtag_tck]
-startgroup
-create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wizard:1.0 clk_wizard_0
-endgroup
-set_property location {6 1664 32} [get_bd_cells clk_wizard_0]
-connect_bd_net [get_bd_pins axi_jtag/tck] [get_bd_pins clk_wizard_0/clk_in1]
-connect_bd_net [get_bd_ports ps_tck_o] [get_bd_pins clk_wizard_0/clk_out1]
-startgroup
-set_property CONFIG.PRIMITIVE_TYPE {DPLL} [get_bd_cells clk_wizard_0]
-endgroup
-
-create_bd_port -dir O -type rst pl0_resetn
-connect_bd_net [get_bd_ports pl0_resetn] [get_bd_pins rst_versal_cips/peripheral_aresetn]
-
-
-## UPDATES TO CLOCK WIZARD OF JTAG. COMBINE WITH THE MODULE INSTANTIATION LATER:
-startgroup
-set_property -dict [list CONFIG.PRIM_IN_FREQ.VALUE_SRC USER] [get_bd_cells clk_wizard_0]
-set_property -dict [list \
-  CONFIG.CLKOUT_DRIVES {BUFG,BUFG,BUFG,BUFG,BUFG,BUFG,BUFG} \
-  CONFIG.CLKOUT_DYN_PS {None,None,None,None,None,None,None} \
-  CONFIG.CLKOUT_GROUPING {Auto,Auto,Auto,Auto,Auto,Auto,Auto} \
-  CONFIG.CLKOUT_MATCHED_ROUTING {false,false,false,false,false,false,false} \
-  CONFIG.CLKOUT_PORT {clk_out1,clk_out2,clk_out3,clk_out4,clk_out5,clk_out6,clk_out7} \
-  CONFIG.CLKOUT_REQUESTED_DUTY_CYCLE {50.000,50.000,50.000,50.000,50.000,50.000,50.000} \
-  CONFIG.CLKOUT_REQUESTED_OUT_FREQUENCY {10,100.000,100.000,100.000,100.000,100.000,100.000} \
-  CONFIG.CLKOUT_REQUESTED_PHASE {0.000,0.000,0.000,0.000,0.000,0.000,0.000} \
-  CONFIG.CLKOUT_USED {true,false,false,false,false,false,false} \
-  CONFIG.PRIMITIVE_TYPE {MMCM} \
-  CONFIG.PRIM_IN_FREQ {10} \
-] [get_bd_cells clk_wizard_0]
-endgroup
 
 # -----------------------------------------------------------------------------
 # Finalize
