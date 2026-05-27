@@ -199,6 +199,14 @@ module dmi_jtag_tap #(
     .clk_o     ( tck_n      )
   );
 
+  // wire tck_buf;
+  // assign tck_buf = testmode_i ? tck_i : tck_ni;
+  
+  // BUFG_FABRIC BUFG_FABRIC_inst (
+  //   .O(tck_n), // 1-bit output: Buffer
+  //   .I(tck_buf)  // 1-bit input: Buffer
+  // );
+
   // TDO changes state at negative edge of TCK
   always_ff @(posedge tck_n, negedge trst_ni) begin : p_tdo_regs
     if (!trst_ni) begin

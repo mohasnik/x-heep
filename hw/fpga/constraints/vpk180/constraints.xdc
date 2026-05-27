@@ -10,33 +10,27 @@
 create_clock -add -name spi_slave_clk_pin -period 16.000 -waveform {0.000 8.000} \
   [get_ports {spi_slave_sck_io}]
 
-# Define a named clock on the fabric-registered TCK net so Vivado can track it
-# in clock groups and timing analysis. The period (100 ns = 10 MHz) is a safe
-# conservative bound for a JTAG TCK; tighten it if your TCK runs faster.
-create_clock -name tck_fabric -period 100.000 \
-  [get_pins xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q]
-
-# Allow non-dedicated routing for the fabric-driven BUFGCTRL (fixes Place 30-1161).
-# Must be declared after create_clock so the net is already known to Vivado.
-set_property CLOCK_DEDICATED_ROUTE FALSE \
-  [get_nets xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q]
-
 # Treat JTAG TAP clocking as asynchronous to the main X-HEEP system clock.
-# System clocks are derived from the LPDDR4 reference as created by the NoC IP XDC.
-set xheep_system_clks [get_clocks -quiet -include_generated_clocks -of_objects \
+# The AXI JTAG IP XDC creates the generated TCK clock on tck_i_reg/Q, so do not
+# create another clock here; collect the IP-owned clock from the generated pin.
+set xheep_core_clks [get_clocks -quiet -include_generated_clocks -of_objects \
   [get_ports -quiet {lpddr4_clk3_clk_p}]]
 
-# Reference both JTAG clocks by their stable names rather than fragile net paths.
-# tck_fabric is defined above; clkout1_primitive is created by the PL clock wizard XDC.
-set xheep_jtag_clks [get_clocks -quiet {
-  clkout1_primitive
-  tck_fabric
-}]
+set axi_jtag_tck_pins [get_pins -quiet -hierarchical -filter \
+  {NAME =~ "*/axi_jtag/inst/u_jtag_proc/tck_i_reg/Q"}]
+set axi_jtag_tck_clks [get_clocks -quiet -of_objects $axi_jtag_tck_pins]
 
-set_clock_groups -asynchronous \
-  -group $xheep_system_clks \
-  -group $xheep_jtag_clks
+if {[llength $xheep_core_clks] && [llength $axi_jtag_tck_clks]} {
+  set_clock_groups -asynchronous \
+    -group $xheep_core_clks \
+    -group $axi_jtag_tck_clks
+}
 
 # False paths
 set_false_path -from [get_cells -hierarchical -filter {NAME =~ *dmcontrol_q_reg[ndmreset]}]
 set_false_path -from [get_cells -hierarchical -filter {NAME =~ *synch_regs_q_reg[3]}]
+set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/dmi_jtag_i/i_dmi_cdc/i_cdc_resp/i_src/async*]
+set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/dmi_jtag_i/i_dmi_cdc/i_cdc_req/i_src/async*]
+set_false_path -from [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_slave_sm/FSM_sequential_state_reg[*]_fret/C}] -to [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_syncro/rdwr_reg_reg[*]/D}]
+set_false_path -setup -hold -to [get_cells -hierarchical -filter {NAME =~ *i_rstgen_bypass/synch_regs_q_reg[*]}]
+set_false_path -hold -from [get_pins {xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_gpio/U0/gpio_core_1/Dual.gpio_Data_Out_reg[1]/C}]
