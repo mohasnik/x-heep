@@ -12,7 +12,8 @@ module sram_wrapper #(
     parameter int unsigned NumWords = 32'd1024,  // Number of Words in data array
     parameter int unsigned DataWidth = 32'd32,  // Data signal width
     // DEPENDENT PARAMETERS, DO NOT OVERWRITE!
-    parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1
+    parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1,
+    parameter int unsigned VERSAL_MEM_USE_URAM = 0
 ) (
     input logic clk_i,
     input logic rst_ni,
@@ -34,8 +35,10 @@ assign pwrgate_ack_no = pwrgate_ni;
 
 `ifdef FPGA_VPK180
   // Classical inferred block RAM (byte-enabled, single-port, 1-cycle read latency)
-  (* ram_style = "block" *) logic [31:0] mem [0:NumWords-1];
   logic [31:0] rdata_q;
+  localparam logic [63:0] RAM_STYLE = VERSAL_MEM_USE_URAM ? "ultra" : "block";
+  
+  (* ram_style = RAM_STYLE *) logic [31:0] mem [0:NumWords-1];
 
   always_ff @(posedge clk_i) begin
     if (req_i) begin
@@ -51,6 +54,7 @@ assign pwrgate_ack_no = pwrgate_ni;
 
   assign rdata_o = rdata_q;
 `else
+
 <%el = ""%>
 % for num_words in xheep.memory_ss().iter_bank_numwords():
   ${el}if (NumWords == 32'd${num_words}) begin
