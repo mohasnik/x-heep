@@ -2,7 +2,7 @@
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-`define NO_DDR_CLK_PORTS
+// `define NO_DDR_CLK_PORTS
 
 
 module xilinx_core_v_mini_mcu_wrapper
@@ -327,21 +327,21 @@ module xilinx_core_v_mini_mcu_wrapper
       .lpddr4_clk1_clk_n(lpddr4_clk1_clk_n),
       .lpddr4_clk1_clk_p(lpddr4_clk1_clk_p),
       .pl0_resetn(cips_rst_n),
-      .ps_gpio_i (ps_x_heep_i),
-      .ps_gpio_o (ps_x_heep_o),
+      .ps_gpio_i(ps_x_heep_i),
+      .ps_gpio_o(ps_x_heep_o),
       // .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
       // .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
       // .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
       // .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
       // .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
       // .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
-      .ps_tck_o  (ps_tck),
-      .ps_tdi_o  (ps_tdi),
-      .ps_tdo_i  (ps_tdo),
-      .ps_tms_o  (ps_tms)
+      .ps_tck_o(ps_tck),
+      .ps_tdi_o(ps_tdi),
+      .ps_tdo_i(ps_tdo),
+      .ps_tms_o(ps_tms)
   );
 
-  
+
 `else
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
       .DDR_addr(DDR_addr),
