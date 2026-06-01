@@ -15,6 +15,11 @@ filesets:
     - sram_wrapper.sv
     file_type: systemVerilogSource
 
+  rtl-fpga-vpk180:
+    files:
+    - vpk180_rstgen.sv
+    file_type: systemVerilogSource
+
   ip-fpga-sram:
     files:
     - scripts/generate_sram.tcl
@@ -163,6 +168,7 @@ targets:
     - target_zcu102 ? (xdc-fpga-zcu102)
     - target_vpk180 ? (ip-fpga-vpk180)
     - target_vpk180 ? (xdc-fpga-vpk180)
+    - target_vpk180 ? (rtl-fpga-vpk180)
     #- target_vpk180 ? (eco-fpga-vpk180)
     - target_aup-zu3 ? (ip-fpga-sram)
     - target_aup-zu3 ? (xdc-fpga-aup-zu3)

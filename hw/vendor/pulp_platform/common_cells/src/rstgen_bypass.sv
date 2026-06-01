@@ -29,48 +29,26 @@ module rstgen_bypass #(
     logic [NumRegs-1:0] synch_regs_q;
 
     // bypass mode: use (clock) multiplexers
-    // tc_clk_mux2 i_tc_clk_mux2_rst_n (
-    //     .clk0_i     ( rst_ni ),
-    //     .clk1_i     ( rst_test_mode_ni ),
-    //     .clk_sel_i  ( test_mode_i ),
-    //     .clk_o      ( rst_n )
-    // );
-    
-    // assign rst_n = rst_ni;
-
-    BUFG_FABRIC BUFG_FABRIC_inst_0 (
-        .O(rst_n), // 1-bit output: Buffer
-        .I(rst_ni)  // 1-bit input: Buffer
+    tc_clk_mux2 i_tc_clk_mux2_rst_n (
+        .clk0_i     ( rst_ni ),
+        .clk1_i     ( rst_test_mode_ni ),
+        .clk_sel_i  ( test_mode_i ),
+        .clk_o      ( rst_n )
     );
 
-    // tc_clk_mux2 i_tc_clk_mux2_rst_no (
-    //     .clk0_i     ( synch_regs_q[NumRegs-1] ),
-    //     .clk1_i     ( rst_test_mode_ni ),
-    //     .clk_sel_i  ( test_mode_i ),
-    //     .clk_o      ( rst_no )
-    // );
-
-    // assign rst_no = synch_regs_q[NumRegs-1];
-
-    BUFG_FABRIC BUFG_FABRIC_inst_1 (
-        .O(rst_no), // 1-bit output: Buffer
-        .I(synch_regs_q[NumRegs-1])  // 1-bit input: Buffer
+    tc_clk_mux2 i_tc_clk_mux2_rst_no (
+        .clk0_i     ( synch_regs_q[NumRegs-1] ),
+        .clk1_i     ( rst_test_mode_ni ),
+        .clk_sel_i  ( test_mode_i ),
+        .clk_o      ( rst_no )
     );
 
-    // tc_clk_mux2 i_tc_clk_mux2_init_no (
-    //     .clk0_i     ( synch_regs_q[NumRegs-1] ),
-    //     .clk1_i     ( 1'b1 ),
-    //     .clk_sel_i  ( test_mode_i ),
-    //     .clk_o      ( init_no )
-    // );
-
-    // assign init_no = synch_regs_q[NumRegs-1];
-
-    BUFG_FABRIC BUFG_FABRIC_inst_2 (
-        .O(init_no), // 1-bit output: Buffer
-        .I(synch_regs_q[NumRegs-1])  // 1-bit input: Buffer
+    tc_clk_mux2 i_tc_clk_mux2_init_no (
+        .clk0_i     ( synch_regs_q[NumRegs-1] ),
+        .clk1_i     ( 1'b1 ),
+        .clk_sel_i  ( test_mode_i ),
+        .clk_o      ( init_no )
     );
-
 
     always @(posedge clk_i or negedge rst_n) begin
         if (~rst_n) begin
