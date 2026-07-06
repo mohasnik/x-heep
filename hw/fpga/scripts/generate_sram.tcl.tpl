@@ -2,8 +2,50 @@
 
 set ipName xilinx_mem_gen_${num_words}
 
-create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.4 -module_name $ipName
+% if target=="vpk180":
+create_ip \\
 
+  -name emb_mem_gen \\
+  
+  -vendor xilinx.com \\
+  
+  -library ip \\
+  
+  -version 1.0 \\
+  
+  -module_name $ipName
+
+set_property -dict [list \\
+
+  CONFIG.USE_MEMORY_BLOCK {Stand_Alone} \\
+  
+  CONFIG.MEMORY_TYPE {Single_Port_RAM} \\
+  
+  CONFIG.ENABLE_32BIT_ADDRESS {false} \\
+  
+  CONFIG.MEMORY_DEPTH {${num_words}} \\
+  
+  CONFIG.WRITE_DATA_WIDTH_A {32} \\
+  
+  CONFIG.READ_DATA_WIDTH_A {32} \\
+  
+  CONFIG.ENABLE_BYTE_WRITES_A {true} \\
+  
+  CONFIG.BYTE_WRITE_WIDTH_A {8} \\
+  
+  CONFIG.WRITE_MODE_A {WRITE_FIRST} \\
+  
+  CONFIG.READ_LATENCY_A {1} \\
+  
+  CONFIG.ALGORITHM {Minimum_Area} \\
+  
+  CONFIG.MEMORY_PRIMITIVE {AUTO} \\
+  
+] [get_ips $ipName]
+
+% else :
+
+create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.4 -module_name $ipName
 set_property -dict [list CONFIG.Enable_32bit_Address {false} \\
 
                         CONFIG.Use_Byte_Write_Enable {true}  \\
@@ -32,7 +74,10 @@ set_property -dict [list CONFIG.Enable_32bit_Address {false} \\
 
                         CONFIG.EN_SAFETY_CKT {false}] [get_ips $ipName]
 
-#generate_target {instantiation_template} [get_ips $ipName]
+
+% endif
+#
+generate_target {instantiation_template} [get_ips $ipName]
 
 #export_ip_user_files -of_objects [get_ips $ipName] -no_script -sync -force -quiet
 

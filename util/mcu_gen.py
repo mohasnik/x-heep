@@ -161,6 +161,7 @@ def generate_xheep(args):
         "plic_used_n_interrupts": plic_used_n_interrupts,
         "plit_n_interrupts": plit_n_interrupts,
         "interrupts": interrupts,
+        "target": args.target,
     }
 
     return kwargs
@@ -255,6 +256,14 @@ def main():
         required=False,
         help="External template filename or comma-separated list of external template filenames. "
         "Intended for templates that are not in the X-HEEP repository, e.g. in the user's CHEEP repository.",
+    )
+
+    parser.add_argument(
+        "--target",
+        "-ht",
+        type=str,
+        required=False,
+        help="Target hardware platform. Required only for appropriate SRAM IP TCL file generation.",
     )
 
     args = parser.parse_args()

@@ -62,7 +62,6 @@ filesets:
     - scripts/vpk180/xilinx_generate_clk_wizard.tcl
     - "!PS_ENABLE ? (scripts/vpk180/xilinx_generate_cips.tcl)"
     - "PS_ENABLE ? (scripts/vpk180/xilinx_generate_ps_wizard.tcl)"
-    # - "PS_ENABLE ? (scripts/vivado/set_tcl_hooks.tcl)"
     file_type: tclSource
 
   ip-fpga-aup-zu3:
@@ -169,7 +168,7 @@ targets:
     - target_vpk180 ? (ip-fpga-vpk180)
     - target_vpk180 ? (xdc-fpga-vpk180)
     - target_vpk180 ? (rtl-fpga-vpk180)
-    #- target_vpk180 ? (eco-fpga-vpk180)
+    - target_vpk180 ? (ip-fpga-sram)
     - target_aup-zu3 ? (ip-fpga-sram)
     - target_aup-zu3 ? (xdc-fpga-aup-zu3)
     - target_aup-zu3 ? (ip-fpga-aup-zu3)
