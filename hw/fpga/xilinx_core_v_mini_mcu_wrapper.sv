@@ -247,9 +247,14 @@ module xilinx_core_v_mini_mcu_wrapper
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_VPK180
+  // xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
+  //     .CLK_IN1_D_0_clk_n(lpddr4_clk3_clk_n),
+  //     .CLK_IN1_D_0_clk_p(lpddr4_clk3_clk_p),
+  //     .clk_out1_0(clk_gen)
+  // );
+  wire pl_clk_1;
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
-      .CLK_IN1_D_0_clk_n(lpddr4_clk3_clk_n),
-      .CLK_IN1_D_0_clk_p(lpddr4_clk3_clk_p),
+      .clk_in1_0 (pl_clk_1),
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_NEXYS
@@ -327,6 +332,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .lpddr4_clk1_clk_n(lpddr4_clk1_clk_n),
       .lpddr4_clk1_clk_p(lpddr4_clk1_clk_p),
       .pl0_resetn(cips_rst_n),
+      .pl_clk_1_o(pl_clk_1),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
       // .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
