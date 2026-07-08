@@ -25,7 +25,6 @@ set ps_tdo_i  [create_bd_port -dir I ps_tdo_i]
 set ps_gpio_i [create_bd_port -dir I -from 1 -to 0 ps_gpio_i]
 set ps_gpio_o [create_bd_port -dir O -from 4 -to 0 ps_gpio_o]
 set pl0_resetn [create_bd_port -dir O -from 0 -to 0 -type rst pl0_resetn]
-set pl_clk_1_o [create_bd_port -dir O -type clk pl_clk_1_o]
 
 set UART_0 [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 UART_0]
 set ch0_lpddr4_trip1 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:lpddr4_rtl:1.0 ch0_lpddr4_trip1 ]
@@ -100,7 +99,7 @@ set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
       PS_USE_M_AXI_FPD {1} \
       PS_USE_NOC_LPD_AXI0 {1} \
       PS_USE_PMCPL_CLK0 {1} \
-      PS_USE_PMCPL_CLK1 {1} \
+      PS_USE_PMCPL_CLK1 {0} \
       SMON_ALARMS {Set_Alarms_On} \
       SMON_ENABLE_TEMP_AVERAGING {0} \
       SMON_INTERFACE_TO_USE {I2C} \
@@ -281,9 +280,6 @@ connect_bd_net [get_bd_ports ps_tdo_i]    [get_bd_pins axi_jtag/tdo]
 # Only SPI interrupt used for now
 # connect_bd_net [get_bd_pins axi_quad_spi/ip2intc_irpt] [get_bd_pins ilconcat_0/In1]
 connect_bd_net [get_bd_pins ilconcat_0/dout] [get_bd_pins versal_cips_0/pl_ps_irq8]
-
-
-connect_bd_net [get_bd_ports pl_clk_1_o] [get_bd_pins versal_cips_0/pl1_ref_clk]
 
 # -----------------------------------------------------------------------------
 # Address map for direct M_AXI_FPD helper plane
