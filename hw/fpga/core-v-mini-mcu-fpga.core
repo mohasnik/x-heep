@@ -22,7 +22,8 @@ filesets:
 
   ip-fpga-sram:
     files:
-    - scripts/generate_sram.tcl
+    - "!target_vpk180 ? (scripts/generate_sram.tcl)"
+    - "target_vpk180 ? (scripts/vpk180/generate_sram.tcl)"
     file_type: tclSource
 
   ip-fpga:
