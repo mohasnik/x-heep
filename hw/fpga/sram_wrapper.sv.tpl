@@ -12,8 +12,7 @@ module sram_wrapper #(
     parameter int unsigned NumWords = 32'd1024,  // Number of Words in data array
     parameter int unsigned DataWidth = 32'd32,  // Data signal width
     // DEPENDENT PARAMETERS, DO NOT OVERWRITE!
-    parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1,
-    parameter int unsigned VERSAL_MEM_USE_URAM = 0
+    parameter int unsigned AddrWidth = (NumWords > 32'd1) ? $clog2(NumWords) : 32'd1
 ) (
     input logic clk_i,
     input logic rst_ni,
