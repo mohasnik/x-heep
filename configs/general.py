@@ -40,15 +40,21 @@ from peripherals.user_peripherals import (
     UART,
 )
 
+from memory_ss.linker_script_config import LinkerScriptConfig
+
 
 def config():
     system = XHeep(BusType.onetoM)
     system.set_cpu(cv32e20(rv32e=False, rv32m="RV32MSlow"))
 
     memory_ss = MemorySS()
-    memory_ss.add_ram_banks([32] * 2)
-    memory_ss.add_linker_section(LinkerSection.by_size("code", 0, 0x00000E800))
-    memory_ss.add_linker_section(LinkerSection("data", 0x00000E800, None))
+    memory_ss.add_ram_banks([64] * 8)
+    memory_ss.add_linker_section(LinkerSection.by_size("code", 0, 0x000020000))
+    memory_ss.add_linker_section(LinkerSection("data", 0x000020000, None))
+
+    memory_ss.set_linker_script_config(
+        LinkerScriptConfig(stack_size=0x1000, heap_size=None)
+    )
     system.set_memory_ss(memory_ss)
 
     # Peripheral domains initialization

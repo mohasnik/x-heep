@@ -4,6 +4,7 @@ from .ram_bank import Bank, is_pow2
 from .il_ram_group import ILRamGroup
 from .linker_section import LinkerSection
 from .linker_subsection import LinkerSubsection
+from .linker_script_config import LinkerScriptConfig
 
 
 class MemorySS:
@@ -21,6 +22,7 @@ class MemorySS:
         self._ram_next_idx: int = 1
         self._ram_next_addr: int = self._ram_start_address
         self._linker_sections: List[LinkerSection] = []
+        self._linker_script_config = LinkerScriptConfig()
         self._used_section_names: Set[str] = set()
 
         self._ignore_ram_continous: bool = False
@@ -247,6 +249,37 @@ class MemorySS:
         self._used_section_names.add(section.name)
         self._linker_sections.append(deepcopy(section))
 
+    def set_linker_script_config(self, config: LinkerScriptConfig):
+        """
+        Sets the linker script configuration for stack and heap sizes.
+
+        :param LinkerScriptConfig config: The linker script configuration.
+        """
+        if not isinstance(config, LinkerScriptConfig):
+            raise TypeError("config should be an instance of LinkerScriptConfig")
+        self._linker_script_config = deepcopy(config)
+
+    def linker_script_config(self) -> LinkerScriptConfig:
+        """
+        :return: the linker script configuration
+        :rtype: LinkerScriptConfig
+        """
+        return self._linker_script_config
+
+    def stack_size(self) -> int:
+        """
+        :return: the configured or inferred stack size in bytes
+        :rtype: int
+        """
+        return self._linker_script_config.stack_size()
+
+    def heap_size(self) -> int:
+        """
+        :return: the configured or inferred heap size in bytes
+        :rtype: int
+        """
+        return self._linker_script_config.heap_size()
+
     def ram_start_address(self) -> int:
         """
         :return: the address of the first ram bank.
@@ -319,6 +352,13 @@ class MemorySS:
                 sizes.add(b.size())
                 yield b.size() // 4
 
+    def _linker_data_region_size(self) -> int:
+        for section in self._linker_sections:
+            if section.name == "data":
+                return section.size
+
+        return self.ram_size_address()
+
     def build(self):
         """
         Finalizes the memory subsystem configuration.
@@ -353,6 +393,8 @@ class MemorySS:
                     "There is no ram bank to infere the end of a section"
                 )
             old_sec.end = self._ram_banks[-1].end_address()
+
+        self._linker_script_config.build(self._linker_data_region_size())
 
     def validate(self):
         """
@@ -422,3 +464,5 @@ class MemorySS:
                 )
 
             old_sec = sec
+
+        self._linker_script_config.validate(self._linker_data_region_size())

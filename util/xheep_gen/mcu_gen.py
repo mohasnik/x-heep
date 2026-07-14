@@ -115,9 +115,6 @@ def generate_xheep(args):
     flash_mem_start_address = string2int(config["flash_mem"]["address"])
     flash_mem_size_address = string2int(config["flash_mem"]["length"])
 
-    stack_size = string2int(config["linker_script"]["stack_size"])
-    heap_size = string2int(config["linker_script"]["heap_size"])
-
     plic_used_n_interrupts = len(config["interrupts"]["list"])
     plit_n_interrupts = config["interrupts"]["number"]
     ext_int_list = {
@@ -134,16 +131,8 @@ def generate_xheep(args):
     # Validate the configuration, performing some sanity checks
     xheep.validate()
 
-    if (
-        int(stack_size, 16) + int(heap_size, 16)
-    ) > xheep.memory_ss().ram_size_address():
-        exit(
-            "The stack and heap section must fit in the RAM size, instead they take "
-            + str(int(stack_size, 16) + int(heap_size, 16))
-            + " bytes while RAM size is "
-            + str(xheep.memory_ss().ram_size_address())
-            + " bytes."
-        )
+    stack_size = f"{xheep.memory_ss().stack_size():X}"
+    heap_size = f"{xheep.memory_ss().heap_size():X}"
 
     kwargs = {
         "xheep": xheep,
