@@ -35,12 +35,39 @@ module xilinx_clk_mux2 (
     output logic clk_o
 );
 
+  // TODO: correct this 
+`ifdef __FPGA_VPK180ll
+
+  wire clk0_buffered;
+  wire clk1_buffered;
+
+  BUFG clk_0_buffer (
+      .O(clk0_buffered),
+      .I(clk0_i)
+  );
+
+  BUFG clk_1_buffer (
+      .O(clk1_buffered),
+      .I(clk1_i)
+  );
+
+  BUFGMUX i_BUFGMUX (
+      .S (clk_sel_i),
+      .I0(clk0_buffered),
+      .I1(clk1_buffered),
+      .O (clk_o)
+  );
+
+
+`else
   BUFGMUX i_BUFGMUX (
       .S (clk_sel_i),
       .I0(clk0_i),
       .I1(clk1_i),
       .O (clk_o)
   );
+
+`endif
 
 endmodule
 

@@ -182,14 +182,14 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
-`ifndef FPGA_VPK180
+  // `ifndef FPGA_VPK180
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io3_io;
   wire       ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
-`endif
+  // `endif
 `endif
 
   // low active reset
@@ -329,12 +329,12 @@ module xilinx_core_v_mini_mcu_wrapper
       .pl0_resetn(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
-      // .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
-      // .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
-      // .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
-      // .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
-      // .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
-      // .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
+      .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
+      .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
+      .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
+      .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
+      .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
+      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
       .ps_tck_o(ps_tck),
       .ps_tdi_o(ps_tdi),
       .ps_tdo_i(ps_tdo),
@@ -393,20 +393,20 @@ module xilinx_core_v_mini_mcu_wrapper
       .xif_mem_if(ext_if),
       .xif_mem_result_if(ext_if),
       .xif_result_if(ext_if),
-      .ext_xbar_master_req_i('0),
-      .ext_xbar_master_resp_o(),
-      .ext_core_instr_req_o(),
-      .ext_core_instr_resp_i('0),
-      .ext_core_data_req_o(),
-      .ext_core_data_resp_i('0),
-      .ext_debug_master_req_o(),
-      .ext_debug_master_resp_i('0),
-      .ext_dma_read_req_o(),
-      .ext_dma_read_resp_i('0),
-      .ext_dma_write_req_o(),
-      .ext_dma_write_resp_i('0),
-      .ext_dma_addr_req_o(),
-      .ext_dma_addr_resp_i('0),
+      .ext_xbar_master_req_i('0),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_xbar_master_resp_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_core_instr_req_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_core_instr_resp_i('0),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_core_data_req_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_core_data_resp_i('0),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_debug_master_req_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_debug_master_resp_i('0),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_dma_read_req_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_dma_read_resp_i('0),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_dma_write_req_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_dma_write_resp_i('0),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_dma_addr_req_o(),  // connect to coress-bar -> obi2axi -> DDR
+      .ext_dma_addr_resp_i('0),  // connect to coress-bar -> obi2axi -> DDR
       .ext_peripheral_slave_req_o(),
       .ext_peripheral_slave_resp_i('0),
       .ext_ao_peripheral_req_i('0),
@@ -469,7 +469,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .ddr_rcv_clk_i(1'b0),
       .ddr_snd_clk_o(),
 `endif
-      .spi_slave_sck_i(spi_slave_sck_io),
+      .spi_slave_sck_i(spi_slave_sck_io),  //TODO: This becomes i for pad_cfg of VPK180
       .spi_slave_cs_io(spi_slave_cs_io),
       .spi_slave_miso_io(spi_slave_miso_io),
       .spi_slave_mosi_io(spi_slave_mosi_io),
@@ -517,7 +517,7 @@ module xilinx_core_v_mini_mcu_wrapper
   assign ps_x_heep_i[1] = exit_value[0];
 
   assign exit_valid_o   = exit_valid;
-`ifndef FPGA_VPK180
+  // `ifndef FPGA_VPK180
 
   // QuadSPI flash mux hook
   (* DONT_TOUCH = "TRUE" *)
@@ -543,6 +543,6 @@ module xilinx_core_v_mini_mcu_wrapper
       .I0(ps_quadspi_io_ss_io[0]),
       .O ()
   );
-`endif
+  // `endif
 `endif
 endmodule

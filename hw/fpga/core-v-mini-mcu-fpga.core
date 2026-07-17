@@ -143,10 +143,14 @@ filesets:
     - scripts/vivado/set_tcl_hooks.tcl
     file_type: tclSource
 
+  tcl-fpga-vpk180-ps-utils:
+    files:
+    - scripts/vivado/set_vpk180_tcl_hooks.tcl
+    file_type: tclSource
+
 parameters:
   PS_ENABLE:
     datatype: bool
-    default: false
     paramtype: vlogdefine
 
 targets:
@@ -169,6 +173,7 @@ targets:
     - target_vpk180 ? (ip-fpga-vpk180)
     - target_vpk180 ? (xdc-fpga-vpk180)
     - target_vpk180 ? (rtl-fpga-vpk180)
+    - target_vpk180 ? (tcl-fpga-vpk180-ps-utils)
     - target_vpk180 ? (ip-fpga-sram)
     - target_aup-zu3 ? (ip-fpga-sram)
     - target_aup-zu3 ? (xdc-fpga-aup-zu3)
