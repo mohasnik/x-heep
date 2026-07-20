@@ -6,7 +6,7 @@ class LinkerScriptConfig:
     Configuration for linker-script-managed runtime memory.
 
     If either stack_size or heap_size is omitted, it is inferred from the
-    configured data linker region during MemorySS.build().
+    configured data linker region during XHeep.build().
     """
 
     _ALIGNMENT = 16

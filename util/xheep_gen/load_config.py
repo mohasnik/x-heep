@@ -11,7 +11,7 @@ from cpu.cv32e40x import cv32e40x
 from memory_ss.memory_ss import MemorySS
 from memory_ss.linker_section import LinkerSection
 from memory_ss.linker_subsection import LinkerSubsection
-from memory_ss.linker_script_config import LinkerScriptConfig
+from linker_script_config.linker_script_config import LinkerScriptConfig
 from peripherals.peripheral_config_loader import load_peripherals_config
 from xheep import BusType, XHeep, CvXIf, PadRing
 
@@ -198,22 +198,22 @@ def load_linker_config(memory_ss: MemorySS, config: list):
         memory_ss.add_linker_section(LinkerSection(name, start, end))
 
 
-def load_linker_script_config(memory_ss: MemorySS, config: hjson.OrderedDict):
+def load_linker_script_config(system: XHeep, config: hjson.OrderedDict):
     """
     Reads the linker script configuration.
 
-    :param MemorySS memory_ss: the memory_ss object where the configuration should be added.
+    :param XHeep system: the system object where the configuration should be added.
     :param hjson.OrderedDict config: The linker script configuration.
     """
-    if not isinstance(memory_ss, MemorySS):
-        raise TypeError("memory_ss should be an instance of MemorySS")
+    if not isinstance(system, XHeep):
+        raise TypeError("system should be an instance of XHeep")
     if type(config) is not hjson.OrderedDict:
         raise TypeError("config should be of type hjson.OrderedDict")
 
     stack_size = to_int(config["stack_size"]) if "stack_size" in config else None
     heap_size = to_int(config["heap_size"]) if "heap_size" in config else None
 
-    memory_ss.set_linker_script_config(
+    system.set_linker_script_config(
         LinkerScriptConfig(stack_size=stack_size, heap_size=heap_size)
     )
 
@@ -311,7 +311,7 @@ def load_cfg_hjson(src: str) -> XHeep:
     if linker_config is not None:
         load_linker_config(memory_ss, linker_config)
     if linker_script_config is not None:
-        load_linker_script_config(memory_ss, linker_script_config)
+        load_linker_script_config(system, linker_script_config)
 
     system.set_memory_ss(memory_ss)
 

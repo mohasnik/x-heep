@@ -8,6 +8,7 @@ from peripherals.abstractions import PeripheralDomain
 from peripherals.base_peripherals_domain import BasePeripheralDomain
 from peripherals.user_peripherals_domain import UserPeripheralDomain
 from pads.pad_ring import PadRing
+from linker_script_config.linker_script_config import LinkerScriptConfig
 
 
 class XHeep:
@@ -39,6 +40,8 @@ class XHeep:
         self._bus_type: BusType = bus_type
 
         self._memory_ss = None
+        ## TODO: Which is better as init value : None or dummy instance ?
+        self._linker_script_config : LinkerScriptConfig = LinkerScriptConfig()
 
         self._base_peripheral_domain = None
         self._user_peripheral_domain = None
@@ -138,6 +141,45 @@ class XHeep:
         :rtype: MemorySS
         """
         return self._memory_ss
+
+    # ------------------------------------------------------------
+    # Linker Script Configuration
+    # ------------------------------------------------------------
+    def set_linker_script_config(self, linker_script_config: LinkerScriptConfig):
+        """
+        Sets the linker script configuration for stack and heap sizes.
+
+        :param LinkerScriptConfig config: The linker script configuration.
+        """
+
+
+        if not isinstance(linker_script_config, LinkerScriptConfig):
+
+            raise TypeError(
+                f"XHeep.linker_script_config should be of type LinkerScriptConfig not {type(linker_script_config)}"
+            )        
+        self._linker_script_config = linker_script_config
+
+    def linker_script_config(self) -> LinkerScriptConfig:
+        """
+        :return: the linker script configuration
+        :rtype: LinkerScriptConfig
+        """
+        return self._linker_script_config
+
+    def stack_size(self) -> int:
+        """
+        :return: the configured or inferred stack size in bytes
+        :rtype: int
+        """
+        return self._linker_script_config.stack_size()
+
+    def heap_size(self) -> int:
+        """
+        :return: the configured or inferred heap size in bytes
+        :rtype: int
+        """
+        return self._linker_script_config.heap_size()
 
     # ------------------------------------------------------------
     # Peripherals
@@ -264,6 +306,7 @@ class XHeep:
 
         if self.memory_ss():
             self.memory_ss().build()
+            self.linker_script_config().build(self.memory_ss().linker_data_region_size())
         if self.are_base_peripherals_configured():
             self._base_peripheral_domain.build()
         if self.are_user_peripherals_configured():
@@ -281,6 +324,7 @@ class XHeep:
         if not self.memory_ss():
             raise RuntimeError("[MCU-GEN] ERROR: A memory subsystem must be configured")
         self.memory_ss().validate()
+        self.linker_script_config().validate(self.memory_ss().linker_data_region_size())
 
         if self.memory_ss().has_il_ram() and (
             self._bus_type not in self.IL_COMPATIBLE_BUS_TYPES
