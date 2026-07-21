@@ -40,7 +40,7 @@ from peripherals.user_peripherals import (
     UART,
 )
 
-from linker_script_config.linker_script_config import LinkerScriptConfig
+from linker_script.linker_script import LinkerScript
 
 
 def config():
@@ -48,14 +48,12 @@ def config():
     system.set_cpu(cv32e20(rv32e=False, rv32m="RV32MSlow"))
 
     memory_ss = MemorySS()
-    memory_ss.add_ram_banks([256] * 12)
-    memory_ss.add_linker_section(LinkerSection.by_size("code", 0, 0x000040000))
-    memory_ss.add_linker_section(LinkerSection("data", 0x000040000, None))
-
-    system.set_linker_script_config(
-        LinkerScriptConfig(stack_size=0x4000, heap_size=None)
-    )
+    memory_ss.add_ram_banks([32] * 2)
+    memory_ss.add_linker_section(LinkerSection.by_size("code", 0, 0x00000E800))
+    memory_ss.add_linker_section(LinkerSection("data", 0x00000E800, None))
     system.set_memory_ss(memory_ss)
+
+    system.set_linker_script_config(LinkerScript(stack_size=0x800, heap_size=0x800))
 
     # Peripheral domains initialization
     base_peripheral_domain = BasePeripheralDomain()

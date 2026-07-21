@@ -318,7 +318,7 @@ class MemorySS:
             if b.size() not in sizes:
                 sizes.add(b.size())
                 yield b.size() // 4
-    
+
     def linker_data_region_size(self) -> int:
         for section in self._linker_sections:
             if section.name == "data":
@@ -360,8 +360,6 @@ class MemorySS:
                     "There is no ram bank to infere the end of a section"
                 )
             old_sec.end = self._ram_banks[-1].end_address()
-
-
 
     def validate(self):
         """

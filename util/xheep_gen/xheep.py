@@ -8,7 +8,7 @@ from peripherals.abstractions import PeripheralDomain
 from peripherals.base_peripherals_domain import BasePeripheralDomain
 from peripherals.user_peripherals_domain import UserPeripheralDomain
 from pads.pad_ring import PadRing
-from linker_script_config.linker_script_config import LinkerScriptConfig
+from linker_script.linker_script import LinkerScript
 
 
 class XHeep:
@@ -40,8 +40,8 @@ class XHeep:
         self._bus_type: BusType = bus_type
 
         self._memory_ss = None
-        ## TODO: Which is better as init value : None or dummy instance ?
-        self._linker_script_config : LinkerScriptConfig = LinkerScriptConfig()
+
+        self._linker_script_config: LinkerScript = None
 
         self._base_peripheral_domain = None
         self._user_peripheral_domain = None
@@ -145,25 +145,24 @@ class XHeep:
     # ------------------------------------------------------------
     # Linker Script Configuration
     # ------------------------------------------------------------
-    def set_linker_script_config(self, linker_script_config: LinkerScriptConfig):
+    def set_linker_script_config(self, linker_script_config: LinkerScript):
         """
         Sets the linker script configuration for stack and heap sizes.
 
-        :param LinkerScriptConfig config: The linker script configuration.
+        :param LinkerScript config: The linker script configuration.
         """
 
-
-        if not isinstance(linker_script_config, LinkerScriptConfig):
+        if not isinstance(linker_script_config, LinkerScript):
 
             raise TypeError(
-                f"XHeep.linker_script_config should be of type LinkerScriptConfig not {type(linker_script_config)}"
-            )        
+                f"XHeep.linker_script_config should be of type LinkerScript not {type(linker_script_config)}"
+            )
         self._linker_script_config = linker_script_config
 
-    def linker_script_config(self) -> LinkerScriptConfig:
+    def linker_script(self) -> LinkerScript:
         """
         :return: the linker script configuration
-        :rtype: LinkerScriptConfig
+        :rtype: LinkerScript
         """
         return self._linker_script_config
 
@@ -306,7 +305,8 @@ class XHeep:
 
         if self.memory_ss():
             self.memory_ss().build()
-            self.linker_script_config().build(self.memory_ss().linker_data_region_size())
+        if self.linker_script():
+            self.linker_script().build(self.memory_ss().linker_data_region_size())
         if self.are_base_peripherals_configured():
             self._base_peripheral_domain.build()
         if self.are_user_peripherals_configured():
@@ -323,8 +323,14 @@ class XHeep:
 
         if not self.memory_ss():
             raise RuntimeError("[MCU-GEN] ERROR: A memory subsystem must be configured")
+
+        if not self.linker_script():
+            raise RuntimeError(
+                "[MCU-GEN] ERROR: A linker script instance must be configured"
+            )
+
         self.memory_ss().validate()
-        self.linker_script_config().validate(self.memory_ss().linker_data_region_size())
+        self.linker_script().validate(self.memory_ss().linker_data_region_size())
 
         if self.memory_ss().has_il_ram() and (
             self._bus_type not in self.IL_COMPATIBLE_BUS_TYPES

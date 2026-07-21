@@ -11,7 +11,7 @@ from cpu.cv32e40x import cv32e40x
 from memory_ss.memory_ss import MemorySS
 from memory_ss.linker_section import LinkerSection
 from memory_ss.linker_subsection import LinkerSubsection
-from linker_script_config.linker_script_config import LinkerScriptConfig
+from linker_script.linker_script import LinkerScript
 from peripherals.peripheral_config_loader import load_peripherals_config
 from xheep import BusType, XHeep, CvXIf, PadRing
 
@@ -214,7 +214,7 @@ def load_linker_script_config(system: XHeep, config: hjson.OrderedDict):
     heap_size = to_int(config["heap_size"]) if "heap_size" in config else None
 
     system.set_linker_script_config(
-        LinkerScriptConfig(stack_size=stack_size, heap_size=heap_size)
+        LinkerScript(stack_size=stack_size, heap_size=heap_size)
     )
 
 

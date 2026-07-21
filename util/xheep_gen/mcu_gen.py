@@ -126,8 +126,6 @@ def generate_xheep(args):
         else 0x01000000
     )
 
-
-
     plic_used_n_interrupts = len(config["interrupts"]["list"])
     plit_n_interrupts = config["interrupts"]["number"]
     ext_int_list = {
