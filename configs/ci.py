@@ -67,9 +67,9 @@ def config():
         interleaved=True,
         il_group_name="interleaved_group_0",
     )
-    
+
     system.set_memory_ss(memory_ss)
-    
+
     system.set_linker_script_config(LinkerScript(stack_size=0x800, heap_size=0x800))
 
     # Peripheral domains initialization

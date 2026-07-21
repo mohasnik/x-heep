@@ -61,7 +61,6 @@ def config():
 
     system.set_linker_script_config(LinkerScript(stack_size=0x800, heap_size=0x800))
 
-
     # Peripheral domains initialization
     base_peripheral_domain = BasePeripheralDomain()
     user_peripheral_domain = UserPeripheralDomain()
