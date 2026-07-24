@@ -182,14 +182,14 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
-  // `ifndef FPGA_VPK180
+`ifndef FPGA_VPK180
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io2_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io3_io;
   wire       ps_quadspi_io_sck_io;
   wire [0:0] ps_quadspi_io_ss_io;
-  // `endif
+`endif
 `endif
 
   // low active reset
@@ -198,7 +198,44 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_GENESYS2
   assign rst_n = rst_i;
 `elsif FPGA_VPK180
-  wire cips_rst_n;
+  wire        cips_rst_n;
+  wire        ps_spi_axi_aclk;
+  wire [31:0] ps_spi_axi_araddr;
+  wire [ 1:0] ps_spi_axi_arburst;
+  wire [ 3:0] ps_spi_axi_arcache;
+  wire [ 7:0] ps_spi_axi_arlen;
+  wire        ps_spi_axi_arlock;
+  wire [ 2:0] ps_spi_axi_arprot;
+  wire [ 3:0] ps_spi_axi_arqos;
+  wire        ps_spi_axi_arready;
+  wire [ 2:0] ps_spi_axi_arsize;
+  wire        ps_spi_axi_arvalid;
+  wire [31:0] ps_spi_axi_awaddr;
+  wire [ 1:0] ps_spi_axi_awburst;
+  wire [ 3:0] ps_spi_axi_awcache;
+  wire [ 7:0] ps_spi_axi_awlen;
+  wire        ps_spi_axi_awlock;
+  wire [ 2:0] ps_spi_axi_awprot;
+  wire [ 3:0] ps_spi_axi_awqos;
+  wire        ps_spi_axi_awready;
+  wire [ 2:0] ps_spi_axi_awsize;
+  wire        ps_spi_axi_awvalid;
+  wire        ps_spi_axi_bready;
+  wire [ 1:0] ps_spi_axi_bresp;
+  wire        ps_spi_axi_bvalid;
+  wire [31:0] ps_spi_axi_rdata;
+  wire        ps_spi_axi_rlast;
+  wire        ps_spi_axi_rready;
+  wire [ 1:0] ps_spi_axi_rresp;
+  wire        ps_spi_axi_rvalid;
+  wire [31:0] ps_spi_axi_wdata;
+  wire        ps_spi_axi_wlast;
+  wire        ps_spi_axi_wready;
+  wire [ 3:0] ps_spi_axi_wstrb;
+  wire        ps_spi_axi_wvalid;
+  wire        xheep_spi_flash_sck_io;
+  wire        xheep_spi_flash_csb_io;
+  wire [ 3:0] xheep_spi_flash_sd_io;
   // TODO: for now system reset of pl is ignored.
   assign rst_n = ~rst_i;
 `else
@@ -284,6 +321,40 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
+      //S_AXI ports :
+      .S01_AXI_0_araddr(ps_spi_axi_araddr),
+      .S01_AXI_0_arburst(ps_spi_axi_arburst),
+      .S01_AXI_0_arcache(ps_spi_axi_arcache),
+      .S01_AXI_0_arlen(ps_spi_axi_arlen),
+      .S01_AXI_0_arlock(ps_spi_axi_arlock),
+      .S01_AXI_0_arprot(ps_spi_axi_arprot),
+      .S01_AXI_0_arqos(ps_spi_axi_arqos),
+      .S01_AXI_0_arready(ps_spi_axi_arready),
+      .S01_AXI_0_arsize(ps_spi_axi_arsize),
+      .S01_AXI_0_arvalid(ps_spi_axi_arvalid),
+      .S01_AXI_0_awaddr(ps_spi_axi_awaddr),
+      .S01_AXI_0_awburst(ps_spi_axi_awburst),
+      .S01_AXI_0_awcache(ps_spi_axi_awcache),
+      .S01_AXI_0_awlen(ps_spi_axi_awlen),
+      .S01_AXI_0_awlock(ps_spi_axi_awlock),
+      .S01_AXI_0_awprot(ps_spi_axi_awprot),
+      .S01_AXI_0_awqos(ps_spi_axi_awqos),
+      .S01_AXI_0_awready(ps_spi_axi_awready),
+      .S01_AXI_0_awsize(ps_spi_axi_awsize),
+      .S01_AXI_0_awvalid(ps_spi_axi_awvalid),
+      .S01_AXI_0_bready(ps_spi_axi_bready),
+      .S01_AXI_0_bresp(ps_spi_axi_bresp),
+      .S01_AXI_0_bvalid(ps_spi_axi_bvalid),
+      .S01_AXI_0_rdata(ps_spi_axi_rdata),
+      .S01_AXI_0_rlast(ps_spi_axi_rlast),
+      .S01_AXI_0_rready(ps_spi_axi_rready),
+      .S01_AXI_0_rresp(ps_spi_axi_rresp),
+      .S01_AXI_0_rvalid(ps_spi_axi_rvalid),
+      .S01_AXI_0_wdata(ps_spi_axi_wdata),
+      .S01_AXI_0_wlast(ps_spi_axi_wlast),
+      .S01_AXI_0_wready(ps_spi_axi_wready),
+      .S01_AXI_0_wstrb(ps_spi_axi_wstrb),
+      .S01_AXI_0_wvalid(ps_spi_axi_wvalid),
       .UART_0_rxd(ps_uart_rx),
       .UART_0_txd(ps_uart_tx),
       .ch0_lpddr4_trip1_ca_a(ch0_lpddr4_trip1_ca_a),
@@ -326,6 +397,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .ch1_lpddr4_trip1_reset_n(ch1_lpddr4_trip1_reset_n),
       .lpddr4_clk1_clk_n(lpddr4_clk1_clk_n),
       .lpddr4_clk1_clk_p(lpddr4_clk1_clk_p),
+      .pl0_ref_clk_o(ps_spi_axi_aclk),
       .pl0_resetn(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
@@ -339,6 +411,87 @@ module xilinx_core_v_mini_mcu_wrapper
       .ps_tdi_o(ps_tdi),
       .ps_tdo_i(ps_tdo),
       .ps_tms_o(ps_tms)
+  );
+
+
+  // SPI 2 AXI module :
+  axi_spi_slave #(
+      .AXI_ADDR_WIDTH(32),
+      .AXI_DATA_WIDTH(32),
+      .AXI_USER_WIDTH(),
+      .AXI_ID_WIDTH  (),
+      .DUMMY_CYCLES  ()
+  ) spi2axi (
+      .test_mode(),
+      .spi_sclk(xheep_spi_flash_sck_io),
+      .spi_cs(xheep_spi_flash_csb_io),
+      .spi_mode(),
+      .spi_sdi0(xheep_spi_flash_sd_io[0]),
+      .spi_sdi1(),
+      .spi_sdi2(xheep_spi_flash_sd_io[2]),
+      .spi_sdi3(xheep_spi_flash_sd_io[3]),
+      .spi_sdo0(),
+      .spi_sdo1(xheep_spi_flash_sd_io[1]),
+      .spi_sdo2(),
+      .spi_sdo3(),
+
+      // AXI4 MASTER
+      //***************************************
+      .axi_aclk(ps_spi_axi_aclk),
+      .axi_aresetn(cips_rst_n),
+      // WRITE ADDRESS CHANNEL
+      .axi_master_aw_valid(ps_spi_axi_awvalid),
+      .axi_master_aw_addr(ps_spi_axi_awaddr),
+      .axi_master_aw_prot(ps_spi_axi_awprot),
+      .axi_master_aw_region(),
+      .axi_master_aw_len(ps_spi_axi_awlen),
+      .axi_master_aw_size(ps_spi_axi_awsize),
+      .axi_master_aw_burst(ps_spi_axi_awburst),
+      .axi_master_aw_lock(ps_spi_axi_awlock),
+      .axi_master_aw_cache(ps_spi_axi_awcache),
+      .axi_master_aw_qos(ps_spi_axi_awqos),
+      .axi_master_aw_id(),
+      .axi_master_aw_user(),
+      .axi_master_aw_ready(ps_spi_axi_awready),
+
+      // READ ADDRESS CHANNEL
+      .axi_master_ar_valid(ps_spi_axi_arvalid),
+      .axi_master_ar_addr(ps_spi_axi_araddr),
+      .axi_master_ar_prot(ps_spi_axi_arprot),
+      .axi_master_ar_region(),
+      .axi_master_ar_len(ps_spi_axi_arlen),
+      .axi_master_ar_size(ps_spi_axi_arsize),
+      .axi_master_ar_burst(ps_spi_axi_arburst),
+      .axi_master_ar_lock(ps_spi_axi_arlock),
+      .axi_master_ar_cache(ps_spi_axi_arcache),
+      .axi_master_ar_qos(ps_spi_axi_arqos),
+      .axi_master_ar_id(),
+      .axi_master_ar_user(),
+      .axi_master_ar_ready(ps_spi_axi_arready),
+
+      // WRITE DATA CHANNEL
+      .axi_master_w_valid(ps_spi_axi_wvalid),
+      .axi_master_w_data (ps_spi_axi_wdata),
+      .axi_master_w_strb (ps_spi_axi_wstrb),
+      .axi_master_w_user (),
+      .axi_master_w_last (ps_spi_axi_wlast),
+      .axi_master_w_ready(ps_spi_axi_wready),
+
+      // READ DATA CHANNEL
+      .axi_master_r_valid(ps_spi_axi_rvalid),
+      .axi_master_r_data(ps_spi_axi_rdata),
+      .axi_master_r_resp(ps_spi_axi_rresp),
+      .axi_master_r_last(ps_spi_axi_rlast),
+      .axi_master_r_id('0),
+      .axi_master_r_user('0),
+      .axi_master_r_ready(ps_spi_axi_rready),
+
+      // WRITE RESPONSE CHANNEL
+      .axi_master_b_valid(ps_spi_axi_bvalid),
+      .axi_master_b_resp(ps_spi_axi_bresp),
+      .axi_master_b_id('0),
+      .axi_master_b_user('0),
+      .axi_master_b_ready(ps_spi_axi_bready)
   );
 
 
@@ -473,13 +626,25 @@ module xilinx_core_v_mini_mcu_wrapper
       .spi_slave_cs_io(spi_slave_cs_io),
       .spi_slave_miso_io(spi_slave_miso_io),
       .spi_slave_mosi_io(spi_slave_mosi_io),
+`ifdef FPGA_VPK180
+      .spi_flash_sd_0_io(xheep_spi_flash_sd_io[0]),
+      .spi_flash_sd_1_io(xheep_spi_flash_sd_io[1]),
+      .spi_flash_sd_2_io(xheep_spi_flash_sd_io[2]),
+      .spi_flash_sd_3_io(xheep_spi_flash_sd_io[3]),
+      .spi_flash_cs_0_io(xheep_spi_flash_csb_io),
+`else
       .spi_flash_sd_0_io(spi_flash_sd_io[0]),
       .spi_flash_sd_1_io(spi_flash_sd_io[1]),
       .spi_flash_sd_2_io(spi_flash_sd_io[2]),
       .spi_flash_sd_3_io(spi_flash_sd_io[3]),
       .spi_flash_cs_0_io(spi_flash_csb_o),
+`endif
       .spi_flash_cs_1_io(),
-      .spi_flash_sck_io(spi_flash_sck_o),
+`ifdef FPGA_VPK180
+      .spi_flash_sck_io(xheep_spi_flash_sck_io),
+`else
+      .spi_flash_sck_io(spi_flash_sck_o),  // axi_spi_slave
+`endif
       .spi_sd_0_io(spi_sd_io[0]),
       .spi_sd_1_io(spi_sd_io[1]),
       .spi_sd_2_io(spi_sd_io[2]),
@@ -517,7 +682,7 @@ module xilinx_core_v_mini_mcu_wrapper
   assign ps_x_heep_i[1] = exit_value[0];
 
   assign exit_valid_o   = exit_valid;
-  // `ifndef FPGA_VPK180
+`ifndef FPGA_VPK180
 
   // QuadSPI flash mux hook
   (* DONT_TOUCH = "TRUE" *)
@@ -543,6 +708,6 @@ module xilinx_core_v_mini_mcu_wrapper
       .I0(ps_quadspi_io_ss_io[0]),
       .O ()
   );
-  // `endif
+`endif
 `endif
 endmodule
