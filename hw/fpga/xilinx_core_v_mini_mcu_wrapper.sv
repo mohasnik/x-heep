@@ -419,64 +419,31 @@ module xilinx_core_v_mini_mcu_wrapper
 
 
   // VPK180 external DDR bus path.
-  localparam int unsigned EXT_XBAR_NMASTER = 1;
-  localparam int unsigned EXT_XBAR_NSLAVE = 1;
-  localparam addr_map_rule_pkg::addr_map_rule_t [EXT_XBAR_NSLAVE-1:0] EXT_XBAR_ADDR_RULES = '{
-      '{
-          idx: 32'd0,
-          start_addr: core_v_mini_mcu_pkg::EXT_SLAVE_START_ADDRESS,
-          end_addr: core_v_mini_mcu_pkg::EXT_SLAVE_END_ADDRESS
-      }
-  };
+  localparam int unsigned DDR_OBI_NMASTER = 2;
 
-  obi_req_t [EXT_XBAR_NMASTER-1:0] ext_master_req;
-  obi_resp_t [EXT_XBAR_NMASTER-1:0] ext_master_resp;
-  obi_req_t [EXT_XBAR_NMASTER-1:0] heep_slave_req;
-  obi_resp_t [EXT_XBAR_NMASTER-1:0] heep_slave_resp;
   obi_req_t heep_core_instr_req;
   obi_resp_t heep_core_instr_resp;
   obi_req_t heep_core_data_req;
   obi_resp_t heep_core_data_resp;
-  obi_req_t heep_debug_master_req;
-  obi_resp_t heep_debug_master_resp;
-  obi_req_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] heep_dma_read_req;
-  obi_resp_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] heep_dma_read_resp;
-  obi_req_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] heep_dma_write_req;
-  obi_resp_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] heep_dma_write_resp;
-  obi_req_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] heep_dma_addr_req;
-  obi_resp_t [core_v_mini_mcu_pkg::DMA_NUM_MASTER_PORTS-1:0] heep_dma_addr_resp;
-  obi_req_t [EXT_XBAR_NSLAVE-1:0] ext_slave_req;
-  obi_resp_t [EXT_XBAR_NSLAVE-1:0] ext_slave_resp;
+  obi_req_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_req;
+  obi_resp_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_resp;
+  obi_req_t ddr_obi_req;
+  obi_resp_t ddr_obi_resp;
 
-  assign ext_master_req = '0;
+  assign ddr_obi_master_req[0] = heep_core_instr_req;
+  assign ddr_obi_master_req[1] = heep_core_data_req;
+  assign heep_core_instr_resp  = ddr_obi_master_resp[0];
+  assign heep_core_data_resp   = ddr_obi_master_resp[1];
 
-  // DDR BUS CONNECTION : 
-  ext_bus #(
-      .EXT_XBAR_NMASTER(EXT_XBAR_NMASTER),
-      .EXT_XBAR_NSLAVE (EXT_XBAR_NSLAVE)
-  ) ext_bus_i (
-      .clk_i                   (clk_gen),
-      .rst_ni                  (rst_n),
-      .addr_map_i              (EXT_XBAR_ADDR_RULES),
-      .default_idx_i           ('0),
-      .heep_core_instr_req_i   (heep_core_instr_req),
-      .heep_core_instr_resp_o  (heep_core_instr_resp),
-      .heep_core_data_req_i    (heep_core_data_req),
-      .heep_core_data_resp_o   (heep_core_data_resp),
-      .heep_debug_master_req_i (heep_debug_master_req),
-      .heep_debug_master_resp_o(heep_debug_master_resp),
-      .heep_dma_read_req_i     (heep_dma_read_req),
-      .heep_dma_read_resp_o    (heep_dma_read_resp),
-      .heep_dma_write_req_i    (heep_dma_write_req),
-      .heep_dma_write_resp_o   (heep_dma_write_resp),
-      .heep_dma_addr_req_i     (heep_dma_addr_req),
-      .heep_dma_addr_resp_o    (heep_dma_addr_resp),
-      .ext_master_req_i        (ext_master_req),
-      .ext_master_resp_o       (ext_master_resp),
-      .heep_slave_req_o        (heep_slave_req),
-      .heep_slave_resp_i       (heep_slave_resp),
-      .ext_slave_req_o         (ext_slave_req),
-      .ext_slave_resp_i        (ext_slave_resp)
+  xbar_varlat_n_to_one #(
+      .XBAR_NMASTER(DDR_OBI_NMASTER)
+  ) ddr_obi_xbar_i (
+      .clk_i        (clk_gen),
+      .rst_ni       (rst_n),
+      .master_req_i (ddr_obi_master_req),
+      .master_resp_o(ddr_obi_master_resp),
+      .slave_req_o  (ddr_obi_req),
+      .slave_resp_i (ddr_obi_resp)
   );
 
   xheep_obi_to_axi_bridge #(
@@ -488,8 +455,8 @@ module xilinx_core_v_mini_mcu_wrapper
   ) obi2axi (
       .clk_i     (clk_gen),
       .rst_ni    (rst_n),
-      .obi_req_i (ext_slave_req[0]),
-      .obi_resp_o(ext_slave_resp[0]),
+      .obi_req_i (ddr_obi_req),
+      .obi_resp_o(ddr_obi_resp),
       .axi_req_o (ddr_axi_req),
       .axi_rsp_i (ddr_axi_rsp)
   );
@@ -547,20 +514,20 @@ module xilinx_core_v_mini_mcu_wrapper
       .xif_result_if(ext_if),
 `ifdef PS_ENABLE
 `ifdef FPGA_VPK180
-      .ext_xbar_master_req_i(heep_slave_req),
-      .ext_xbar_master_resp_o(heep_slave_resp),
+      .ext_xbar_master_req_i('0),
+      .ext_xbar_master_resp_o(),
       .ext_core_instr_req_o(heep_core_instr_req),
       .ext_core_instr_resp_i(heep_core_instr_resp),
       .ext_core_data_req_o(heep_core_data_req),
       .ext_core_data_resp_i(heep_core_data_resp),
-      .ext_debug_master_req_o(heep_debug_master_req),
-      .ext_debug_master_resp_i(heep_debug_master_resp),
-      .ext_dma_read_req_o(heep_dma_read_req),
-      .ext_dma_read_resp_i(heep_dma_read_resp),
-      .ext_dma_write_req_o(heep_dma_write_req),
-      .ext_dma_write_resp_i(heep_dma_write_resp),
-      .ext_dma_addr_req_o(heep_dma_addr_req),
-      .ext_dma_addr_resp_i(heep_dma_addr_resp),
+      .ext_debug_master_req_o(),
+      .ext_debug_master_resp_i('0),
+      .ext_dma_read_req_o(),
+      .ext_dma_read_resp_i('0),
+      .ext_dma_write_req_o(),
+      .ext_dma_write_resp_i('0),
+      .ext_dma_addr_req_o(),
+      .ext_dma_addr_resp_i('0),
 `else
       .ext_xbar_master_req_i('0),
       .ext_xbar_master_resp_o(),
