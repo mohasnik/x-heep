@@ -16,7 +16,7 @@ index 0000000..d87be95
 +filesets:
 +  obi_to_axi:
 +    depend:
-+    - x-heep::packages
++    - pulp-platform.org::obi
 +    - pulp-platform.org::common_cells
 +    - pulp-platform.org::axi:0.39.8
 +    files:

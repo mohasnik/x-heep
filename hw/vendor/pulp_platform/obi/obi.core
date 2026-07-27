@@ -4,24 +4,22 @@ CAPI=2:
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-name: pulp-platform.org::axi_obi
-description: OBI to AXI protocol bridge from pulp-platform/axi_obi.
+name: pulp-platform.org::obi
+description: OBI package from pulp-platform/obi with package renamed to pulp_obi_pkg.
 
 filesets:
-  obi_to_axi:
+  rtl:
     depend:
-    - pulp-platform.org::obi
     - pulp-platform.org::common_cells
-    - pulp-platform.org::axi:0.39.8
     files:
-    - src/obi_to_axi.sv
+    - src/obi_pkg.sv
     file_type: systemVerilogSource
 
 targets:
   default:
     filesets:
-    - obi_to_axi
+    - rtl
 
-  obi_to_axi:
+  rtl:
     filesets:
-    - obi_to_axi
+    - rtl

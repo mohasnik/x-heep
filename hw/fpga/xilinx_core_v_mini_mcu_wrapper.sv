@@ -490,7 +490,6 @@ module xilinx_core_v_mini_mcu_wrapper
       .rst_ni    (rst_n),
       .obi_req_i (ext_slave_req[0]),
       .obi_resp_o(ext_slave_resp[0]),
-      .axi_user_i('0),
       .axi_req_o (ddr_axi_req),
       .axi_rsp_i (ddr_axi_rsp)
   );

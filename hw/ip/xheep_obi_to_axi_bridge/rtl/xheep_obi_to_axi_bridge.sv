@@ -5,7 +5,6 @@
 // Converts the flat X-HEEP OBI request/response structs to the nested OBI
 // structs expected by pulp-platform/axi_obi's obi_to_axi bridge.
 module xheep_obi_to_axi_bridge
-  import obi_pkg::*;
   import core_v_mini_mcu_pkg::*;
   import xheep_obi_to_axi_bridge_pkg::*;
 #(
@@ -44,59 +43,57 @@ module xheep_obi_to_axi_bridge
     input  obi_pkg::obi_req_t  obi_req_i,
     output obi_pkg::obi_resp_t obi_resp_o,
 
-    input logic [AxiUserWidth-1:0] axi_user_i,
-
     output axi_req_t axi_req_o,
     input  axi_rsp_t axi_rsp_i
 );
 
-  typedef logic [ObiAddrWidth-1:0] obi_to_axi_addr_t;
-  typedef logic [ObiDataWidth-1:0] obi_to_axi_data_t;
-  typedef logic [ObiDataWidth/8-1:0] obi_to_axi_be_t;
-  typedef logic [ObiIdWidth-1:0] obi_to_axi_id_t;
-  typedef logic [ObiRspUserWidth-1:0] obi_to_axi_ruser_t;
+  typedef logic [ObiAddrWidth-1:0] pulp_obi_addr_t;
+  typedef logic [ObiDataWidth-1:0] pulp_obi_data_t;
+  typedef logic [ObiDataWidth/8-1:0] pulp_obi_be_t;
+  typedef logic [ObiIdWidth-1:0] pulp_obi_id_t;
+  typedef logic [ObiRspUserWidth-1:0] pulp_obi_ruser_t;
 
   // Optional fields are present in the type so it matches the shape expected by
   // obi_to_axi. The configuration below disables their protocol use.
   typedef struct packed {
-    logic [2:0] prot;
-    logic [5:0] atop;
-    logic [1:0] memtype;
-  } obi_to_axi_a_optional_t;
+    pulp_obi_pkg::prot_t    prot;
+    pulp_obi_pkg::atop_t    atop;
+    pulp_obi_pkg::memtype_t memtype;
+  } pulp_obi_a_optional_t;
 
   typedef struct packed {
-    logic              exokay;
-    obi_to_axi_ruser_t ruser;
-  } obi_to_axi_r_optional_t;
+    logic            exokay;
+    pulp_obi_ruser_t ruser;
+  } pulp_obi_r_optional_t;
 
   typedef struct packed {
-    obi_to_axi_addr_t       addr;
-    logic                   we;
-    obi_to_axi_be_t         be;
-    obi_to_axi_data_t       wdata;
-    obi_to_axi_id_t         aid;
-    obi_to_axi_a_optional_t a_optional;
-  } obi_to_axi_a_chan_t;
+    pulp_obi_addr_t       addr;
+    logic                 we;
+    pulp_obi_be_t         be;
+    pulp_obi_data_t       wdata;
+    pulp_obi_id_t         aid;
+    pulp_obi_a_optional_t a_optional;
+  } pulp_obi_a_chan_t;
 
   typedef struct packed {
-    obi_to_axi_data_t       rdata;
-    obi_to_axi_id_t         rid;
-    logic                   err;
-    obi_to_axi_r_optional_t r_optional;
-  } obi_to_axi_r_chan_t;
+    pulp_obi_data_t       rdata;
+    pulp_obi_id_t         rid;
+    logic                 err;
+    pulp_obi_r_optional_t r_optional;
+  } pulp_obi_r_chan_t;
 
   typedef struct packed {
-    obi_to_axi_a_chan_t a;
-    logic               req;
-  } obi_to_axi_req_t;
+    pulp_obi_a_chan_t a;
+    logic             req;
+  } pulp_obi_req_t;
 
   typedef struct packed {
-    obi_to_axi_r_chan_t r;
-    logic               gnt;
-    logic               rvalid;
-  } obi_to_axi_rsp_t;
+    pulp_obi_r_chan_t r;
+    logic             gnt;
+    logic             rvalid;
+  } pulp_obi_rsp_t;
 
-  localparam obi_pkg::obi_optional_cfg_t ObiToAxiOptionalCfg = '{
+  localparam pulp_obi_pkg::obi_optional_cfg_t ObiToAxiOptionalCfg = '{
       UseAtop: 1'b0,
       UseMemtype: 1'b0,
       UseProt: 1'b0,
@@ -109,7 +106,7 @@ module xheep_obi_to_axi_bridge
       RChkWidth: 0
   };
 
-  localparam obi_pkg::obi_cfg_t ObiToAxiCfg = '{
+  localparam pulp_obi_pkg::obi_cfg_t ObiToAxiCfg = '{
       UseRReady: 1'b0,
       CombGnt: 1'b0,
       AddrWidth: ObiAddrWidth,
@@ -120,37 +117,39 @@ module xheep_obi_to_axi_bridge
       OptionalCfg: ObiToAxiOptionalCfg
   };
 
-  obi_to_axi_req_t obi_to_axi_req;
-  obi_to_axi_rsp_t obi_to_axi_rsp;
+  pulp_obi_req_t pulp_obi_req;
+  pulp_obi_rsp_t pulp_obi_rsp;
 
   logic [31:0] obi_addr_offset;
   logic [AxiAddrWidth-1:0] translated_axi_addr;
+  logic [AxiUserWidth-1:0] axi_user;
 
   assign obi_addr_offset = obi_req_i.addr - ObiWindowBaseAddr;
   assign translated_axi_addr = TranslateAddress ? AxiBaseAddr + AxiAddrWidth'(obi_addr_offset) :
                                AxiAddrWidth'(obi_req_i.addr);
+  assign axi_user = '0;
 
   always_comb begin
-    obi_to_axi_req = '0;
+    pulp_obi_req              = '0;
 
-    obi_to_axi_req.req     = obi_req_i.req;
-    obi_to_axi_req.a.addr  = obi_to_axi_addr_t'(translated_axi_addr);
-    obi_to_axi_req.a.we    = obi_req_i.we;
-    obi_to_axi_req.a.be    = obi_to_axi_be_t'(obi_req_i.be);
-    obi_to_axi_req.a.wdata = obi_to_axi_data_t'(obi_req_i.wdata);
-    obi_to_axi_req.a.aid   = '0;
+    pulp_obi_req.req          = obi_req_i.req;
+    pulp_obi_req.a.addr       = pulp_obi_addr_t'(translated_axi_addr);
+    pulp_obi_req.a.we         = obi_req_i.we;
+    pulp_obi_req.a.be         = pulp_obi_be_t'(obi_req_i.be);
+    pulp_obi_req.a.wdata      = pulp_obi_data_t'(obi_req_i.wdata);
+    pulp_obi_req.a.aid        = '0;
 
-    obi_to_axi_req.a.a_optional = '0;
+    pulp_obi_req.a.a_optional = '0;
   end
 
-  assign obi_resp_o.gnt    = obi_to_axi_rsp.gnt;
-  assign obi_resp_o.rvalid = obi_to_axi_rsp.rvalid;
-  assign obi_resp_o.rdata  = obi_to_axi_rsp.r.rdata[31:0];
+  assign obi_resp_o.gnt    = pulp_obi_rsp.gnt;
+  assign obi_resp_o.rvalid = pulp_obi_rsp.rvalid;
+  assign obi_resp_o.rdata  = pulp_obi_rsp.r.rdata[31:0];
 
   obi_to_axi #(
       .ObiCfg      (ObiToAxiCfg),
-      .obi_req_t   (obi_to_axi_req_t),
-      .obi_rsp_t   (obi_to_axi_rsp_t),
+      .obi_req_t   (pulp_obi_req_t),
+      .obi_rsp_t   (pulp_obi_rsp_t),
       .AxiLite     (AxiLite),
       .AxiAddrWidth(AxiAddrWidth),
       .AxiDataWidth(AxiDataWidth),
@@ -163,9 +162,9 @@ module xheep_obi_to_axi_bridge
       .clk_i (clk_i),
       .rst_ni(rst_ni),
 
-      .obi_req_i(obi_to_axi_req),
-      .obi_rsp_o(obi_to_axi_rsp),
-      .user_i   (axi_user_i),
+      .obi_req_i(pulp_obi_req),
+      .obi_rsp_o(pulp_obi_rsp),
+      .user_i   (axi_user),
 
       .axi_req_o(axi_req_o),
       .axi_rsp_i(axi_rsp_i),
@@ -177,18 +176,18 @@ module xheep_obi_to_axi_bridge
   );
 
   // pragma translate_off
-  `ifndef SYNTHESIS
-    initial begin : gen_parameter_assertions
-      assert (ObiDataWidth == 32)
-      else $fatal(1, "xheep_obi_to_axi_bridge expects the current flat X-HEEP OBI data width.");
+`ifndef SYNTHESIS
+  initial begin : gen_parameter_assertions
+    assert (ObiDataWidth == 32)
+    else $fatal(1, "xheep_obi_to_axi_bridge expects the current flat X-HEEP OBI data width.");
 
-      assert (ObiAddrWidth <= AxiAddrWidth)
-      else $fatal(1, "OBI address width must not exceed AXI address width.");
+    assert (ObiAddrWidth <= AxiAddrWidth)
+    else $fatal(1, "OBI address width must not exceed AXI address width.");
 
-      assert (AxiDataWidth >= ObiDataWidth && AxiDataWidth % ObiDataWidth == 0)
-      else $fatal(1, "AXI data width must be an integer multiple of OBI data width.");
-    end
-  `endif
+    assert (AxiDataWidth >= ObiDataWidth && AxiDataWidth % ObiDataWidth == 0)
+    else $fatal(1, "AXI data width must be an integer multiple of OBI data width.");
+  end
+`endif
   // pragma translate_on
 
 endmodule : xheep_obi_to_axi_bridge
