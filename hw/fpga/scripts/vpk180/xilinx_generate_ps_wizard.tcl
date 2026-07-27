@@ -126,11 +126,11 @@ set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
     CONFIG.MC_DQ_WIDTH {32} \
     CONFIG.MC_EN_INTR_RESP {TRUE} \
     CONFIG.MC_SYSTEM_CLOCK {Differential} \
-    CONFIG.NUM_CLKS {6} \
+    CONFIG.NUM_CLKS {7} \
     CONFIG.NUM_MC {1} \
     CONFIG.NUM_MCP {4} \
     CONFIG.NUM_MI {0} \
-    CONFIG.NUM_SI {6} \
+    CONFIG.NUM_SI {7} \
     CONFIG.sys_clk0_BOARD_INTERFACE {lpddr4_clk1} \
   ] $axi_noc_0  
 
@@ -140,12 +140,15 @@ set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_0 {read_bw {10
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_1 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S03_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_rpu}] [get_bd_intf_pins /axi_noc_0/S04_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_pmc}] [get_bd_intf_pins /axi_noc_0/S05_AXI]
+set_property -dict [list CONFIG.CONNECTIONS {MC_0 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}}] [get_bd_intf_pins /axi_noc_0/S06_AXI]
+
 set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_0/aclk0]
 set_property CONFIG.ASSOCIATED_BUSIF {S01_AXI} [get_bd_pins /axi_noc_0/aclk1]
 set_property CONFIG.ASSOCIATED_BUSIF {S02_AXI} [get_bd_pins /axi_noc_0/aclk2]
 set_property CONFIG.ASSOCIATED_BUSIF {S03_AXI} [get_bd_pins /axi_noc_0/aclk3]
 set_property CONFIG.ASSOCIATED_BUSIF {S04_AXI} [get_bd_pins /axi_noc_0/aclk4]
 set_property CONFIG.ASSOCIATED_BUSIF {S05_AXI} [get_bd_pins /axi_noc_0/aclk5]
+set_property CONFIG.ASSOCIATED_BUSIF {S06_AXI} [get_bd_pins /axi_noc_0/aclk6]
 
 connect_bd_intf_net [get_bd_intf_ports ch0_lpddr4_trip1] [get_bd_intf_pins axi_noc_0/CH0_LPDDR4_0]
 connect_bd_intf_net [get_bd_intf_ports ch1_lpddr4_trip1] [get_bd_intf_pins axi_noc_0/CH1_LPDDR4_0]
@@ -164,6 +167,21 @@ connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi2_clk] [get_bd_pins axi
 connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi3_clk] [get_bd_pins axi_noc_0/aclk3]
 connect_bd_net [get_bd_pins versal_cips_0/lpd_axi_noc_clk] [get_bd_pins axi_noc_0/aclk4]
 connect_bd_net [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] [get_bd_pins axi_noc_0/aclk5]
+
+
+### DDR AXI interface :
+
+
+create_bd_port -dir I -type clk -freq_hz 10000000 ddr_clk_i
+set_property -dict [list CONFIG.CLK_DOMAIN [get_property CONFIG.CLK_DOMAIN [get_bd_pins axi_noc_0/aclk6]]] [get_bd_ports ddr_clk_i]
+
+connect_bd_net [get_bd_pins /axi_noc_0/aclk6] [get_bd_ports ddr_clk_i]
+
+create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 DDR_S_AXI
+set_property -dict [list CONFIG.ID_WIDTH [get_property CONFIG.ID_WIDTH [get_bd_intf_pins axi_noc_0/S06_AXI]] CONFIG.ADDR_WIDTH [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins axi_noc_0/S06_AXI]]] [get_bd_intf_ports DDR_S_AXI]
+connect_bd_intf_net [get_bd_intf_pins axi_noc_0/S06_AXI] [get_bd_intf_ports DDR_S_AXI]
+
+
 
 # -----------------------------------------------------------------------------
 # AXI Uartlite

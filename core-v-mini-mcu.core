@@ -102,6 +102,10 @@ filesets:
     - hw/fpga/xilinx_core_v_mini_mcu_wrapper.sv
     file_type: systemVerilogSource
 
+  rtl-fpga-vpk180-obi-to-axi:
+    depend:
+    - x-heep:ip:xheep_obi_to_axi_bridge
+
   ip-asic:
     depend:
     - technology::prim_mytech
@@ -565,6 +569,7 @@ targets:
     description: Xilinx VPK180 Versal Evaluation Board
     filesets_append:
     - x_heep_system
+    - rtl-fpga-vpk180-obi-to-axi
     - rtl-fpga
     parameters:
     - SYNTHESIS=true
