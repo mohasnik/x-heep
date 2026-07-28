@@ -6,14 +6,12 @@ package xheep_obi_to_axi_bridge_pkg;
 
   `include "axi/typedef.svh"
 
-  // Default VPK180 DDR AXI view. Override the wrapper type parameters if the
+  // Default VPK180 AXI type view. Override the wrapper type parameters if the
   // exported PS/NoC AXI port uses different widths.
   localparam int unsigned VPK180_DDR_AXI_ADDR_WIDTH = 64;
   localparam int unsigned VPK180_DDR_AXI_DATA_WIDTH = 128;
   localparam int unsigned VPK180_DDR_AXI_ID_WIDTH = 1;
   localparam int unsigned VPK180_DDR_AXI_USER_WIDTH = 1;
-
-  localparam logic [VPK180_DDR_AXI_ADDR_WIDTH-1:0] VPK180_DDR_BASE_ADDR = 64'h0000_0008_0000_0000;
 
   typedef logic [VPK180_DDR_AXI_ADDR_WIDTH-1:0] vpk180_ddr_axi_addr_t;
   typedef logic [VPK180_DDR_AXI_DATA_WIDTH-1:0] vpk180_ddr_axi_data_t;

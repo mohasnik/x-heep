@@ -3,9 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 // Converts the flat X-HEEP OBI request/response structs to the nested OBI
-// structs expected by pulp-platform/axi_obi's obi_to_axi bridge.
+// structs expected by pulp-platform/axi_obi's obi_to_axi bridge. Address
+// remapping is intentionally left to the downstream NoC/address editor.
 module xheep_obi_to_axi_bridge
-  import core_v_mini_mcu_pkg::*;
   import xheep_obi_to_axi_bridge_pkg::*;
 #(
     // X-HEEP's external OBI data bus is currently 32-bit. The bridge address
@@ -22,15 +22,6 @@ module xheep_obi_to_axi_bridge
     parameter int unsigned AxiUserWidth = VPK180_DDR_AXI_USER_WIDTH,
     parameter int unsigned AxiBurstType = axi_pkg::BURST_INCR,
     parameter int unsigned MaxRequests = 2,
-
-    // When enabled, translate accesses from X-HEEP's external slave window to
-    // the physical AXI address window exposed by the VPK180 PS/NoC DDR path:
-    //
-    //   AXI address = AxiBaseAddr + (OBI address - ObiWindowBaseAddr)
-    //
-    parameter bit TranslateAddress = 1'b1,
-    parameter logic [31:0] ObiWindowBaseAddr = EXT_SLAVE_START_ADDRESS,
-    parameter logic [AxiAddrWidth-1:0] AxiBaseAddr = VPK180_DDR_BASE_ADDR,
 
     // AXI request/response structs are parameterized so the top-level wrapper
     // can pass the exact type matching the PS wizard exported AXI port.
@@ -120,20 +111,15 @@ module xheep_obi_to_axi_bridge
   pulp_obi_req_t pulp_obi_req;
   pulp_obi_rsp_t pulp_obi_rsp;
 
-  logic [31:0] obi_addr_offset;
-  logic [AxiAddrWidth-1:0] translated_axi_addr;
   logic [AxiUserWidth-1:0] axi_user;
 
-  assign obi_addr_offset = obi_req_i.addr - ObiWindowBaseAddr;
-  assign translated_axi_addr = TranslateAddress ? AxiBaseAddr + AxiAddrWidth'(obi_addr_offset) :
-                               AxiAddrWidth'(obi_req_i.addr);
   assign axi_user = '0;
 
   always_comb begin
     pulp_obi_req              = '0;
 
     pulp_obi_req.req          = obi_req_i.req;
-    pulp_obi_req.a.addr       = pulp_obi_addr_t'(translated_axi_addr);
+    pulp_obi_req.a.addr       = pulp_obi_addr_t'(obi_req_i.addr);
     pulp_obi_req.a.we         = obi_req_i.we;
     pulp_obi_req.a.be         = pulp_obi_be_t'(obi_req_i.be);
     pulp_obi_req.a.wdata      = pulp_obi_data_t'(obi_req_i.wdata);
