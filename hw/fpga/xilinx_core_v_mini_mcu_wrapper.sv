@@ -400,7 +400,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .pl0_ref_clk_o(ps_spi_axi_aclk),
       .pl0_resetn(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
-      .ps_gpio_o(ps_x_heep_o),    
+      .ps_gpio_o(ps_x_heep_o),
       .ps_tck_o(ps_tck),
       .ps_tdi_o(ps_tdi),
       .ps_tdo_i(ps_tdo),

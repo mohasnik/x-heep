@@ -13,11 +13,8 @@
   patch_dir: "../patches/pulp_platform_axi_spi_slave",
   
   exclude_from_upstream: [
-    // ".ci",
     ".github",
-    ".gitlab-ci.d",
-    // "scripts",
-    // "test",
+    ".gitlab-ci.d"
   ]
 
 }

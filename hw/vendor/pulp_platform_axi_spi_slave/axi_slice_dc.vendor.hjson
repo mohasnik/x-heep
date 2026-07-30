@@ -1,0 +1,19 @@
+// Copyright 2020 ETH Zurich and University of Bologna.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "axi_slice_dc",
+  target_dir: "axi_slice_dc",
+
+  upstream: {
+    url: "https://github.com/pulp-platform/axi_slice_dc.git",
+    rev: "fbfb22bd5ce999e74f2f97440df77c435bf22883",
+  },
+  
+  
+  exclude_from_upstream: [
+    ".github",
+    ".gitlab-ci.d"
+  ]
+
+}
