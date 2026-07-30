@@ -333,7 +333,6 @@ class MemorySS:
                 return section.size
 
         raise RuntimeError("Memory subsystem must be built first to obtain data region")
-        
 
     def build(self):
         """
