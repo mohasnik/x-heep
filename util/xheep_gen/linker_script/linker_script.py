@@ -14,10 +14,8 @@ class LinkerScript:
     def __init__(
         self, stack_size: Optional[int] = None, heap_size: Optional[int] = None
     ):
-        self._requested_stack_size = self._check_size("stack_size", stack_size)
-        self._requested_heap_size = self._check_size("heap_size", heap_size)
-        self._stack_size = self._requested_stack_size
-        self._heap_size = self._requested_heap_size
+        self._stack_size = self._check_size("stack_size", stack_size)
+        self._heap_size = self._check_size("heap_size", heap_size)
 
     @staticmethod
     def _check_size(name: str, size: Optional[int]) -> Optional[int]:
@@ -51,8 +49,8 @@ class LinkerScript:
                 "[MCU-GEN - LinkerScript] ERROR: available_size should be strictly positive"
             )
 
-        stack_size = self._requested_stack_size
-        heap_size = self._requested_heap_size
+        stack_size = self._stack_size
+        heap_size = self._heap_size
 
         if stack_size is None and heap_size is None:
             inferred_size = self._align_down(available_size // 4)
