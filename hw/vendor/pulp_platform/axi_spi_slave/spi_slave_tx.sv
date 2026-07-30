@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-module spi_slave_tx
+module pulp_spi_slave_tx
 (
     input  logic        test_mode,
     input  logic        sclk,

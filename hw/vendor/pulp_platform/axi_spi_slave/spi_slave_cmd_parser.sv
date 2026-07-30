@@ -8,7 +8,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-module spi_slave_cmd_parser(
+module pulp_spi_slave_cmd_parser(
       input  logic [7:0] cmd,
       output logic       get_addr,
       output logic       get_mode,

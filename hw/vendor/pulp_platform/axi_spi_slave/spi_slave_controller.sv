@@ -12,7 +12,7 @@
 `define SPI_QUAD_TX 2'b01
 `define SPI_QUAD_RX 2'b10
 
-module spi_slave_controller
+module pulp_spi_slave_controller
     #(
     parameter DUMMY_CYCLES = 32
     )
@@ -84,7 +84,7 @@ module spi_slave_controller
 
   assign command = decode_cmd_comb ? rx_data : cmd_reg;
 
-  spi_slave_cmd_parser u_cmd_parser(
+  pulp_spi_slave_cmd_parser u_cmd_parser(
       .cmd(command),
       .get_addr(get_addr),
       .get_mode(get_mode),
@@ -97,7 +97,7 @@ module spi_slave_controller
       .reg_sel(reg_sel)
       );
 
-  spi_slave_regs #(
+  pulp_spi_slave_regs #(
       .REG_SIZE(REG_SIZE)
     ) u_spiregs(
       .sclk(sclk),
