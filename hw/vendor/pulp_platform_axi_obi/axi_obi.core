@@ -1,8 +1,12 @@
 CAPI=2:
 
-# Copyright 2026 Huawei Technologies Co., Ltd.
+# Copyright (C) 2026 EPFL.
 # Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# File: axi_obi.core
+# Author: Mohammad Hossein Nikkhah
+# Description: 
 
 name: pulp-platform.org::axi_obi
 description: OBI to AXI protocol bridge from pulp-platform/axi_obi.
@@ -14,7 +18,7 @@ filesets:
     - pulp-platform.org::common_cells
     - pulp-platform.org::axi:0.39.8
     files:
-    - src/obi_to_axi.sv
+    - axi_obi/src/obi_to_axi.sv
     file_type: systemVerilogSource
 
 targets:
