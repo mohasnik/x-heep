@@ -16,6 +16,8 @@ filesets:
     file_type: systemVerilogSource
 
   rtl-fpga-vpk180:
+    depend:
+    -  pulp-platform.org::axi_spi_slave
     files:
     - vpk180_rstgen.sv
     file_type: systemVerilogSource

@@ -229,9 +229,9 @@ set_property -dict {PACKAGE_PIN CD40 IOSTANDARD LVCMOS15} [get_ports {spi2_sck_o
 # Shared external flash pins used by x-heep_system and then muxed against PS
 # QuadSPI by the ECO hook.
 # -----------------------------------------------------------------------------
-set_property -dict {PACKAGE_PIN CD41 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[0]}] ; # FMCP1_LA21_N
-set_property -dict {PACKAGE_PIN CD42 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[1]}] ; # FMCP1_LA22_P
-set_property -dict {PACKAGE_PIN CD43 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[2]}] ; # FMCP1_LA22_N
-set_property -dict {PACKAGE_PIN CB40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[3]}] ; # FMCP1_LA23_P
-set_property -dict {PACKAGE_PIN CC40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_csb_o}]     ; # FMCP1_LA23_N
-set_property -dict {PACKAGE_PIN BY40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sck_o}]     ; # FMCP1_LA24_P
+# set_property -dict {PACKAGE_PIN CD41 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[0]}] ; # FMCP1_LA21_N
+# set_property -dict {PACKAGE_PIN CD42 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[1]}] ; # FMCP1_LA22_P
+# set_property -dict {PACKAGE_PIN CD43 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[2]}] ; # FMCP1_LA22_N
+# set_property -dict {PACKAGE_PIN CB40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sd_io[3]}] ; # FMCP1_LA23_P
+# set_property -dict {PACKAGE_PIN CC40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_csb_o}]     ; # FMCP1_LA23_N
+# set_property -dict {PACKAGE_PIN BY40 IOSTANDARD LVCMOS15} [get_ports {spi_flash_sck_o}]     ; # FMCP1_LA24_P

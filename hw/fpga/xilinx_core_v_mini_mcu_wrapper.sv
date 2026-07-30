@@ -400,13 +400,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .pl0_ref_clk_o(ps_spi_axi_aclk),
       .pl0_resetn(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
-      .ps_gpio_o(ps_x_heep_o),
-      .ps_quadspi_io_io0_io(ps_quadspi_io_io0_io),
-      .ps_quadspi_io_io1_io(ps_quadspi_io_io1_io),
-      .ps_quadspi_io_io2_io(ps_quadspi_io_io2_io),
-      .ps_quadspi_io_io3_io(ps_quadspi_io_io3_io),
-      .ps_quadspi_io_sck_io(ps_quadspi_io_sck_io),
-      .ps_quadspi_io_ss_io(ps_quadspi_io_ss_io),
+      .ps_gpio_o(ps_x_heep_o),    
       .ps_tck_o(ps_tck),
       .ps_tdi_o(ps_tdi),
       .ps_tdo_i(ps_tdo),
@@ -422,7 +416,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .AXI_ID_WIDTH  (),
       .DUMMY_CYCLES  ()
   ) spi2axi (
-      .test_mode(),
+      .test_mode(1'b0),
       .spi_sclk(xheep_spi_flash_sck_io),
       .spi_cs(xheep_spi_flash_csb_io),
       .spi_mode(),

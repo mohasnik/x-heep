@@ -243,7 +243,8 @@ connect_bd_net [get_bd_pins $versal_cips/pl0_ref_clk] \
   [get_bd_pins rst_versal_cips/slowest_sync_clk] \
   [get_bd_pins axi_jtag/s_axi_aclk] \
   [get_bd_pins axi_gpio/s_axi_aclk] \
-  [get_bd_pins axi_uartlite_0/s_axi_aclk]
+  [get_bd_pins axi_uartlite_0/s_axi_aclk] \
+  [get_bd_ports pl0_ref_clk_o]
 
 # -----------------------------------------------------------------------------
 # Reset
