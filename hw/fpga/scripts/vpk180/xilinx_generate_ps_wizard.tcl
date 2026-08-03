@@ -129,7 +129,7 @@ set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
     CONFIG.MC_EN_INTR_RESP {TRUE} \
     CONFIG.MC_SYSTEM_CLOCK {Differential} \
     CONFIG.NUM_CLKS {6} \
-    CONFIG.NUM_MC {1} \
+    CONFIG.NUM_MC {2} \
     CONFIG.NUM_MCP {4} \
     CONFIG.NUM_MI {0} \
     CONFIG.NUM_SI {6} \

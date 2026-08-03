@@ -16,7 +16,7 @@ filesets:
     depend:
     - pulp-platform.org::common_cells
     files:
-    - obi/src/obi_pkg.sv
+    - pulp_platform/obi/src/obi_pkg.sv
     file_type: systemVerilogSource
 
 targets:
