@@ -13,5 +13,6 @@
   exclude_from_upstream: [
     ".gitignore"
     ".github"
+    "Makefile"
   ],
 }
