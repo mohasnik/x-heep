@@ -181,8 +181,8 @@
     }
 
     ext_slaves: {
-        address: 0x80000000
-        length:  0x80000000
+        address: 0xc0000000
+        length:  0x40000000
     }
 
     interrupts: {
