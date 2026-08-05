@@ -120,7 +120,6 @@ def generate_xheep(args):
         if "serial_link" in config
         else 0x50000000
     )
-
     serial_link_size_address = (
         string2int(config["serial_link"]["length"])
         if "serial_link" in config
