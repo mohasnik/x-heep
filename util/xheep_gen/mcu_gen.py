@@ -126,7 +126,7 @@ def generate_xheep(args):
         if "serial_link" in config
         else 0x01000000
     )
-    
+
     plic_used_n_interrupts = len(config["interrupts"]["list"])
     plit_n_interrupts = config["interrupts"]["number"]
     ext_int_list = {
