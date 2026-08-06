@@ -6,7 +6,7 @@
 
 module axi_to_obi #(
   /// The configuration of the OBI port (input port).
-  parameter pulp_obi_pkg::obi_cfg_t ObiCfg      = pulp_obi_pkg::ObiDefaultConfig,
+  parameter obi_pkg::obi_cfg_t ObiCfg      = obi_pkg::ObiDefaultConfig,
   /// The request struct of the OBI port
   parameter type               obi_req_t = logic,
   /// The response struct of the OBI port
@@ -111,7 +111,7 @@ module axi_to_obi #(
   obi_req_t [2*NumBanks-1:0] obi_reqs;
   obi_rsp_t [2*NumBanks-1:0] obi_rsps;
 
-  pulp_obi_pkg::atop_t [2*NumBanks-1:0] obi_atop;
+  obi_pkg::atop_t [2*NumBanks-1:0] obi_atop;
 
   axi_demux_simple #(
     .AxiIdWidth  ( AxiIdWidth ),
@@ -261,21 +261,21 @@ module axi_to_obi #(
   if (ObiCfg.OptionalCfg.UseAtop) begin : gen_atop
     for (genvar i = 0; i < 2*NumBanks; i++) begin : gen_atop_banks
       always_comb begin : proc_atop_translate
-        obi_atop[i] = pulp_obi_pkg::ATOPNONE;
+        obi_atop[i] = obi_pkg::ATOPNONE;
         if (bank_mem_lock[i]) begin
-          obi_atop[i] = bank_mem_we[i] ? pulp_obi_pkg::ATOPSC : pulp_obi_pkg::ATOPLR;
+          obi_atop[i] = bank_mem_we[i] ? obi_pkg::ATOPSC : obi_pkg::ATOPLR;
         end else if (bank_mem_atop[i] == axi_pkg::ATOP_ATOMICSWAP) begin
-          obi_atop[i] = pulp_obi_pkg::AMOSWAP;
+          obi_atop[i] = obi_pkg::AMOSWAP;
         end else if (bank_mem_atop[i] != '0) begin
           case (bank_mem_atop[i][2:0])
-            axi_pkg::ATOP_ADD: obi_atop[i] = pulp_obi_pkg::AMOADD;
-            axi_pkg::ATOP_EOR: obi_atop[i] = pulp_obi_pkg::AMOXOR;
-            axi_pkg::ATOP_CLR: obi_atop[i] = pulp_obi_pkg::AMOAND;
-            axi_pkg::ATOP_SET: obi_atop[i] = pulp_obi_pkg::AMOOR;
-            axi_pkg::ATOP_SMIN: obi_atop[i] = pulp_obi_pkg::AMOMIN;
-            axi_pkg::ATOP_SMAX: obi_atop[i] = pulp_obi_pkg::AMOMAX;
-            axi_pkg::ATOP_UMIN: obi_atop[i] = pulp_obi_pkg::AMOMINU;
-            axi_pkg::ATOP_UMAX: obi_atop[i] = pulp_obi_pkg::AMOMAXU;
+            axi_pkg::ATOP_ADD: obi_atop[i] = obi_pkg::AMOADD;
+            axi_pkg::ATOP_EOR: obi_atop[i] = obi_pkg::AMOXOR;
+            axi_pkg::ATOP_CLR: obi_atop[i] = obi_pkg::AMOAND;
+            axi_pkg::ATOP_SET: obi_atop[i] = obi_pkg::AMOOR;
+            axi_pkg::ATOP_SMIN: obi_atop[i] = obi_pkg::AMOMIN;
+            axi_pkg::ATOP_SMAX: obi_atop[i] = obi_pkg::AMOMAX;
+            axi_pkg::ATOP_UMIN: obi_atop[i] = obi_pkg::AMOMINU;
+            axi_pkg::ATOP_UMAX: obi_atop[i] = obi_pkg::AMOMAXU;
             default: ;
           endcase
         end
@@ -291,7 +291,7 @@ module axi_to_obi #(
     assign obi_reqs[i].a.addr  = bank_mem_addr[i];
     if (ObiCfg.OptionalCfg.UseAtop) begin : gen_obi_bank_assign_atop
       assign obi_reqs[i].a.a_optional.atop = obi_atop[i];
-      assign obi_reqs[i].a.wdata = (obi_atop[i] == pulp_obi_pkg::AMOAND) ?
+      assign obi_reqs[i].a.wdata = (obi_atop[i] == obi_pkg::AMOAND) ?
                                    ~bank_mem_wdata[i] : bank_mem_wdata[i];
       assign bank_mem_exokay[i] = obi_rsps[i].r.r_optional.exokay;
     end else begin : gen_obi_bank_tie_atop

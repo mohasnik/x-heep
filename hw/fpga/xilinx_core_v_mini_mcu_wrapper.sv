@@ -10,8 +10,8 @@
 
 
 module xilinx_core_v_mini_mcu_wrapper
-  import obi_pkg::*;
-  import reg_pkg::*;
+  import xheep_obi_pkg::*;
+  import xheep_reg_pkg::*;
 `ifdef FPGA_VPK180
   import xheep_obi_to_axi_bridge_pkg::*;
 `endif
@@ -501,14 +501,14 @@ module xilinx_core_v_mini_mcu_wrapper
   // VPK180 external DDR bus path.
   localparam int unsigned DDR_OBI_NMASTER = 2;
 
-  obi_req_t heep_core_instr_req;
-  obi_resp_t heep_core_instr_resp;
-  obi_req_t heep_core_data_req;
-  obi_resp_t heep_core_data_resp;
-  obi_req_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_req;
-  obi_resp_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_resp;
-  obi_req_t ddr_obi_req;
-  obi_resp_t ddr_obi_resp;
+  xheep_obi_req_t heep_core_instr_req;
+  xheep_obi_rsp_t heep_core_instr_resp;
+  xheep_obi_req_t heep_core_data_req;
+  xheep_obi_rsp_t heep_core_data_resp;
+  xheep_obi_req_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_req;
+  xheep_obi_rsp_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_resp;
+  xheep_obi_req_t ddr_obi_req;
+  xheep_obi_rsp_t ddr_obi_resp;
 
   assign ddr_obi_master_req[0] = heep_core_instr_req;
   assign ddr_obi_master_req[1] = heep_core_data_req;

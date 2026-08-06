@@ -10,7 +10,7 @@
     rev: "205c9bb338df6955a0c4a300c5140d9ce413ec56",
   },
   
-  patch_dir: "../patches/pulp_platform_axi_obi",
+  // patch_dir: "../patches/pulp_platform_axi_obi",
   
   exclude_from_upstream: [
     ".ci",

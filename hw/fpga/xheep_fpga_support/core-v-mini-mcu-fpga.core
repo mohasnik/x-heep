@@ -14,7 +14,7 @@ filesets:
 
   rtl-fpga-vpk180:
     files:
-    - vpk180_rstgen.sv
+    - rtl/vpk180_rstgen.sv
     file_type: systemVerilogSource
 
   ip-fpga-sram:
@@ -25,7 +25,6 @@ filesets:
 
   ip-fpga:
     files:
-    - scripts/generate_sram.tcl:  { file_type: tclSource }
     - rtl/prim_xilinx_clk.sv
     - rtl/cv32e40p_xilinx_clock_gate.sv
     - rtl/cv32e40x_xilinx_clock_gate.sv

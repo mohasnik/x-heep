@@ -9,7 +9,7 @@ CAPI=2:
 # Description: 
 
 name: pulp-platform.org::obi
-description: OBI package from pulp-platform/obi with package renamed to pulp_obi_pkg.
+description: OBI package from pulp-platform/obi with package renamed to obi_pkg.
 
 filesets:
   rtl:

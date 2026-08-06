@@ -31,8 +31,8 @@ module xheep_obi_to_axi_bridge
     input logic clk_i,
     input logic rst_ni,
 
-    input  obi_pkg::obi_req_t  obi_req_i,
-    output obi_pkg::obi_resp_t obi_resp_o,
+    input  xheep_obi_pkg::xheep_obi_req_t obi_req_i,
+    output xheep_obi_pkg::xheep_obi_rsp_t obi_resp_o,
 
     output axi_req_t axi_req_o,
     input  axi_rsp_t axi_rsp_i
@@ -47,9 +47,9 @@ module xheep_obi_to_axi_bridge
   // Optional fields are present in the type so it matches the shape expected by
   // obi_to_axi. The configuration below disables their protocol use.
   typedef struct packed {
-    pulp_obi_pkg::prot_t    prot;
-    pulp_obi_pkg::atop_t    atop;
-    pulp_obi_pkg::memtype_t memtype;
+    obi_pkg::prot_t    prot;
+    obi_pkg::atop_t    atop;
+    obi_pkg::memtype_t memtype;
   } pulp_obi_a_optional_t;
 
   typedef struct packed {
@@ -84,7 +84,7 @@ module xheep_obi_to_axi_bridge
     logic             rvalid;
   } pulp_obi_rsp_t;
 
-  localparam pulp_obi_pkg::obi_optional_cfg_t ObiToAxiOptionalCfg = '{
+  localparam obi_pkg::obi_optional_cfg_t ObiToAxiOptionalCfg = '{
       UseAtop: 1'b0,
       UseMemtype: 1'b0,
       UseProt: 1'b0,
@@ -97,7 +97,7 @@ module xheep_obi_to_axi_bridge
       RChkWidth: 0
   };
 
-  localparam pulp_obi_pkg::obi_cfg_t ObiToAxiCfg = '{
+  localparam obi_pkg::obi_cfg_t ObiToAxiCfg = '{
       UseRReady: 1'b0,
       CombGnt: 1'b0,
       AddrWidth: ObiAddrWidth,

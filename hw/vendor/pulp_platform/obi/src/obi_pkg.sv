@@ -4,7 +4,7 @@
 
 // Michael Rogenmoser <michaero@iis.ee.ethz.ch>
 
-package pulp_obi_pkg;
+package obi_pkg;
 
   /// The OBI atomics type, to be expanded.
   typedef logic [5:0] atop_t;
@@ -133,4 +133,4 @@ package pulp_obi_pkg;
     ATOPNONE = 6'h0
   } obi_atop_e;
 
-endpackage : pulp_obi_pkg
+endpackage

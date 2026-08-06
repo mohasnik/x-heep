@@ -10,7 +10,7 @@
     rev: "v0.1.7",
   },
 
-  patch_dir: "../patches/pulp_platform_obi",
+  // patch_dir: "../patches/pulp_platform_obi",
 
   exclude_from_upstream: [
     ".ci",
