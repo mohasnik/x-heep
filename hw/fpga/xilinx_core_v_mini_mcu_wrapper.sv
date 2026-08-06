@@ -4,10 +4,17 @@
 
 // `define NO_DDR_CLK_PORTS
 
+`ifdef FPGA_VPK180
+`include "axi/typedef.svh"
+`endif
+
 
 module xilinx_core_v_mini_mcu_wrapper
-  import xheep_obi_pkg::*;
-  import xheep_reg_pkg::*;
+  import obi_pkg::*;
+  import reg_pkg::*;
+`ifdef FPGA_VPK180
+  import xheep_obi_to_axi_bridge_pkg::*;
+`endif
 #(
     parameter CLK_LED_COUNT_LENGTH = 27
 ) (
@@ -27,6 +34,8 @@ module xilinx_core_v_mini_mcu_wrapper
 `elsif FPGA_VPK180
     input logic lpddr4_clk1_clk_n,
     input logic lpddr4_clk1_clk_p,
+    input logic lpddr4_clk2_clk_n,
+    input logic lpddr4_clk2_clk_p,
     input logic lpddr4_clk3_clk_n,
     input logic lpddr4_clk3_clk_p,
     output logic [5:0] ch0_lpddr4_trip1_ca_a,
@@ -67,6 +76,44 @@ module xilinx_core_v_mini_mcu_wrapper
     inout logic [1:0] ch1_lpddr4_trip1_dqs_t_a,
     inout logic [1:0] ch1_lpddr4_trip1_dqs_t_b,
     output logic ch1_lpddr4_trip1_reset_n,
+    output logic [5:0] ch0_lpddr4_trip2_ca_a,
+    output logic [5:0] ch0_lpddr4_trip2_ca_b,
+    output logic ch0_lpddr4_trip2_ck_c_a,
+    output logic ch0_lpddr4_trip2_ck_c_b,
+    output logic ch0_lpddr4_trip2_ck_t_a,
+    output logic ch0_lpddr4_trip2_ck_t_b,
+    output logic ch0_lpddr4_trip2_cke_a,
+    output logic ch0_lpddr4_trip2_cke_b,
+    output logic ch0_lpddr4_trip2_cs_a,
+    output logic ch0_lpddr4_trip2_cs_b,
+    inout logic [1:0] ch0_lpddr4_trip2_dmi_a,
+    inout logic [1:0] ch0_lpddr4_trip2_dmi_b,
+    inout logic [15:0] ch0_lpddr4_trip2_dq_a,
+    inout logic [15:0] ch0_lpddr4_trip2_dq_b,
+    inout logic [1:0] ch0_lpddr4_trip2_dqs_c_a,
+    inout logic [1:0] ch0_lpddr4_trip2_dqs_c_b,
+    inout logic [1:0] ch0_lpddr4_trip2_dqs_t_a,
+    inout logic [1:0] ch0_lpddr4_trip2_dqs_t_b,
+    output logic ch0_lpddr4_trip2_reset_n,
+    output logic [5:0] ch1_lpddr4_trip2_ca_a,
+    output logic [5:0] ch1_lpddr4_trip2_ca_b,
+    output logic ch1_lpddr4_trip2_ck_c_a,
+    output logic ch1_lpddr4_trip2_ck_c_b,
+    output logic ch1_lpddr4_trip2_ck_t_a,
+    output logic ch1_lpddr4_trip2_ck_t_b,
+    output logic ch1_lpddr4_trip2_cke_a,
+    output logic ch1_lpddr4_trip2_cke_b,
+    output logic ch1_lpddr4_trip2_cs_a,
+    output logic ch1_lpddr4_trip2_cs_b,
+    inout logic [1:0] ch1_lpddr4_trip2_dmi_a,
+    inout logic [1:0] ch1_lpddr4_trip2_dmi_b,
+    inout logic [15:0] ch1_lpddr4_trip2_dq_a,
+    inout logic [15:0] ch1_lpddr4_trip2_dq_b,
+    inout logic [1:0] ch1_lpddr4_trip2_dqs_c_a,
+    inout logic [1:0] ch1_lpddr4_trip2_dqs_c_b,
+    inout logic [1:0] ch1_lpddr4_trip2_dqs_t_a,
+    inout logic [1:0] ch1_lpddr4_trip2_dqs_t_b,
+    output logic ch1_lpddr4_trip2_reset_n,
 `elsif FPGA_NEXYS
     inout logic clk_i,
 `else
@@ -182,6 +229,34 @@ module xilinx_core_v_mini_mcu_wrapper
   wire       ps_uart_rx;
   wire       ps_uart_tx;
 
+`ifdef FPGA_VPK180
+  localparam int unsigned DDR_AXI_ADDR_WIDTH = 64;
+  localparam int unsigned DDR_AXI_DATA_WIDTH = 32;
+  localparam int unsigned DDR_AXI_ID_WIDTH = 2;
+  localparam int unsigned DDR_AXI_USER_WIDTH = 1;
+
+  typedef logic [DDR_AXI_ADDR_WIDTH-1:0] ddr_axi_addr_t;
+  typedef logic [DDR_AXI_DATA_WIDTH-1:0] ddr_axi_data_t;
+  typedef logic [DDR_AXI_DATA_WIDTH/8-1:0] ddr_axi_strb_t;
+  typedef logic [DDR_AXI_ID_WIDTH-1:0] ddr_axi_id_t;
+  typedef logic [DDR_AXI_USER_WIDTH-1:0] ddr_axi_user_t;
+
+  `AXI_TYPEDEF_AW_CHAN_T(ddr_axi_aw_t, ddr_axi_addr_t, ddr_axi_id_t, ddr_axi_user_t)
+  `AXI_TYPEDEF_W_CHAN_T(ddr_axi_w_t, ddr_axi_data_t, ddr_axi_strb_t, ddr_axi_user_t)
+  `AXI_TYPEDEF_B_CHAN_T(ddr_axi_b_t, ddr_axi_id_t, ddr_axi_user_t)
+  `AXI_TYPEDEF_AR_CHAN_T(ddr_axi_ar_t, ddr_axi_addr_t, ddr_axi_id_t, ddr_axi_user_t)
+  `AXI_TYPEDEF_R_CHAN_T(ddr_axi_r_t, ddr_axi_data_t, ddr_axi_id_t, ddr_axi_user_t)
+
+  `AXI_TYPEDEF_REQ_T(ddr_axi_req_t, ddr_axi_aw_t, ddr_axi_w_t, ddr_axi_ar_t)
+  `AXI_TYPEDEF_RESP_T(ddr_axi_rsp_t, ddr_axi_b_t, ddr_axi_r_t)
+
+  ddr_axi_req_t ddr_axi_req;
+  ddr_axi_rsp_t ddr_axi_rsp;
+
+  assign ddr_axi_rsp.b.user = '0;
+  assign ddr_axi_rsp.r.user = '0;
+`endif
+
 `ifndef FPGA_VPK180
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io0_io;
   (* DONT_TOUCH = "TRUE" *)wire       ps_quadspi_io_io1_io;
@@ -284,6 +359,47 @@ module xilinx_core_v_mini_mcu_wrapper
   );
 `elsif FPGA_VPK180
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
+      // DDR CONNECTIONS : 
+      .DDR_S_AXI_araddr(ddr_axi_req.ar.addr),
+      .DDR_S_AXI_arburst(ddr_axi_req.ar.burst),
+      .DDR_S_AXI_arcache(ddr_axi_req.ar.cache),
+      .DDR_S_AXI_arid(ddr_axi_req.ar.id),
+      .DDR_S_AXI_arlen(ddr_axi_req.ar.len),
+      .DDR_S_AXI_arlock(ddr_axi_req.ar.lock),
+      .DDR_S_AXI_arprot(ddr_axi_req.ar.prot),
+      .DDR_S_AXI_arqos(ddr_axi_req.ar.qos),
+      .DDR_S_AXI_arready(ddr_axi_rsp.ar_ready),
+      .DDR_S_AXI_arregion(ddr_axi_req.ar.region),
+      .DDR_S_AXI_arsize(ddr_axi_req.ar.size),
+      .DDR_S_AXI_arvalid(ddr_axi_req.ar_valid),
+      .DDR_S_AXI_awaddr(ddr_axi_req.aw.addr),
+      .DDR_S_AXI_awburst(ddr_axi_req.aw.burst),
+      .DDR_S_AXI_awcache(ddr_axi_req.aw.cache),
+      .DDR_S_AXI_awid(ddr_axi_req.aw.id),
+      .DDR_S_AXI_awlen(ddr_axi_req.aw.len),
+      .DDR_S_AXI_awlock(ddr_axi_req.aw.lock),
+      .DDR_S_AXI_awprot(ddr_axi_req.aw.prot),
+      .DDR_S_AXI_awqos(ddr_axi_req.aw.qos),
+      .DDR_S_AXI_awready(ddr_axi_rsp.aw_ready),
+      .DDR_S_AXI_awregion(ddr_axi_req.aw.region),
+      .DDR_S_AXI_awsize(ddr_axi_req.aw.size),
+      .DDR_S_AXI_awvalid(ddr_axi_req.aw_valid),
+      .DDR_S_AXI_bid(ddr_axi_rsp.b.id),
+      .DDR_S_AXI_bready(ddr_axi_req.b_ready),
+      .DDR_S_AXI_bresp(ddr_axi_rsp.b.resp),
+      .DDR_S_AXI_bvalid(ddr_axi_rsp.b_valid),
+      .DDR_S_AXI_rdata(ddr_axi_rsp.r.data),
+      .DDR_S_AXI_rid(ddr_axi_rsp.r.id),
+      .DDR_S_AXI_rlast(ddr_axi_rsp.r.last),
+      .DDR_S_AXI_rready(ddr_axi_req.r_ready),
+      .DDR_S_AXI_rresp(ddr_axi_rsp.r.resp),
+      .DDR_S_AXI_rvalid(ddr_axi_rsp.r_valid),
+      .DDR_S_AXI_wdata(ddr_axi_req.w.data),
+      .DDR_S_AXI_wlast(ddr_axi_req.w.last),
+      .DDR_S_AXI_wready(ddr_axi_rsp.w_ready),
+      .DDR_S_AXI_wstrb(ddr_axi_req.w.strb),
+      .DDR_S_AXI_wvalid(ddr_axi_req.w_valid),
+      .ddr_clk_i(clk_gen),
       .UART_0_rxd(ps_uart_rx),
       .UART_0_txd(ps_uart_tx),
       .ch0_lpddr4_trip1_ca_a(ch0_lpddr4_trip1_ca_a),
@@ -326,6 +442,46 @@ module xilinx_core_v_mini_mcu_wrapper
       .ch1_lpddr4_trip1_reset_n(ch1_lpddr4_trip1_reset_n),
       .lpddr4_clk1_clk_n(lpddr4_clk1_clk_n),
       .lpddr4_clk1_clk_p(lpddr4_clk1_clk_p),
+      .ch0_lpddr4_trip2_ca_a(ch0_lpddr4_trip2_ca_a),
+      .ch0_lpddr4_trip2_ca_b(ch0_lpddr4_trip2_ca_b),
+      .ch0_lpddr4_trip2_ck_c_a(ch0_lpddr4_trip2_ck_c_a),
+      .ch0_lpddr4_trip2_ck_c_b(ch0_lpddr4_trip2_ck_c_b),
+      .ch0_lpddr4_trip2_ck_t_a(ch0_lpddr4_trip2_ck_t_a),
+      .ch0_lpddr4_trip2_ck_t_b(ch0_lpddr4_trip2_ck_t_b),
+      .ch0_lpddr4_trip2_cke_a(ch0_lpddr4_trip2_cke_a),
+      .ch0_lpddr4_trip2_cke_b(ch0_lpddr4_trip2_cke_b),
+      .ch0_lpddr4_trip2_cs_a(ch0_lpddr4_trip2_cs_a),
+      .ch0_lpddr4_trip2_cs_b(ch0_lpddr4_trip2_cs_b),
+      .ch0_lpddr4_trip2_dmi_a(ch0_lpddr4_trip2_dmi_a),
+      .ch0_lpddr4_trip2_dmi_b(ch0_lpddr4_trip2_dmi_b),
+      .ch0_lpddr4_trip2_dq_a(ch0_lpddr4_trip2_dq_a),
+      .ch0_lpddr4_trip2_dq_b(ch0_lpddr4_trip2_dq_b),
+      .ch0_lpddr4_trip2_dqs_c_a(ch0_lpddr4_trip2_dqs_c_a),
+      .ch0_lpddr4_trip2_dqs_c_b(ch0_lpddr4_trip2_dqs_c_b),
+      .ch0_lpddr4_trip2_dqs_t_a(ch0_lpddr4_trip2_dqs_t_a),
+      .ch0_lpddr4_trip2_dqs_t_b(ch0_lpddr4_trip2_dqs_t_b),
+      .ch0_lpddr4_trip2_reset_n(ch0_lpddr4_trip2_reset_n),
+      .ch1_lpddr4_trip2_ca_a(ch1_lpddr4_trip2_ca_a),
+      .ch1_lpddr4_trip2_ca_b(ch1_lpddr4_trip2_ca_b),
+      .ch1_lpddr4_trip2_ck_c_a(ch1_lpddr4_trip2_ck_c_a),
+      .ch1_lpddr4_trip2_ck_c_b(ch1_lpddr4_trip2_ck_c_b),
+      .ch1_lpddr4_trip2_ck_t_a(ch1_lpddr4_trip2_ck_t_a),
+      .ch1_lpddr4_trip2_ck_t_b(ch1_lpddr4_trip2_ck_t_b),
+      .ch1_lpddr4_trip2_cke_a(ch1_lpddr4_trip2_cke_a),
+      .ch1_lpddr4_trip2_cke_b(ch1_lpddr4_trip2_cke_b),
+      .ch1_lpddr4_trip2_cs_a(ch1_lpddr4_trip2_cs_a),
+      .ch1_lpddr4_trip2_cs_b(ch1_lpddr4_trip2_cs_b),
+      .ch1_lpddr4_trip2_dmi_a(ch1_lpddr4_trip2_dmi_a),
+      .ch1_lpddr4_trip2_dmi_b(ch1_lpddr4_trip2_dmi_b),
+      .ch1_lpddr4_trip2_dq_a(ch1_lpddr4_trip2_dq_a),
+      .ch1_lpddr4_trip2_dq_b(ch1_lpddr4_trip2_dq_b),
+      .ch1_lpddr4_trip2_dqs_c_a(ch1_lpddr4_trip2_dqs_c_a),
+      .ch1_lpddr4_trip2_dqs_c_b(ch1_lpddr4_trip2_dqs_c_b),
+      .ch1_lpddr4_trip2_dqs_t_a(ch1_lpddr4_trip2_dqs_t_a),
+      .ch1_lpddr4_trip2_dqs_t_b(ch1_lpddr4_trip2_dqs_t_b),
+      .ch1_lpddr4_trip2_reset_n(ch1_lpddr4_trip2_reset_n),
+      .lpddr4_clk2_clk_n(lpddr4_clk2_clk_n),
+      .lpddr4_clk2_clk_p(lpddr4_clk2_clk_p),
       .pl0_resetn(cips_rst_n),
       .ps_gpio_i(ps_x_heep_i),
       .ps_gpio_o(ps_x_heep_o),
@@ -341,6 +497,49 @@ module xilinx_core_v_mini_mcu_wrapper
       .ps_tms_o(ps_tms)
   );
 
+
+  // VPK180 external DDR bus path.
+  localparam int unsigned DDR_OBI_NMASTER = 2;
+
+  obi_req_t heep_core_instr_req;
+  obi_resp_t heep_core_instr_resp;
+  obi_req_t heep_core_data_req;
+  obi_resp_t heep_core_data_resp;
+  obi_req_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_req;
+  obi_resp_t [DDR_OBI_NMASTER-1:0] ddr_obi_master_resp;
+  obi_req_t ddr_obi_req;
+  obi_resp_t ddr_obi_resp;
+
+  assign ddr_obi_master_req[0] = heep_core_instr_req;
+  assign ddr_obi_master_req[1] = heep_core_data_req;
+  assign heep_core_instr_resp  = ddr_obi_master_resp[0];
+  assign heep_core_data_resp   = ddr_obi_master_resp[1];
+
+  xbar_varlat_n_to_one #(
+      .XBAR_NMASTER(DDR_OBI_NMASTER)
+  ) ddr_obi_xbar_i (
+      .clk_i        (clk_gen),
+      .rst_ni       (rst_n),
+      .master_req_i (ddr_obi_master_req),
+      .master_resp_o(ddr_obi_master_resp),
+      .slave_req_o  (ddr_obi_req),
+      .slave_resp_i (ddr_obi_resp)
+  );
+
+  xheep_obi_to_axi_bridge #(
+      .AxiAddrWidth(DDR_AXI_ADDR_WIDTH),
+      .AxiDataWidth(DDR_AXI_DATA_WIDTH),
+      .AxiUserWidth(DDR_AXI_USER_WIDTH),
+      .axi_req_t   (ddr_axi_req_t),
+      .axi_rsp_t   (ddr_axi_rsp_t)
+  ) obi2axi (
+      .clk_i     (clk_gen),
+      .rst_ni    (rst_n),
+      .obi_req_i (ddr_obi_req),
+      .obi_resp_o(ddr_obi_resp),
+      .axi_req_o (ddr_axi_req),
+      .axi_rsp_i (ddr_axi_rsp)
+  );
 
 `else
   xilinx_ps_wizard_wrapper xilinx_ps_wizard_wrapper_i (
@@ -393,6 +592,23 @@ module xilinx_core_v_mini_mcu_wrapper
       .xif_mem_if(ext_if),
       .xif_mem_result_if(ext_if),
       .xif_result_if(ext_if),
+`ifdef PS_ENABLE
+`ifdef FPGA_VPK180
+      .ext_xbar_master_req_i('0),
+      .ext_xbar_master_resp_o(),
+      .ext_core_instr_req_o(heep_core_instr_req),
+      .ext_core_instr_resp_i(heep_core_instr_resp),
+      .ext_core_data_req_o(heep_core_data_req),
+      .ext_core_data_resp_i(heep_core_data_resp),
+      .ext_debug_master_req_o(),
+      .ext_debug_master_resp_i('0),
+      .ext_dma_read_req_o(),
+      .ext_dma_read_resp_i('0),
+      .ext_dma_write_req_o(),
+      .ext_dma_write_resp_i('0),
+      .ext_dma_addr_req_o(),
+      .ext_dma_addr_resp_i('0),
+`else
       .ext_xbar_master_req_i('0),
       .ext_xbar_master_resp_o(),
       .ext_core_instr_req_o(),
@@ -407,6 +623,23 @@ module xilinx_core_v_mini_mcu_wrapper
       .ext_dma_write_resp_i('0),
       .ext_dma_addr_req_o(),
       .ext_dma_addr_resp_i('0),
+`endif
+`else
+      .ext_xbar_master_req_i('0),
+      .ext_xbar_master_resp_o(),
+      .ext_core_instr_req_o(),
+      .ext_core_instr_resp_i('0),
+      .ext_core_data_req_o(),
+      .ext_core_data_resp_i('0),
+      .ext_debug_master_req_o(),
+      .ext_debug_master_resp_i('0),
+      .ext_dma_read_req_o(),
+      .ext_dma_read_resp_i('0),
+      .ext_dma_write_req_o(),
+      .ext_dma_write_resp_i('0),
+      .ext_dma_addr_req_o(),
+      .ext_dma_addr_resp_i('0),
+`endif
       .ext_peripheral_slave_req_o(),
       .ext_peripheral_slave_resp_i('0),
       .ext_ao_peripheral_req_i('0),
@@ -469,7 +702,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .ddr_rcv_clk_i(1'b0),
       .ddr_snd_clk_o(),
 `endif
-      .spi_slave_sck_i(spi_slave_sck_io),
+      .spi_slave_sck_i(spi_slave_sck_io),  //TODO: This becomes i for pad_cfg of VPK180
       .spi_slave_cs_io(spi_slave_cs_io),
       .spi_slave_miso_io(spi_slave_miso_io),
       .spi_slave_mosi_io(spi_slave_mosi_io),

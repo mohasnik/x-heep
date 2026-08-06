@@ -32,6 +32,11 @@ set ch1_lpddr4_trip1 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interfa
 set lpddr4_clk1 [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 lpddr4_clk1]
 set_property -dict [list CONFIG.FREQ_HZ {200000000}] $lpddr4_clk1
 
+set ch0_lpddr4_trip2 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:lpddr4_rtl:1.0 ch0_lpddr4_trip2 ]
+set ch1_lpddr4_trip2 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:lpddr4_rtl:1.0 ch1_lpddr4_trip2 ]
+set lpddr4_clk2 [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 lpddr4_clk2]
+set_property -dict [list CONFIG.FREQ_HZ {200000000}] $lpddr4_clk2
+
 
 # -----------------------------------------------------------------------------
 # CIPS
@@ -113,12 +118,16 @@ set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
 # AXI NOC
 # -----------------------------------------------------------------------------
 
+
+### MAIN  NOC to DDR connection
 set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_0 ]
   set_property -dict [list \
     CONFIG.CH0_LPDDR4_0_BOARD_INTERFACE {ch0_lpddr4_trip1} \
     CONFIG.CH1_LPDDR4_0_BOARD_INTERFACE {ch1_lpddr4_trip1} \
-    CONFIG.MC1_FLIPPED_PINOUT {true} \
-    CONFIG.MC_CHANNEL_INTERLEAVING {true} \
+    CONFIG.CH0_LPDDR4_1_BOARD_INTERFACE {ch0_lpddr4_trip2} \
+    CONFIG.CH1_LPDDR4_1_BOARD_INTERFACE {ch1_lpddr4_trip2} \
+    CONFIG.sys_clk1_BOARD_INTERFACE {lpddr4_clk2} \
+    CONFIG.MC_CHANNEL_INTERLEAVING {false} \
     CONFIG.MC_CHAN_REGION0 {DDR_LOW1} \
     CONFIG.MC_CHAN_REGION1 {DDR_LOW1} \
     CONFIG.MC_DM_WIDTH {4} \
@@ -127,19 +136,23 @@ set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
     CONFIG.MC_EN_INTR_RESP {TRUE} \
     CONFIG.MC_SYSTEM_CLOCK {Differential} \
     CONFIG.NUM_CLKS {6} \
-    CONFIG.NUM_MC {1} \
+    CONFIG.NUM_MC {2} \
     CONFIG.NUM_MCP {4} \
     CONFIG.NUM_MI {0} \
     CONFIG.NUM_SI {6} \
+    CONFIG.NUM_NSI {1} \
     CONFIG.sys_clk0_BOARD_INTERFACE {lpddr4_clk1} \
   ] $axi_noc_0  
 
+set_property -dict [list CONFIG.CONNECTIONS {MC_0 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}}] [get_bd_intf_pins /axi_noc_0/S00_INI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S00_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S01_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_0 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S02_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_1 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S03_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_rpu}] [get_bd_intf_pins /axi_noc_0/S04_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_pmc}] [get_bd_intf_pins /axi_noc_0/S05_AXI]
+
+
 set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_0/aclk0]
 set_property CONFIG.ASSOCIATED_BUSIF {S01_AXI} [get_bd_pins /axi_noc_0/aclk1]
 set_property CONFIG.ASSOCIATED_BUSIF {S02_AXI} [get_bd_pins /axi_noc_0/aclk2]
@@ -150,6 +163,10 @@ set_property CONFIG.ASSOCIATED_BUSIF {S05_AXI} [get_bd_pins /axi_noc_0/aclk5]
 connect_bd_intf_net [get_bd_intf_ports ch0_lpddr4_trip1] [get_bd_intf_pins axi_noc_0/CH0_LPDDR4_0]
 connect_bd_intf_net [get_bd_intf_ports ch1_lpddr4_trip1] [get_bd_intf_pins axi_noc_0/CH1_LPDDR4_0]
 connect_bd_intf_net [get_bd_intf_ports lpddr4_clk1] [get_bd_intf_pins axi_noc_0/sys_clk0]
+
+connect_bd_intf_net [get_bd_intf_ports ch0_lpddr4_trip2] [get_bd_intf_pins axi_noc_0/CH0_LPDDR4_1]
+connect_bd_intf_net [get_bd_intf_ports ch1_lpddr4_trip2] [get_bd_intf_pins axi_noc_0/CH1_LPDDR4_1]
+connect_bd_intf_net [get_bd_intf_ports lpddr4_clk2] [get_bd_intf_pins axi_noc_0/sys_clk1]
 
 connect_bd_intf_net [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_0] [get_bd_intf_pins axi_noc_0/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins versal_cips_0/FPD_CCI_NOC_1] [get_bd_intf_pins axi_noc_0/S01_AXI]
@@ -164,6 +181,41 @@ connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi2_clk] [get_bd_pins axi
 connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi3_clk] [get_bd_pins axi_noc_0/aclk3]
 connect_bd_net [get_bd_pins versal_cips_0/lpd_axi_noc_clk] [get_bd_pins axi_noc_0/aclk4]
 connect_bd_net [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] [get_bd_pins axi_noc_0/aclk5]
+
+
+
+### ADDRESS REMAPPING: 
+
+set axi_noc_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_1 ]
+  set_property -dict [list \
+    CONFIG.NUM_MI {0} \
+    CONFIG.NUM_NMI {1} \
+  ] $axi_noc_1
+
+
+connect_bd_intf_net [get_bd_intf_pins axi_noc_1/M00_INI] [get_bd_intf_pins axi_noc_0/S00_INI]
+set_property -dict [list CONFIG.CONNECTIONS {M00_INI {read_bw {500} write_bw {500}}} CONFIG.DEST_IDS {} CONFIG.REMAPS {M00_INI {{0xC000_0000 0x0000_0009_C000_0000 1G}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {pl}] [get_bd_intf_pins /axi_noc_1/S00_AXI]
+set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_1/aclk0]
+
+### DDR AXI interface :
+
+
+create_bd_port -dir I -type clk -freq_hz 10000000 ddr_clk_i
+set_property -dict [list CONFIG.CLK_DOMAIN [get_property CONFIG.CLK_DOMAIN [get_bd_pins axi_noc_1/aclk0]]] [get_bd_ports ddr_clk_i]
+
+connect_bd_net [get_bd_pins /axi_noc_1/aclk0] [get_bd_ports ddr_clk_i]
+
+create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 DDR_S_AXI
+set_property -dict [list CONFIG.ID_WIDTH [get_property CONFIG.ID_WIDTH [get_bd_intf_pins axi_noc_1/S00_AXI]] CONFIG.ADDR_WIDTH [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins axi_noc_1/S00_AXI]]] [get_bd_intf_ports DDR_S_AXI]
+connect_bd_intf_net [get_bd_intf_pins axi_noc_1/S00_AXI] [get_bd_intf_ports DDR_S_AXI]
+
+
+
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # AXI Uartlite
@@ -303,12 +355,14 @@ assign_bd_address -offset 0xA4040000 -range 0x00010000 -with_name SEG_axi_uartli
 #   [get_bd_addr_segs axi_quad_spi/AXI_LITE/Reg] -force
 
 
-assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_noc_0/S00_AXI/C3_DDR_LOW1] -force
-assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_1] [get_bd_addr_segs axi_noc_0/S01_AXI/C2_DDR_LOW1] -force
-assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_2] [get_bd_addr_segs axi_noc_0/S02_AXI/C0_DDR_LOW1] -force
-assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_3] [get_bd_addr_segs axi_noc_0/S03_AXI/C1_DDR_LOW1] -force
-assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW1] -force
-assign_bd_address -offset 0x000800000000 -range 0x000100000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW1] -force
+assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_noc_0/S00_AXI/C3_DDR_LOW1x2] -force
+assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_1] [get_bd_addr_segs axi_noc_0/S01_AXI/C2_DDR_LOW1x2] -force
+assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_2] [get_bd_addr_segs axi_noc_0/S02_AXI/C0_DDR_LOW1x2] -force
+assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_3] [get_bd_addr_segs axi_noc_0/S03_AXI/C1_DDR_LOW1x2] -force
+assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW1x2] -force
+assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW1x2] -force
+assign_bd_address -offset 0xC0000000 -range 0x40000000 -target_address_space [get_bd_addr_spaces DDR_S_AXI] [get_bd_addr_segs axi_noc_0/S00_INI/C0_DDR_LOW1x2] -force
+
 
 # -----------------------------------------------------------------------------
 # Finalize
