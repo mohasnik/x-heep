@@ -516,7 +516,9 @@ module xilinx_core_v_mini_mcu_wrapper
   assign heep_core_data_resp   = ddr_obi_master_resp[1];
 
   xbar_varlat_n_to_one #(
-      .XBAR_NMASTER(DDR_OBI_NMASTER)
+      .XBAR_NMASTER(DDR_OBI_NMASTER),
+      .obi_req_t(xheep_obi_req_t),
+      .obi_rsp_t(xheep_obi_rsp_t)
   ) ddr_obi_xbar_i (
       .clk_i        (clk_gen),
       .rst_ni       (rst_n),
