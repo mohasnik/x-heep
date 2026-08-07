@@ -1,6 +1,10 @@
-// Copyright 2026 Huawei Technologies Co., Ltd.
+// Copyright (C) 2026 EPFL.
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: xheep_obi_to_axi_bridge_pkg.sv
+// Author: Mohammad Hossein Nikkhah
+// Description: Defines the default VPK180 DDR AXI widths and typedefs used by the bridge.
 
 package xheep_obi_to_axi_bridge_pkg;
 

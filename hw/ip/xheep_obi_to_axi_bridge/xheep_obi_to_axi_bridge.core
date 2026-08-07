@@ -3,9 +3,6 @@ CAPI=2:
 name: "x-heep:ip:xheep_obi_to_axi_bridge"
 description: "X-HEEP flat OBI to PULP AXI OBI bridge wrapper."
 
-# Copyright 2026 Huawei Technologies Co., Ltd.
-# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 filesets:
   rtl:

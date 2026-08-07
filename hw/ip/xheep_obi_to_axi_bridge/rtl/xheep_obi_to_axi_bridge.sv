@@ -1,10 +1,12 @@
-// Copyright 2026 Huawei Technologies Co., Ltd.
+// Copyright (C) 2026 EPFL.
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: xheep_obi_to_axi_bridge.sv
+// Author: Mohammad Hossein Nikkhah
+// Description: Wraps PULP's OBI-to-AXI bridge for X-HEEP's flat OBI external interface.
 
-// Converts the flat X-HEEP OBI request/response structs to the nested OBI
-// structs expected by pulp-platform/axi_obi's obi_to_axi bridge. Address
-// remapping is intentionally left to the downstream NoC/address editor.
+
 module xheep_obi_to_axi_bridge
   import xheep_obi_to_axi_bridge_pkg::*;
 #(

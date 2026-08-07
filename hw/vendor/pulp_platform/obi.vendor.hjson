@@ -1,6 +1,10 @@
-// Copyright 2026 Huawei Technologies Co., Ltd.
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
+// Copyright (C) 2026 EPFL.
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: obi.vendor.hjson
+// Author: Mohammad Hossein Nikkhah
+// Description: Vendor configuration for importing the PULP Platform OBI dependency.
 {
   name: "obi",
   target_dir: "obi",

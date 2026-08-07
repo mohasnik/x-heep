@@ -1,6 +1,10 @@
-// Copyright 2026 Huawei Technologies Co., Ltd.
+// Copyright (C) 2026 EPFL.
 // Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// File: main.c
+// Author: Mohammad Hossein Nikkhah
+// Description: Application that reads words from the PS DDR window through X-HEEP's external slave range.
 
 #include <stdint.h>
 #include <stdio.h>
