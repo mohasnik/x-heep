@@ -16,8 +16,6 @@ current_bd_instance /
 # External PL-facing ports for the SV wrapper
 # -----------------------------------------------------------------------------
 
-# set ps_quadspi_io [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:spi_rtl:1.0 ps_quadspi_io]
-
 set ps_tdi_o  [create_bd_port -dir O ps_tdi_o]
 set ps_tms_o  [create_bd_port -dir O ps_tms_o]
 set ps_tck_o  [create_bd_port -dir O -from 0 -to 0 ps_tck_o]
@@ -37,15 +35,11 @@ set ch1_lpddr4_trip2 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interfa
 set lpddr4_clk2 [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 lpddr4_clk2]
 set_property -dict [list CONFIG.FREQ_HZ {200000000}] $lpddr4_clk2
 
-
 # -----------------------------------------------------------------------------
 # CIPS
 # -----------------------------------------------------------------------------
 
-
 set versal_cips_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:versal_cips:3.4 versal_cips_0 ]
-
-# Full System mode so M_AXI_FPD / IRQs / PL clocks-resets are available
 
 set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
   set_property -dict [list \
@@ -113,13 +107,10 @@ set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
     } \
   ] $versal_cips_0
 
-
 # -----------------------------------------------------------------------------
 # AXI NOC
 # -----------------------------------------------------------------------------
 
-
-### MAIN  NOC to DDR connection
 set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_0 ]
   set_property -dict [list \
     CONFIG.CH0_LPDDR4_0_BOARD_INTERFACE {ch0_lpddr4_trip1} \
@@ -142,7 +133,7 @@ set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
     CONFIG.NUM_SI {6} \
     CONFIG.NUM_NSI {1} \
     CONFIG.sys_clk0_BOARD_INTERFACE {lpddr4_clk1} \
-  ] $axi_noc_0  
+  ] $axi_noc_0
 
 set_property -dict [list CONFIG.CONNECTIONS {MC_0 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}}] [get_bd_intf_pins /axi_noc_0/S00_INI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S00_AXI]
@@ -151,7 +142,6 @@ set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_0 {read_bw {10
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_1 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_cci}] [get_bd_intf_pins /axi_noc_0/S03_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_3 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_rpu}] [get_bd_intf_pins /axi_noc_0/S04_AXI]
 set_property -dict [list CONFIG.REGION {0} CONFIG.CONNECTIONS {MC_2 {read_bw {100} write_bw {100} read_avg_burst {4} write_avg_burst {4}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {ps_pmc}] [get_bd_intf_pins /axi_noc_0/S05_AXI]
-
 
 set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_0/aclk0]
 set_property CONFIG.ASSOCIATED_BUSIF {S01_AXI} [get_bd_pins /axi_noc_0/aclk1]
@@ -182,9 +172,9 @@ connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi3_clk] [get_bd_pins axi
 connect_bd_net [get_bd_pins versal_cips_0/lpd_axi_noc_clk] [get_bd_pins axi_noc_0/aclk4]
 connect_bd_net [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] [get_bd_pins axi_noc_0/aclk5]
 
-
-
-### ADDRESS REMAPPING: 
+# -----------------------------------------------------------------------------
+# AXI NOC address remap
+# -----------------------------------------------------------------------------
 
 set axi_noc_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_1 ]
   set_property -dict [list \
@@ -192,13 +182,13 @@ set axi_noc_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
     CONFIG.NUM_NMI {1} \
   ] $axi_noc_1
 
-
 connect_bd_intf_net [get_bd_intf_pins axi_noc_1/M00_INI] [get_bd_intf_pins axi_noc_0/S00_INI]
 set_property -dict [list CONFIG.CONNECTIONS {M00_INI {read_bw {500} write_bw {500}}} CONFIG.DEST_IDS {} CONFIG.REMAPS {M00_INI {{0xC000_0000 0x0000_0009_C000_0000 1G}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {pl}] [get_bd_intf_pins /axi_noc_1/S00_AXI]
 set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_1/aclk0]
 
-### DDR AXI interface :
-
+# -----------------------------------------------------------------------------
+# DDR AXI slave interface
+# -----------------------------------------------------------------------------
 
 create_bd_port -dir I -type clk -freq_hz 10000000 ddr_clk_i
 set_property -dict [list CONFIG.CLK_DOMAIN [get_property CONFIG.CLK_DOMAIN [get_bd_pins axi_noc_1/aclk0]]] [get_bd_ports ddr_clk_i]
@@ -209,36 +199,21 @@ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 DDR_S_A
 set_property -dict [list CONFIG.ID_WIDTH [get_property CONFIG.ID_WIDTH [get_bd_intf_pins axi_noc_1/S00_AXI]] CONFIG.ADDR_WIDTH [get_property CONFIG.ADDR_WIDTH [get_bd_intf_pins axi_noc_1/S00_AXI]]] [get_bd_intf_ports DDR_S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_noc_1/S00_AXI] [get_bd_intf_ports DDR_S_AXI]
 
-
-
-
-
-
-
-
-
-# -----------------------------------------------------------------------------
-# AXI Uartlite
-# -----------------------------------------------------------------------------
-
-create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 axi_uartlite_0
-connect_bd_intf_net [get_bd_intf_ports UART_0] [get_bd_intf_pins axi_uartlite_0/UART]
-
-
 # -----------------------------------------------------------------------------
 # AXI helper plane in PL
 # -----------------------------------------------------------------------------
 
-set axi_jtag [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_jtag:1.0 axi_jtag]
-set_property CONFIG.C_TCK_CLOCK_RATIO {10} [get_bd_cells axi_jtag]
-
 set axi_smc [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 axi_smc]
 set_property -dict [list \
-  CONFIG.NUM_MI {4} \
+  CONFIG.NUM_MI {3} \
   CONFIG.NUM_SI {1} \
 ] $axi_smc
 
 set rst_versal_cips [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_versal_cips]
+
+# -----------------------------------------------------------------------------
+# AXI GPIO
+# -----------------------------------------------------------------------------
 
 set axi_gpio [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 axi_gpio]
 set_property -dict [list \
@@ -249,56 +224,62 @@ set_property -dict [list \
   CONFIG.C_IS_DUAL {1} \
 ] $axi_gpio
 
-set ilconcat_0 [create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat:1.0 ilconcat_0]
-
-# set_property CONFIG.NUM_PORTS {2} $ilconcat_0
-set_property CONFIG.NUM_PORTS {1} $ilconcat_0
-connect_bd_net [get_bd_pins axi_uartlite_0/interrupt] [get_bd_pins ilconcat_0/In0]
-
+connect_bd_net [get_bd_pins axi_gpio/gpio_io_o] [get_bd_ports ps_gpio_o]
+connect_bd_net [get_bd_ports ps_gpio_i] [get_bd_pins axi_gpio/gpio2_io_i]
 
 # -----------------------------------------------------------------------------
-# UTILITY BUFFER 
+# AXI JTAG
 # -----------------------------------------------------------------------------
+
+set axi_jtag [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_jtag:1.0 axi_jtag]
+set_property CONFIG.C_TCK_CLOCK_RATIO {10} [get_bd_cells axi_jtag]
 
 set util_ds_buf_0 [create_bd_cell -type ip -vlnv xilinx.com:ip:util_ds_buf:2.2 util_ds_buf_0]
 set_property CONFIG.C_BUF_TYPE {BUFG} $util_ds_buf_0
 
+connect_bd_net [get_bd_pins axi_jtag/tck] [get_bd_pins util_ds_buf_0/BUFG_I]
+connect_bd_net [get_bd_pins util_ds_buf_0/BUFG_O] [get_bd_ports ps_tck_o]
+connect_bd_net [get_bd_pins axi_jtag/tdi] [get_bd_ports ps_tdi_o]
+connect_bd_net [get_bd_pins axi_jtag/tms] [get_bd_ports ps_tms_o]
+connect_bd_net [get_bd_ports ps_tdo_i] [get_bd_pins axi_jtag/tdo]
 
+# -----------------------------------------------------------------------------
+# AXI Uartlite
+# -----------------------------------------------------------------------------
 
-# set axi_quad_spi [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 axi_quad_spi]
-# set_property -dict [list \
-#   CONFIG.C_SPI_MODE {2} \
-#   CONFIG.C_USE_STARTUP {0} \
-# ] $axi_quad_spi
+create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 axi_uartlite_0
+connect_bd_intf_net [get_bd_intf_ports UART_0] [get_bd_intf_pins axi_uartlite_0/UART]
+
+# -----------------------------------------------------------------------------
+# PS interrupts
+# -----------------------------------------------------------------------------
+
+set ilconcat_0 [create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat:1.0 ilconcat_0]
+set_property CONFIG.NUM_PORTS {1} $ilconcat_0
+connect_bd_net [get_bd_pins axi_uartlite_0/interrupt] [get_bd_pins ilconcat_0/In0]
+connect_bd_net [get_bd_pins ilconcat_0/dout] [get_bd_pins versal_cips_0/pl_ps_irq8]
 
 # -----------------------------------------------------------------------------
 # AXI interface connections
 # -----------------------------------------------------------------------------
 
-# Direct PS master to helper interconnect
 connect_bd_intf_net [get_bd_intf_pins versal_cips_0/M_AXI_FPD] [get_bd_intf_pins axi_smc/S00_AXI]
 
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M00_AXI] [get_bd_intf_pins axi_gpio/S_AXI]
 connect_bd_intf_net [get_bd_intf_pins axi_smc/M01_AXI] [get_bd_intf_pins axi_jtag/s_axi]
-# connect_bd_intf_net [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins axi_quad_spi/AXI_LITE]
-connect_bd_intf_net [get_bd_intf_pins axi_smc/M03_AXI] [get_bd_intf_pins axi_uartlite_0/S_AXI]
-
-# connect_bd_intf_net [get_bd_intf_ports ps_quadspi_io] [get_bd_intf_pins axi_quad_spi/SPI_0]
+connect_bd_intf_net [get_bd_intf_pins axi_smc/M02_AXI] [get_bd_intf_pins axi_uartlite_0/S_AXI]
 
 # -----------------------------------------------------------------------------
 # Clocking
 # -----------------------------------------------------------------------------
 
-# PL clock 0 drives the internal helper AXI plane
 connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] \
   [get_bd_pins versal_cips_0/m_axi_fpd_aclk] \
   [get_bd_pins axi_smc/aclk] \
   [get_bd_pins rst_versal_cips/slowest_sync_clk] \
   [get_bd_pins axi_jtag/s_axi_aclk] \
   [get_bd_pins axi_gpio/s_axi_aclk] \
-  [get_bd_pins axi_uartlite_0/s_axi_aclk] 
-#  [get_bd_pins axi_quad_spi/s_axi_aclk] \
-#  [get_bd_pins axi_quad_spi/ext_spi_clk] 
+  [get_bd_pins axi_uartlite_0/s_axi_aclk]
 
 # -----------------------------------------------------------------------------
 # Reset
@@ -307,31 +288,12 @@ connect_bd_net [get_bd_pins versal_cips_0/pl0_ref_clk] \
 connect_bd_net [get_bd_pins versal_cips_0/pl0_resetn] \
   [get_bd_pins rst_versal_cips/ext_reset_in]
 
-# Peripheral active-low resets
 connect_bd_net [get_bd_pins rst_versal_cips/peripheral_aresetn] \
   [get_bd_pins axi_smc/aresetn] \
   [get_bd_pins axi_jtag/s_axi_aresetn] \
   [get_bd_pins axi_gpio/s_axi_aresetn] \
   [get_bd_pins axi_uartlite_0/s_axi_aresetn] \
   [get_bd_ports pl0_resetn]
-#  [get_bd_pins axi_quad_spi/s_axi_aresetn] 
-
-# -----------------------------------------------------------------------------
-# GPIO / JTAG / IRQ connections
-# -----------------------------------------------------------------------------
-
-connect_bd_net [get_bd_pins axi_gpio/gpio_io_o]  [get_bd_ports ps_gpio_o]
-connect_bd_net [get_bd_ports ps_gpio_i]          [get_bd_pins axi_gpio/gpio2_io_i]
-
-connect_bd_net [get_bd_pins axi_jtag/tck] [get_bd_pins util_ds_buf_0/BUFG_I]
-connect_bd_net [get_bd_pins util_ds_buf_0/BUFG_O] [get_bd_ports ps_tck_o]
-connect_bd_net [get_bd_pins axi_jtag/tdi] [get_bd_ports ps_tdi_o]
-connect_bd_net [get_bd_pins axi_jtag/tms] [get_bd_ports ps_tms_o]
-connect_bd_net [get_bd_ports ps_tdo_i]    [get_bd_pins axi_jtag/tdo]
-
-# Only SPI interrupt used for now
-# connect_bd_net [get_bd_pins axi_quad_spi/ip2intc_irpt] [get_bd_pins ilconcat_0/In1]
-connect_bd_net [get_bd_pins ilconcat_0/dout] [get_bd_pins versal_cips_0/pl_ps_irq8]
 
 # -----------------------------------------------------------------------------
 # Address map for direct M_AXI_FPD helper plane
@@ -345,15 +307,9 @@ assign_bd_address -offset 0xA4000000 -range 0x00010000 \
   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
   [get_bd_addr_segs axi_jtag/s_axi/reg0] -force
 
-
 assign_bd_address -offset 0xA4040000 -range 0x00010000 -with_name SEG_axi_uartlite_Reg \
   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
   [get_bd_addr_segs axi_uartlite_0/S_AXI/Reg] -force
-
-# assign_bd_address -offset 0xA4030000 -range 0x00010000 -with_name SEG_axi_quad_spi_Reg \
-#   -target_address_space [get_bd_addr_spaces versal_cips_0/M_AXI_FPD] \
-#   [get_bd_addr_segs axi_quad_spi/AXI_LITE/Reg] -force
-
 
 assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_0] [get_bd_addr_segs axi_noc_0/S00_AXI/C3_DDR_LOW1x2] -force
 assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/FPD_CCI_NOC_1] [get_bd_addr_segs axi_noc_0/S01_AXI/C2_DDR_LOW1x2] -force
@@ -362,7 +318,6 @@ assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_s
 assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW1x2] -force
 assign_bd_address -offset 0x000800000000 -range 0x000200000000 -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW1x2] -force
 assign_bd_address -offset 0xC0000000 -range 0x40000000 -target_address_space [get_bd_addr_spaces DDR_S_AXI] [get_bd_addr_segs axi_noc_0/S00_INI/C0_DDR_LOW1x2] -force
-
 
 # -----------------------------------------------------------------------------
 # Finalize
