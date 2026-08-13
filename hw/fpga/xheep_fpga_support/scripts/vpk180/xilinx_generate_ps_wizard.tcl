@@ -183,7 +183,7 @@ set axi_noc_1 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
   ] $axi_noc_1
 
 connect_bd_intf_net [get_bd_intf_pins axi_noc_1/M00_INI] [get_bd_intf_pins axi_noc_0/S00_INI]
-set_property -dict [list CONFIG.CONNECTIONS {M00_INI {read_bw {500} write_bw {500}}} CONFIG.DEST_IDS {} CONFIG.REMAPS {M00_INI {{0xC000_0000 0x0000_0009_C000_0000 1G}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {pl}] [get_bd_intf_pins /axi_noc_1/S00_AXI]
+set_property -dict [list CONFIG.CONNECTIONS {M00_INI {read_bw {500} write_bw {500}} initial_boot {false}} CONFIG.DEST_IDS {} CONFIG.REMAPS {M00_INI {{0xC000_0000 0x0000_0009_C000_0000 1G}}} CONFIG.NOC_PARAMS {} CONFIG.CATEGORY {pl}] [get_bd_intf_pins /axi_noc_1/S00_AXI]
 set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_1/aclk0]
 
 # -----------------------------------------------------------------------------
