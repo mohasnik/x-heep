@@ -23,6 +23,7 @@ set ps_tdo_i  [create_bd_port -dir I ps_tdo_i]
 set ps_gpio_i [create_bd_port -dir I -from 1 -to 0 ps_gpio_i]
 set ps_gpio_o [create_bd_port -dir O -from 4 -to 0 ps_gpio_o]
 set pl0_resetn [create_bd_port -dir O -from 0 -to 0 -type rst pl0_resetn]
+set pl1_clk_o [create_bd_port -dir O -type clk pl1_clk_o]
 
 set UART_0 [create_bd_intf_port -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 UART_0]
 set ch0_lpddr4_trip1 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:lpddr4_rtl:1.0 ch0_lpddr4_trip1 ]
@@ -98,7 +99,7 @@ set_property CONFIG.DESIGN_MODE {1} $versal_cips_0
       PS_USE_M_AXI_FPD {1} \
       PS_USE_NOC_LPD_AXI0 {1} \
       PS_USE_PMCPL_CLK0 {1} \
-      PS_USE_PMCPL_CLK1 {0} \
+      PS_USE_PMCPL_CLK1 {1} \
       SMON_ALARMS {Set_Alarms_On} \
       SMON_ENABLE_TEMP_AVERAGING {0} \
       SMON_INTERFACE_TO_USE {I2C} \
@@ -171,6 +172,7 @@ connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi2_clk] [get_bd_pins axi
 connect_bd_net [get_bd_pins versal_cips_0/fpd_cci_noc_axi3_clk] [get_bd_pins axi_noc_0/aclk3]
 connect_bd_net [get_bd_pins versal_cips_0/lpd_axi_noc_clk] [get_bd_pins axi_noc_0/aclk4]
 connect_bd_net [get_bd_pins versal_cips_0/pmc_axi_noc_axi0_clk] [get_bd_pins axi_noc_0/aclk5]
+connect_bd_net [get_bd_ports pl1_clk_o] [get_bd_pins versal_cips_0/pl1_ref_clk]
 
 # -----------------------------------------------------------------------------
 # AXI NOC address remap

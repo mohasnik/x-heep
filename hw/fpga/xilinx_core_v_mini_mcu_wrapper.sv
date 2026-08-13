@@ -36,8 +36,8 @@ module xilinx_core_v_mini_mcu_wrapper
     input logic lpddr4_clk1_clk_p,
     input logic lpddr4_clk2_clk_n,
     input logic lpddr4_clk2_clk_p,
-    input logic lpddr4_clk3_clk_n,
-    input logic lpddr4_clk3_clk_p,
+    // input logic lpddr4_clk3_clk_n,
+    // input logic lpddr4_clk3_clk_p,
     output logic [5:0] ch0_lpddr4_trip1_ca_a,
     output logic [5:0] ch0_lpddr4_trip1_ca_b,
     output logic ch0_lpddr4_trip1_ck_c_a,
@@ -322,11 +322,19 @@ module xilinx_core_v_mini_mcu_wrapper
       .clk_out1_0(clk_gen)
   );
 `elsif FPGA_VPK180
+  wire pl1_clk;
+
+  // xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
+  //     .CLK_IN1_D_0_clk_n(lpddr4_clk3_clk_n),
+  //     .CLK_IN1_D_0_clk_p(lpddr4_clk3_clk_p),
+  //     .clk_out1_0(clk_gen)
+  // );
+
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
-      .CLK_IN1_D_0_clk_n(lpddr4_clk3_clk_n),
-      .CLK_IN1_D_0_clk_p(lpddr4_clk3_clk_p),
+      .clk_in1_0(pl1_clk),
       .clk_out1_0(clk_gen)
   );
+
 `elsif FPGA_NEXYS
   xilinx_clk_wizard_wrapper xilinx_clk_wizard_wrapper_i (
       .clk_100MHz(clk_i),
@@ -400,6 +408,7 @@ module xilinx_core_v_mini_mcu_wrapper
       .DDR_S_AXI_wstrb(ddr_axi_req.w.strb),
       .DDR_S_AXI_wvalid(ddr_axi_req.w_valid),
       .ddr_clk_i(clk_gen),
+      .pl1_clk_o(pl1_clk),
       .UART_0_rxd(ps_uart_rx),
       .UART_0_txd(ps_uart_tx),
       .ch0_lpddr4_trip1_ca_a(ch0_lpddr4_trip1_ca_a),
