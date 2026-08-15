@@ -130,6 +130,7 @@ set axi_noc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_noc:1.1 axi_noc_
     CONFIG.NUM_SI {6} \
     CONFIG.NUM_NSI {1} \
     CONFIG.sys_clk0_BOARD_INTERFACE {lpddr4_clk1} \
+    CONFIG.sys_clk1_BOARD_INTERFACE {lpddr4_clk2} \
   ] $axi_noc_0
 
 set_property -dict [list CONFIG.CONNECTIONS {MC_0 {read_bw {500} write_bw {500} read_avg_burst {4} write_avg_burst {4}}}] [get_bd_intf_pins /axi_noc_0/S00_INI]
