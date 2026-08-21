@@ -289,7 +289,6 @@ scripts:
     - python
     - ../../../scripts/sim/vcs/patch_vcs_ams_Makefile.py
 
-  #path-vpk180 run process:
   patch_vpk_run:
     cmd:
     - sh

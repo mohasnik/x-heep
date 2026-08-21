@@ -27,10 +27,14 @@ if {[llength $xheep_core_clks] && [llength $axi_jtag_tck_clks]} {
 }
 
 # False paths
+## TODO: check the following false paths:
 set_false_path -from [get_cells -hierarchical -filter {NAME =~ *dmcontrol_q_reg[ndmreset]}]
+## TODO: seem normal, double-check
 set_false_path -from [get_cells -hierarchical -filter {NAME =~ *synch_regs_q_reg[3]}]
 set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/dmi_jtag_i/i_dmi_cdc/i_cdc_resp/i_src/async*]
 set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/dmi_jtag_i/i_dmi_cdc/i_cdc_req/i_src/async*]
+
+
 set_false_path -from [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_slave_sm/FSM_sequential_state_reg[*]_fret/C}] -to [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_syncro/rdwr_reg_reg[*]/D}]
 set_false_path -setup -hold -to [get_cells -hierarchical -filter {NAME =~ *i_rstgen_bypass/synch_regs_q_reg[*]}]
 set_false_path -hold -from [get_pins {xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_gpio/U0/gpio_core_1/Dual.gpio_Data_Out_reg[1]/C}]
