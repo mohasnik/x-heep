@@ -583,7 +583,7 @@ targets:
     tools:
       vivado:
         part: xcvp1802-lsvc4072-2MP-e-S
-        jobs: 10
+        jobs: 4
     toplevel: [xilinx_core_v_mini_mcu_wrapper]
 
   asic_synthesis:

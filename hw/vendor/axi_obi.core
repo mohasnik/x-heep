@@ -16,7 +16,7 @@ filesets:
     depend:
     - pulp-platform.org::obi
     - pulp-platform.org::common_cells
-    - pulp-platform.org::axi:0.39.8
+    - pulp-platform.org::axi
     files:
     - pulp_platform/axi_obi/src/obi_to_axi.sv
     file_type: systemVerilogSource

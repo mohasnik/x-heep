@@ -5,7 +5,6 @@
 # Author(s): Juan Sapriza, David Mallasen
 # Description: Pad configuration for X-HEEP
 
-
 from xheep import XHeep
 from pads.pad_ring import PadRing
 from pads.floorplan import Side
@@ -25,7 +24,6 @@ def config(xheep: XHeep) -> PadRing:
         Input("clk"),
         Input("rst", module="x_heep_system", attributes={"active": "low"}),
         Input("boot_select"),
-        Input("execute_from_flash"),
         Input("jtag_tck"),
         Input("jtag_tms"),
         Input("jtag_trst", attributes={"active": "low"}),
@@ -98,7 +96,6 @@ def config(xheep: XHeep) -> PadRing:
             ["clk"],
             ["rst"],
             ["boot_select"],
-            ["execute_from_flash"],
             ["jtag_tck"],
             ["jtag_tms"],
             ["jtag_trst"],
@@ -174,7 +171,6 @@ def config(xheep: XHeep) -> PadRing:
         floorplan_dimensions=None,
         pin_list=list(pin_dict.values()),
         mapping=mapping,
-        attributes={},
     )
 
     # Check the pins attached to each pad so you can do a visual-sanity check

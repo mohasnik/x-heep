@@ -41,8 +41,6 @@ module sram_wrapper #(
 
 assign pwrgate_ack_no = pwrgate_ni;
 
-
-
 <%el = ""%>
 % for num_words in xheep.memory_ss().iter_bank_numwords():
   ${el}if (NumWords == 32'd${num_words}) begin

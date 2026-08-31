@@ -35,6 +35,6 @@ set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_
 set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/dmi_jtag_i/i_dmi_cdc/i_cdc_req/i_src/async*]
 
 
-set_false_path -from [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_slave_sm/FSM_sequential_state_reg[*]_fret/C}] -to [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_syncro/rdwr_reg_reg[*]/D}]
-set_false_path -setup -hold -to [get_cells -hierarchical -filter {NAME =~ *i_rstgen_bypass/synch_regs_q_reg[*]}]
-set_false_path -hold -from [get_pins {xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_gpio/U0/gpio_core_1/Dual.gpio_Data_Out_reg[1]/C}]
+#set_false_path -from [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_slave_sm/FSM_sequential_state_reg[*]_fret/C}] -to [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_syncro/rdwr_reg_reg[*]/D}]
+#set_false_path -setup -hold -to [get_cells -hierarchical -filter {NAME =~ *i_rstgen_bypass/synch_regs_q_reg[*]}]
+# set_false_path -hold -from [get_pins {xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_gpio/U0/gpio_core_1/Dual.gpio_Data_Out_reg[1]/C}]

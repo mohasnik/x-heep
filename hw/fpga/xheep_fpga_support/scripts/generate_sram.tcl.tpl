@@ -7,6 +7,7 @@
 set ipName xilinx_mem_gen_${num_words}
 
 create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.4 -module_name $ipName
+
 set_property -dict [list CONFIG.Enable_32bit_Address {false} \\
 
                         CONFIG.Use_Byte_Write_Enable {true}  \\
@@ -35,9 +36,7 @@ set_property -dict [list CONFIG.Enable_32bit_Address {false} \\
 
                         CONFIG.EN_SAFETY_CKT {false}] [get_ips $ipName]
 
-
-#
-generate_target {instantiation_template} [get_ips $ipName]
+#generate_target {instantiation_template} [get_ips $ipName]
 
 #export_ip_user_files -of_objects [get_ips $ipName] -no_script -sync -force -quiet
 
