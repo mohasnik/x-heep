@@ -41,4 +41,13 @@ sed -i 's/-to_step write_bitstream/-to_step write_device_image/g' "$RUN_FILE"
 #    Word boundary keeps "write_bitstream" (no leading dot) untouched.
 sed -i 's/\.bit\b/.pdi/g' "$RUN_FILE"
 
+# 5. Versal segmented configuration emits separate PLD and boot PDI files.
+sed -i 's/\[ get_property top \[current_fileset\] \]\.pdi/[ get_property top [current_fileset] ]_pld.pdi/g' "$RUN_FILE"
+if ! grep -Fq '[current_project]_boot.pdi' "$RUN_FILE"; then
+    sed -i '/file copy -force \$vivadoDefaultBitstreamFile \[pwd\]\/\[current_project\]\.pdi/a file copy -force [ get_property DIRECTORY [current_run] ]/[ get_property top [current_fileset] ]_boot.pdi [pwd]/[current_project]_boot.pdi' "$RUN_FILE"
+fi
+if ! grep -Fq 'write_hw_platform -fixed -include_bit -force' "$RUN_FILE"; then
+    sed -i '/file copy -force \[ get_property DIRECTORY \[current_run\] \]\/\[ get_property top \[current_fileset\] \]_boot\.pdi \[pwd\]\/\[current_project\]_boot\.pdi/a write_hw_platform -fixed -include_bit -force -file [pwd]/[get_property top [current_fileset]].xsa' "$RUN_FILE"
+fi
+
 echo "INFO: Patched $PROJECT_TCL and $RUN_FILE for Versal (VPK180)."

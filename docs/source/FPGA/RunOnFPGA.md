@@ -7,14 +7,15 @@ This project offers X-HEEP implementations on Xilinx FPGAs.
 In this version, the X-HEEP architecture is implemented on the programmable logic (PL) side of the FPGA, and its input/output are connected to the available headers on the FPGA board.
 
 The following FPGA boards are supported: 
-| Vendor      | Board                                                                                                                              | BOARD_NAME    |
-|-------------|------------------------------------------------------------------------------------------------------------------------------------|---------------|
-| TUL         | [Pynq-Z2](https://www.amd.com/en/corporate/university-program/aup-boards/pynq-z2.html)                                             | pynq-z2       |
-| AMD         | [Zynq™ UltraScale+™ MPSoC ZCU104](https://www.amd.com/en/products/adaptive-socs-and-fpgas/evaluation-boards/zcu104.html)           | zcu104        |
-| AMD         | [Zynq™ UltraScale+™ MPSoC ZCU102](https://www.amd.com/en/products/adaptive-socs-and-fpgas/evaluation-boards/ek-u1-zcu102-g.html)   | zcu102        |
-| Digilent    | [Nexys-A7-100t](https://digilent.com/reference/programmable-logic/nexys-a7/start)                                                  | nexys-a7-100t |
-| Digilent    | [Genesys2](https://digilent.com/reference/programmable-logic/genesys-2/start)                                                      | genesys2      |
-| RealDigital | [AUP-ZU3 (8GB)](https://www.amd.com/en/corporate/university-program/aup-boards/realdigital-aup-zu3.html)                           | aup-zu3       |
+| Vendor      | Board                                                                                                                                     | BOARD_NAME    |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| TUL         | [Pynq-Z2](https://www.amd.com/en/corporate/university-program/aup-boards/pynq-z2.html)                                                    | pynq-z2       |
+| AMD         | [Versal™ Adaptive SoC Premium Series VPK180](https://www.amd.com/en/products/adaptive-socs-and-fpgas/evaluation-boards/vpk180.html)       | vpk180        |
+| AMD         | [Zynq™ UltraScale+™ MPSoC ZCU104](https://www.amd.com/en/products/adaptive-socs-and-fpgas/evaluation-boards/zcu104.html)                  | zcu104        |
+| AMD         | [Zynq™ UltraScale+™ MPSoC ZCU102](https://www.amd.com/en/products/adaptive-socs-and-fpgas/evaluation-boards/ek-u1-zcu102-g.html)          | zcu102        |
+| Digilent    | [Nexys-A7-100t](https://digilent.com/reference/programmable-logic/nexys-a7/start)                                                         | nexys-a7-100t |
+| Digilent    | [Genesys2](https://digilent.com/reference/programmable-logic/genesys-2/start)                                                             | genesys2      |
+| RealDigital | [AUP-ZU3 (8GB)](https://www.amd.com/en/corporate/university-program/aup-boards/realdigital-aup-zu3.html)                                  | aup-zu3       |
 
 1. Make sure you have the FPGA board files installed in your Vivado.
 > For example, for the Pynq-Z2 board, use the documentation provided at the following [link](https://pynq.readthedocs.io/en/v2.5/overlay_design_methodology/board_settings.html) to download and install them.
@@ -45,7 +46,7 @@ Adding the fusesoc flag `use_bscane_xilinx` enables the native Xilinx scanchain 
 make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_FLAGS=--flag=use_bscane_xilinx
 ```
 
-To program the bitstream, open Vivado,
+To program the bitstream (.bit) or Programmable Device Image (.pdi), open Vivado,
 
 ```
 open --> Hardware Manager --> Open Target --> Autoconnect --> Program Device
@@ -59,6 +60,10 @@ Or simply type:
 make vivado-fpga-pgm FPGA_BOARD=<BOARD_NAME>
 ```
 
+```{note}
+For the VPK180 target, you will have two `.pdi` files instead of a bitstream file (.bit): `openhwgroup.org_systems_core-v-mini-mcu_<version>_boot.pdi` and `openhwgroup.org_systems_core-v-mini-mcu_<version>_pld.pdi`. You may use the latter to program the FPGA after the system has booted properly. For more information on the VPK180 design flow, refer to the [VPK180 Design Flow and Programming Guide](./VPk_180.md).
+```
+
 ### Build and program the FPGA using the Processing System
 
 The Processing System (PS) enables remote access to the SoC over SSH. With the PYNQ utilities, you can connect to the board and program the FPGA by loading the bitstream from Python.
@@ -68,6 +73,9 @@ Setting the `PS_ENABLE` argument instantiates the PS in the design for the suppo
 ```sh
 make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_PARAM="--PS_ENABLE"
 ```
+
+This parameter is enabled by default for the `VPK180` target, since the current design flow only supports programming X-HEEP from the Processing System.
+
 
 **Upload the bitstream to the remote board**
 
