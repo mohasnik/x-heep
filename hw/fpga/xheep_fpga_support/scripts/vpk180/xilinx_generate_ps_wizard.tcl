@@ -35,10 +35,17 @@ set_property -dict [list CONFIG.FREQ_HZ {200000000}] $lpddr4_clk1
 # set lpddr4_clk2 [create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:diff_clock_rtl:1.0 lpddr4_clk2]
 # set_property -dict [list CONFIG.FREQ_HZ {200000000}] $lpddr4_clk2
 
-set pl_ddr_address 0xF0000000
-set pl_ddr_size 256K
+set xheep_ddr_address    0xC0000000
+set xheep_ddr_size       0x40000000      ;# 1 GiB
+
 set ps_ddr_start_address 0x800000000
-set ps_ddr_size 4G
+set ps_ddr_size          0x100000000     ;# 4 GiB
+
+set pl_ddr_offset \
+    [format "0x%X" [expr {$ps_ddr_size - $xheep_ddr_size}]]
+
+set pl_ddr_start_address \
+    [format "0x%X" [expr {$ps_ddr_start_address + $pl_ddr_offset}]]
 
 # -----------------------------------------------------------------------------
 # CIPS
@@ -218,7 +225,7 @@ set_property CONFIG.ASSOCIATED_BUSIF {S00_AXI} [get_bd_pins /axi_noc_1/aclk0]
 set_property -dict [list \
     CONFIG.CONNECTIONS {M00_INI {read_bw {500} write_bw {500} initial_boot {false}}} \
     CONFIG.DEST_IDS {} \
-    CONFIG.REMAPS [list M00_INI [list [list $pl_ddr_address $ps_ddr_start_address $pl_ddr_size]]] \
+    CONFIG.REMAPS [list M00_INI [list [list $xheep_ddr_address $pl_ddr_start_address $xheep_ddr_size]]] \
     CONFIG.NOC_PARAMS {} \
     CONFIG.CATEGORY {pl} \
 ] [get_bd_intf_pins /axi_noc_1/S00_AXI]
@@ -361,7 +368,7 @@ assign_bd_address -offset $ps_ddr_start_address -range $ps_ddr_size -target_addr
 assign_bd_address -offset $ps_ddr_start_address -range $ps_ddr_size -target_address_space [get_bd_addr_spaces versal_cips_0/LPD_AXI_NOC_0] [get_bd_addr_segs axi_noc_0/S04_AXI/C3_DDR_LOW1] -force
 assign_bd_address -offset $ps_ddr_start_address -range $ps_ddr_size -target_address_space [get_bd_addr_spaces versal_cips_0/PMC_NOC_AXI_0] [get_bd_addr_segs axi_noc_0/S05_AXI/C2_DDR_LOW1] -force
 
-assign_bd_address -offset $pl_ddr_address -range $pl_ddr_size -target_address_space [get_bd_addr_spaces DDR_S_AXI] [get_bd_addr_segs axi_noc_0/S00_INI/C0_DDR_LOW1] -force
+assign_bd_address -offset $xheep_ddr_address -range $xheep_ddr_size -target_address_space [get_bd_addr_spaces DDR_S_AXI] [get_bd_addr_segs axi_noc_0/S00_INI/C0_DDR_LOW1] -force
 
 
 
