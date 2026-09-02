@@ -162,6 +162,7 @@ targets:
     - target_vpk180 ? (ip-fpga-vpk180)
     - target_vpk180 ? (xdc-fpga-vpk180)
     - target_vpk180 ? (rtl-fpga-vpk180)
+    - target_vpk180 ? (tcl-fpga-ps-utils)
     - target_aup-zu3 ? (xdc-fpga-aup-zu3)
     - target_aup-zu3 ? (ip-fpga-aup-zu3)
     - target_aup-zu3 ? (tcl-fpga-ps-utils)
