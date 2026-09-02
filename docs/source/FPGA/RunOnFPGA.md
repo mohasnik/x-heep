@@ -61,7 +61,7 @@ make vivado-fpga-pgm FPGA_BOARD=<BOARD_NAME>
 ```
 
 ```{note}
-For the VPK180 target, you will have two `.pdi` files instead of a bitstream file (.bit): `openhwgroup.org_systems_core-v-mini-mcu_<version>_boot.pdi` and `openhwgroup.org_systems_core-v-mini-mcu_<version>_pld.pdi`. You may use the latter to program the FPGA after the system has booted properly. For more information on the VPK180 design flow, refer to the [VPK180 Design Flow and Programming Guide](./VPk_180.md).
+For the VPK180 target, you will have two `.pdi` files instead of a bitstream file (.bit): `openhwgroup.org_systems_core-v-mini-mcu_<version>_boot.pdi` and `openhwgroup.org_systems_core-v-mini-mcu_<version>_pld.pdi`. You may use the latter to program the FPGA after the system has booted properly. For more information on the VPK180 design flow, refer to the [VPK180 Design Flow and Programming Guide](./VPK_180.md).
 ```
 
 ### Build and program the FPGA using the Processing System
@@ -114,8 +114,12 @@ $ sudo -i
 >>> ol = Overlay("/path/to/bitstream.bit")
 ```
 
-Additionally, you can find utilities to program the bitstream on the FPGA and run programs from the Processing System in the following repository: [xheep-Xilinx-SoCs-interface](https://github.com/x-heep/xheep-Xilinx-SoCs-interface).
+Additionally, you can find utilities to program the bitstream (or pdi) on the FPGA and run programs from the Processing System in the following repository: [xheep-Xilinx-SoCs-interface](https://github.com/x-heep/xheep-Xilinx-SoCs-interface).
 
+
+```{Warning}
+   VPK180 is not supported by the PYNQ project.
+```
 
 ## Running firmware on the FPGA
 

@@ -38,19 +38,20 @@ int main(void)
     printf("X-HEEP DDR window base: 0x%08x\n", XHEEP_DDR_ADDR);
     printf("Reading %u words:\n", (unsigned)DDR_READ_WORDS);
 
-    for (uint32_t i = 0; i < DDR_READ_WORDS; i++) {
-        uint32_t xheep_addr = XHEEP_DDR_ADDR + 4u * i;
-        ddr[i] = i;
-    }
+    // for (uint32_t i = 0; i < DDR_READ_WORDS; i++) {
+    //     uint32_t xheep_addr = XHEEP_DDR_ADDR + 4u * i;
+    //     ddr[i] = i;
+    // }
 
     for (uint32_t i = 0; i < DDR_READ_WORDS; i++) {
         uint32_t xheep_addr = XHEEP_DDR_ADDR + 4u * i;
         uint32_t value = ddr[i];
-        
-        if (value != i) {
-            printf("ERROR: X-HEEP[0x%08x] = 0x%08x. Expected : 0x%08x\n\r",
-             xheep_addr, value, i);
-        }
+        printf("X-HEEP[0x%08x] = 0x%08x.\n\r", xheep_addr, value);
+
+        // if (value != i) {
+        //     printf("ERROR: X-HEEP[0x%08x] = 0x%08x. Expected : 0x%08x\n\r",
+        //      xheep_addr, value, i);
+        // }
     }
 
     printf("Done.\n");

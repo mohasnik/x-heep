@@ -1,4 +1,10 @@
 # Building Linux Image for VPK180 Target
+As it may not be feasible to use a pre-built Linux package, compared to other platforms supported by X-HEEP, this section gives brief instructions on how to build a Linux image with the minimum requirements using PetaLinux for VPK180. For this, you need to install Petalinux. Please refer to the following links for more information:
+
+* [Petalinux Installation Guide](https://docs.amd.com/r/en-US/ug1144-petalinux-tools-reference-guide/Installing-the-PetaLinux-Tool)
+* [Example Petalinux project for Versal Targets](https://docs.amd.com/r/2024.2-English/ug1305-versal-embedded-tutorial/System-Design-Example-using-Scalar-Engine-and-Adaptable-Engine?section=example-project-creating-linux-images-using-petalinux)
+
+## Creating and Configuring the Project
 
 
 
