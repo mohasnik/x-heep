@@ -11,49 +11,107 @@
 #include <stdlib.h>
 
 #include "core_v_mini_mcu.h"
+#include "timer_sdk.h"
 
-// VPK180 maps the PL DDR AXI window at 0xC000_0000 to PS physical DDR
-// 0x0000_0009_C000_0000, with a 1 GiB range. The X-HEEP external slave
-// range generated from configs/general.hjson must match that AXI window.
-#define VPK180_DDR_AXI_WINDOW_BASE EXT_SLAVE_START_ADDRESS
+
+
+#define DDR_AXI_WINDOW_BASE EXT_SLAVE_START_ADDRESS
 
 // Read the first 16 32-bit words available in the generated external range.
-#define DDR_READ_WORDS 16
+#define DDR_READ_WORDS 4
 
-#if EXT_SLAVE_START_ADDRESS != VPK180_DDR_AXI_WINDOW_BASE
-#error "EXT_SLAVE_START_ADDRESS must match the VPK180 DDR AXI window base"
-#endif
+// #define DDR_START_ADDRESS (DDR_AXI_WINDOW_BASE + 100)
+// #define XHEEP_DDR_ADDR ((uint32_t)DDR_START_ADDRESS)
 
-#if EXT_SLAVE_SIZE < (DDR_READ_WORDS * 4ULL)
-#error "External slave range is too small for the DDR read test"
-#endif
 
-#define XHEEP_DDR_ADDR ((uint32_t)EXT_SLAVE_START_ADDRESS)
+typedef struct 
+{
+    uint32_t magic;
+    uint32_t ddr_offset_bytes;
+    uint32_t expected_values[DDR_READ_WORDS];
+    uint32_t footer;
+} ddr_test_t;
+
+__attribute__((section(".patchable_config"), used, aligned(4)))
+volatile ddr_test_t fpga_ddr_config = {
+    .magic = 0x43524444u,      // bytes: "DDRC"
+    .ddr_offset_bytes = 100u,
+    .expected_values = {16u, 17u, 19u, 20u},
+    .footer = 0x454E4444u,
+};
+
+
+
+uint32_t random_u32(uint32_t rng_state)
+{
+    uint32_t x = rng_state;
+
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+
+    rng_state = x;
+    return x;
+}
 
 int main(void)
 {
-    volatile uint32_t *ddr = (volatile uint32_t *)(uintptr_t)XHEEP_DDR_ADDR;
+    uint32_t ddr_offset = fpga_ddr_config.ddr_offset_bytes;
+    uint32_t ddr_start = EXT_SLAVE_START_ADDRESS + ddr_offset;
+    volatile uint32_t *ddr = (volatile uint32_t *)(uintptr_t)DDR_AXI_WINDOW_BASE;
+
 
     printf("X-HEEP DDR read test\n");
-    printf("X-HEEP DDR window base: 0x%08x\n", XHEEP_DDR_ADDR);
-    printf("Reading %u words:\n", (unsigned)DDR_READ_WORDS);
+    printf("X-HEEP DDR window base: 0x%08x\n", ddr_start);
+    printf("R/W %u words at 0x%08x:\n", (unsigned)DDR_READ_WORDS, ddr_start);
 
-    // for (uint32_t i = 0; i < DDR_READ_WORDS; i++) {
-    //     uint32_t xheep_addr = XHEEP_DDR_ADDR + 4u * i;
-    //     ddr[i] = i;
-    // }
-
-    for (uint32_t i = 0; i < DDR_READ_WORDS; i++) {
-        uint32_t xheep_addr = XHEEP_DDR_ADDR + 4u * i;
-        uint32_t value = ddr[i];
-        printf("X-HEEP[0x%08x] = 0x%08x.\n\r", xheep_addr, value);
-
-        // if (value != i) {
-        //     printf("ERROR: X-HEEP[0x%08x] = 0x%08x. Expected : 0x%08x\n\r",
-        //      xheep_addr, value, i);
-        // }
+    if (fpga_ddr_config.magic != 0x43524444u) {
+        printf("ERROR : invalid DDR config magic 0x%08x", fpga_ddr_config.magic);
+        return 1;
     }
 
-    printf("Done.\n");
+    /* ------------------------------ TEST 1  ------------------------------*/
+    printf("### TEST 1 : PS WRITE / Xheep READ ###\n");
+
+    uint32_t xheep_addr = ddr_offset;
+    uint32_t value = 0;
+    for (uint32_t  i = 0; i < DDR_READ_WORDS; i++) {
+        xheep_addr = ddr_offset + (i << 2);
+        value = *(volatile uint32_t *)(uintptr_t)(DDR_AXI_WINDOW_BASE + xheep_addr);
+
+        if (value != fpga_ddr_config.expected_values[i]) {
+            printf("ERROR : READ X-HEEP[0x%08x] = 0x%08x. Expected 0x%08x", xheep_addr, value, fpga_ddr_config.expected_values[i]);
+            return 1;
+        }
+    }
+    printf("*** TEST 1 PASSED ***\n\n");
+    
+    /* ------------------------------ TEST 2  ------------------------------*/
+    printf("### TEST 2 : Xheep WRITE / Xheep READ ###\n");
+    timer_cycles_init();
+    timer_start();
+    uint32_t read_value;
+    for (uint32_t  i = 0; i < DDR_READ_WORDS; i++) {
+        xheep_addr = ddr_offset + (i << 2);
+        value = random_u32(i);
+        *(volatile uint32_t *)(uintptr_t)(DDR_AXI_WINDOW_BASE + xheep_addr) = value;
+        read_value = *(volatile uint32_t *)(uintptr_t)(DDR_AXI_WINDOW_BASE + xheep_addr);
+        if (value != read_value) {
+            printf("ERROR : READ X-HEEP[0x%08x] = 0x%08x. Expected 0x%08x", xheep_addr, read_value, value);
+            return 1;
+        }
+    }
+    printf("*** TEST 2 PASSED ***\n\n");
+    printf("### TEST 3 : Xheep WRITE / PS READ ###\n");
+    for (uint32_t  i = 0; i < DDR_READ_WORDS; i++) {
+        xheep_addr = ddr_offset + (i << 2);
+        value = random_u32(i + timer_stop());
+        timer_start();
+        *(volatile uint32_t *)(uintptr_t)(DDR_AXI_WINDOW_BASE + xheep_addr) = value;
+        
+        printf("-WT-I-%02d : %08x\n", i, value);
+    }
+
+    printf("Done. Final test will be validated by PS\n");
     return EXIT_SUCCESS;
 }
