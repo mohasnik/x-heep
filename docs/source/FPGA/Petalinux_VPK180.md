@@ -15,12 +15,13 @@ petalinux-create -n xheep_versal_linux project -s /path/to/BSP/File
 ```
 This will create a fresh project from the BSP with necessary board-specific constarints for you.
 
-3. configure the project with your synthesized hardware configuration.
+3. Configure the project with your synthesized hardware configuration.
 In order to rpovide the information on you PS/PL design configurations to Petalinux project, you mujst provide the `.xsa` file recieved from Vivado. You can simply export xsa file suing the following commadn in Vviado :
 
-```bash
+```tcl
     write_hw_platform -fixed -include_bit -force' "file_name.xsa"
 ```
+ file is already exported by the build flow triggered by the `make vivado-fpga FPGA_BOARD=vpk180` and can be found inside the FuseSoC build directory (e.g, `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`).
 
 Or in GUI, `File > Export > Export Hardware ...`.  Make sure to incldue the pdi file while exporting.
 
@@ -35,7 +36,7 @@ petalinux-config --get-hw-description=/path/to/XSA/file.xsa
 
 ## Add OpenOCD Package 
 
-In order to program VPK180 you need OpenOCD to interact with JTAG and download the elf file to X-HEEP. However, this package does not exist in Petalinux packages, and requires additional steps in the Yokto to download and build this package in your linux . In order to do so, do the followings : 
+In order to program VPK180 you need OpenOCD to interact with JTAG and flash the `main.elf` file to X-HEEP. However, this package does not exist in Petalinux packages, and requires additional steps in Yocto to download and build this package in your linux . In order to do so, do the followings : 
 
 1. Create this directory:
 
