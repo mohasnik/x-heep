@@ -74,8 +74,9 @@ Setting the `PS_ENABLE` argument instantiates the PS in the design for the suppo
 make vivado-fpga FPGA_BOARD=pynq-z2 FUSESOC_PARAM="--PS_ENABLE"
 ```
 
-This parameter is enabled by default for the `VPK180` target, since the current design flow only supports programming X-HEEP from the Processing System.
-
+```{note}
+This parameter is enabled by default for the `vpk180` target, since the current design flow only supports programming X-HEEP from the Processing System. The ESL X-HEEP programmer is not supported at the moment due to the lack of a PMOD connector on this board.
+```
 
 **Upload the bitstream to the remote board**
 
