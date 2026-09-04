@@ -64,6 +64,10 @@ make vivado-fpga-pgm FPGA_BOARD=<BOARD_NAME>
 For the VPK180 target, you will have two `.pdi` files instead of a bitstream file (.bit): `openhwgroup.org_systems_core-v-mini-mcu_<version>_boot.pdi` and `openhwgroup.org_systems_core-v-mini-mcu_<version>_pld.pdi`. You may use the latter to program the FPGA after the system has booted properly. For more information on the VPK180 design flow, refer to the [VPK180 Design Flow and Programming Guide](./VPK_180.md).
 ```
 
+```{note}
+The VPK180 flow has been tested with `Vivado 2024.2`.
+```
+
 ### Build and program the FPGA using the Processing System
 
 The Processing System (PS) enables remote access to the SoC over SSH. With the PYNQ utilities, you can connect to the board and program the FPGA by loading the bitstream from Python.
@@ -100,6 +104,10 @@ Important: The `*.bit` and `*.hwh` files must:
 This ensure the bitstream to be loaded correctly through the PYNQ drivers.
 ```
 
+```{note}
+The `vivado-fpga-remote-pgm` target does not currently support VPK180. For VPK180, program the ELF manually.
+```
+
 **Program the FPGA on the remote board**
 
 SSH into the board, activate the PYNQ environment, and load the overlay:
@@ -117,9 +125,8 @@ $ sudo -i
 
 Additionally, you can find utilities to program the bitstream (or pdi) on the FPGA and run programs from the Processing System in the following repository: [xheep-Xilinx-SoCs-interface](https://github.com/x-heep/xheep-Xilinx-SoCs-interface).
 
-
-```{Warning}
-   VPK180 is not supported by the PYNQ project.
+```{warning}
+The VPK180 target is not supported by the PYNQ project. However, you can use the `xheep-Xilinx-SoCs-interface` utility mentioned above to program ELF files for this target.
 ```
 
 ## Running firmware on the FPGA
