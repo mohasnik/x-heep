@@ -6,6 +6,76 @@ As it may not be feasible to use a pre-built Linux package, compared to other pl
 
 ## Creating and Configuring the Project
 
+1. Download the Board Support Package (BSP) file for VPK180 form [this link](https://www.xilinx.com/support/download.html/content/xilinx/en/downloadNav/embedded-design-tools/2024-2.html)
+
+2. Run the following command to create a new Petalinux Project: 
+
+```bash
+petalinux-create -n xheep_versal_linux project -s /path/to/BSP/File
+```
+This will create a fresh project from the BSP with necessary board-specific constarints for you.
+
+3. configure the project with your synthesized hardware configuration.
+In order to rpovide the information on you PS/PL design configurations to Petalinux project, you mujst provide the `.xsa` file recieved from Vivado. You can simply export xsa file suing the following commadn in Vviado :
+
+```bash
+    write_hw_platform -fixed -include_bit -force' "file_name.xsa"
+```
+
+Or in GUI, `File > Export > Export Hardware ...`.  Make sure to incldue the pdi file while exporting.
+
+After having the `xsa` file, run the following command inside the petalinux project:
+
+
+```bash
+cd xheep_versal_linux
+petalinux-config --get-hw-description=/path/to/XSA/file.xsa
+```
+
+
+## Add OpenOCD Package 
+
+In order to program VPK180 you need OpenOCD to interact with JTAG and download the elf file to X-HEEP. However, this package does not exist in Petalinux packages, and requires additional steps in the Yokto to download and build this package in your linux . In order to do so, do the followings : 
+
+1. Create this directory:
+
+```sh
+mkdir -p project-spec/meta-user/recipes-devtools/openocd/files
+```
+
+2. Create `project-spec/meta-user/recipes-devtools/openocd/openocd_%.bbappend` with:
+
+```bitbake
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+
+# Use the OpenOCD upstream repo/revision expected by the X-HEEP helper flow.
+SRC_URI:remove = "git://repo.or.cz/openocd.git;protocol=http;name=openocd;branch=master"
+SRC_URI:prepend = "git://github.com/openocd-org/openocd.git;protocol=https;name=openocd;branch=master "
+SRC_URI:append = " file://openocd-xheep.patch"
+SRCREV_openocd = "b9e40161613fd880fc85fdb357365b70e646ff23"
+
+# Needed for AXI JTAG access through the Xilinx AXI XVC OpenOCD driver.
+EXTRA_OECONF:append = " --enable-xlnx-axi-xvc --enable-internal-jimtcl"
+```
+
+
+3. Put [this patch](LINK TO THE PATCH) file here:
+
+```text
+project-spec/meta-user/recipes-devtools/openocd/files/openocd-xheep.patch
+```
+
+That patch changes OpenOCD RISC-V register probing for X-HEEP:
+- checks `misa` before probing `vlenb`
+- skips unsupported `mtopi` and `mtopei` probing
+- avoids an assertion when those registers are treated as unavailable
+
+4. Rebuild OpenOCD after adding/changing this override:
+
+```sh
+petalinux-build -c openocd -x cleansstate
+petalinux-build -c openocd
+```
 
 
 ## Registering UART on Linux Runtime
