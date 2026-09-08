@@ -7,7 +7,7 @@
 # The PL clock wizard and NoC IP XDCs create clocks for their LPDDR4 inputs.
 
 # The SPI slave debug port remains an external clock domain even when PS_ENABLE=1.
-create_clock -add -name spi_slave_clk_pin -period 16.000 -waveform {0.000 8.000} \
+create_clock -add -name spi_slave_clk_pin -period 80.000 -waveform {0.000 8.000} \
   [get_ports {spi_slave_sck_io}]
 
 # Treat JTAG TAP clocking as asynchronous to the main X-HEEP system clock.
@@ -36,5 +36,8 @@ set_false_path -hold -through [get_pins x_heep_system_i/core_v_mini_mcu_i/debug_
 
 
 #set_false_path -from [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_slave_sm/FSM_sequential_state_reg[*]_fret/C}] -to [get_pins {x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_syncro/rdwr_reg_reg[*]/D}]
-#set_false_path -setup -hold -to [get_cells -hierarchical -filter {NAME =~ *i_rstgen_bypass/synch_regs_q_reg[*]}]
-# set_false_path -hold -from [get_pins {xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_gpio/U0/gpio_core_1/Dual.gpio_Data_Out_reg[1]/C}]
+set_false_path -setup -hold -to [get_cells -hierarchical -filter {NAME =~ *i_rstgen_bypass/synch_regs_q_reg[*]}]
+set_false_path -hold -from [get_pins {xilinx_ps_wizard_wrapper_i/xilinx_ps_wizard_i/axi_gpio/U0/gpio_core_1/Dual.gpio_Data_Out_reg[1]/C}]
+
+# TODO: check this command
+set_multicycle_path 2 -from [ get_clocks spi_slave_clk_pin ] -to [ get_pins x_heep_system_i/core_v_mini_mcu_i/debug_subsystem_i/gen_spi_slave.obi_spi_slave_i/u_obiplug/FSM_sequential_OBI_CS_reg[0]_bret__1/D ]
