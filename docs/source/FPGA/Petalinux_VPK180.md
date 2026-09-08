@@ -1,12 +1,12 @@
 # Building Linux Image for VPK180 Target
-As it may not be feasible to use a pre-built Linux package, compared to other platforms supported by X-HEEP, this section gives brief instructions on how to build a Linux image with the minimum requirements using PetaLinux for VPK180. For this, you need to install Petalinux. Please refer to the following links for more information:
+As it may not be feasible to use a pre-built Linux package, compared to other platforms supported by X-HEEP, this section gives brief instructions on how to build a Linux image with the minimum requirements using PetaLinux for VPK180. For this, you need to install Petalinux 2024.2. Please refer to the following links for more information:
 
 * [Petalinux Installation Guide](https://docs.amd.com/r/en-US/ug1144-petalinux-tools-reference-guide/Installing-the-PetaLinux-Tool)
 * [Example Petalinux project for Versal Targets](https://docs.amd.com/r/2024.2-English/ug1305-versal-embedded-tutorial/System-Design-Example-using-Scalar-Engine-and-Adaptable-Engine?section=example-project-creating-linux-images-using-petalinux)
 
 ## Creating and Configuring the Project
 
-1. Download the Board Support Package (BSP) file for VPK180 form [this link](https://www.xilinx.com/support/download.html/content/xilinx/en/downloadNav/embedded-design-tools/2024-2.html)
+1. Download the Board Support Package (BSP) file for the VPK180 XSCT flow from [this link](https://www.xilinx.com/support/download.html/content/xilinx/en/downloadNav/embedded-design-tools/2024-2.html)
 
 2. Run the following command to create a new Petalinux Project: 
 
@@ -139,3 +139,4 @@ Now you can verify that the device has been registered:
 ```
 
 You should see a new device listed (ttyUL0).
+
