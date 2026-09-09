@@ -9,3 +9,5 @@ Check this section to run your design on the FPGA.
 
    RunOnFPGA
    *
+   VPK_180
+   Petalinux_VPK180
