@@ -1,42 +1,148 @@
 # Building Linux Image for VPK180 Target
-As it may not be feasible to use a pre-built Linux package, compared to other platforms supported by X-HEEP, this section gives brief instructions on how to build a Linux image with the minimum requirements using PetaLinux for VPK180. For this, you need to install Petalinux 2024.2. Please refer to the following links for more information:
 
-* [Petalinux Installation Guide](https://docs.amd.com/r/en-US/ug1144-petalinux-tools-reference-guide/Installing-the-PetaLinux-Tool)
-* [Example Petalinux project for Versal Targets](https://docs.amd.com/r/2024.2-English/ug1305-versal-embedded-tutorial/System-Design-Example-using-Scalar-Engine-and-Adaptable-Engine?section=example-project-creating-linux-images-using-petalinux)
+Unlike some other X-HEEP-supported platforms, the VPK180 target may need a locally built Linux image instead of a pre-built package. This page gives brief instructions for building a minimal VPK180 Linux image with PetaLinux 2024.2. For more information, see:
+
+* [PetaLinux Installation Guide](https://docs.amd.com/r/en-US/ug1144-petalinux-tools-reference-guide/Installing-the-PetaLinux-Tool)
+* [Example PetaLinux project for Versal targets](https://docs.amd.com/r/2024.2-English/ug1305-versal-embedded-tutorial/System-Design-Example-using-Scalar-Engine-and-Adaptable-Engine?section=example-project-creating-linux-images-using-petalinux)
 
 ## Creating and Configuring the Project
 
-1. Download the Board Support Package (BSP) file for the VPK180 XSCT flow from [this link](https://www.xilinx.com/support/download.html/content/xilinx/en/downloadNav/embedded-design-tools/2024-2.html)
+1. Download the Board Support Package (BSP) file for the VPK180 XSCT flow from [this link](https://www.xilinx.com/support/download.html/content/xilinx/en/downloadNav/embedded-design-tools/2024-2.html).
 
-2. Run the following command to create a new Petalinux Project: 
+2. Create a new PetaLinux project from the BSP:
 
 ```bash
-petalinux-create -n xheep_versal_linux project -s /path/to/BSP/File
+petalinux-create project -s /path/to/BSP/file.bsp -n xheep_versal_linux
 ```
-This will create a fresh project from the BSP with necessary board-specific constarints for you.
 
-3. Configure the project with your synthesized hardware configuration.
-In order to rpovide the information on you PS/PL design configurations to Petalinux project, you mujst provide the `.xsa` file recieved from Vivado. You can simply export xsa file suing the following commadn in Vviado :
+This creates a fresh project from the BSP with the board-specific configuration needed by PetaLinux.
+
+3. Configure the project with your synthesized hardware platform.
+
+PetaLinux needs the `.xsa` file exported from Vivado so it can import the PS/PL design configuration. You can export the XSA from Vivado with:
 
 ```tcl
-    write_hw_platform -fixed -include_bit -force' "file_name.xsa"
+write_hw_platform -fixed -include_bit -force -file file_name.xsa
 ```
- file is already exported by the build flow triggered by the `make vivado-fpga FPGA_BOARD=vpk180` and can be found inside the FuseSoC build directory (e.g, `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`).
 
-Or in GUI, `File > Export > Export Hardware ...`.  Make sure to incldue the pdi file while exporting.
+The XSA is also exported by the X-HEEP Vivado build flow when running `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
 
-After having the `xsa` file, run the following command inside the petalinux project:
+In the Vivado GUI, use `File > Export > Export Hardware ...` and enable the option to include the device image/PDI.
 
+After the XSA is available, run the following commands from the PetaLinux project directory:
 
 ```bash
 cd xheep_versal_linux
-petalinux-config --get-hw-description=/path/to/XSA/file.xsa
+petalinux-config --get-hw-description /path/to/XSA/file.xsa
 ```
 
+`petalinux-config` opens the project configuration menu after importing the hardware description. For the SD-card flow below, check at least the following settings before saving and exiting:
 
-## Add OpenOCD Package 
+- `Image Packaging Configuration > Root File System Type`: select `EXT4 (SD/eMMC/SATA/USB)` so the build generates an ext4 root file system image.
+- `FPGA Manager`: enable FPGA manager support if you plan to load PL images or device-tree overlays from Linux.
+- User and network settings: configure a Linux user/password and networking if you plan to log in through SSH.
 
-In order to program VPK180 you need OpenOCD to interact with JTAG and flash the `main.elf` file to X-HEEP. However, this package does not exist in Petalinux packages, and requires additional steps in Yocto to download and build this package in your linux . In order to do so, do the followings : 
+Then configure the root file system packages:
+
+```bash
+petalinux-config -c rootfs
+```
+
+Enable the packages needed by your runtime flow. At minimum, this guide expects OpenOCD to be available for JTAG access, and the UART runtime overlay flow expects `dtc` and `fpgautil` to be available on the target. Depending on the BSP package menu, `fpgautil` may be provided by the `fpga-manager-script` package.
+
+## Configuring the rootfs
+Configure the rootfs to include the packages required by your application. This section describes a minimal configuration for the VPK180 programming flow. Add any other packages required by your application.
+
+From the PetaLinux project directory, run:
+
+```sh
+petalinux-config -c rootfs
+```
+
+This command opens the rootfs configuration menu. Figure 1 shows this menu:
+
+![PetaLinux rootfs configuration menu](../images/Petalinux/rootfs-page.png)
+
+To add an additional user and password, go to `PetaLinux RootFS Settings > Add Extra Users`. The default user is `root`; configure an explicit password before booting the image.
+
+### Packages to Add
+Enable the following packages to run the X-HEEP programmer SDK, program the FPGA, and connect to the board remotely. Search for these packages in the rootfs configuration menu, or use the repository-provided `rootfs_config` file at `hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/rootfs_config` as a reference.
+
+| # | Package to Enable |
+|---:|---|
+| 1 | `sudo` |
+| 2 | `e2fsprogs-mke2fs` |
+| 3 | `fpga-manager-script` |
+| 4 | `dfx-mgr` |
+| 5 | `init-ifupdown` |
+| 6 | `iproute2` |
+| 7 | `iproute2-ss` |
+| 8 | `mtd-utils` |
+| 9 | `procps` |
+| 10 | `bash` |
+| 11 | `can-utils` |
+| 12 | `ethtool` |
+| 13 | `nfs-utils` |
+| 14 | `openssh` |
+| 15 | `openssh-ssh` |
+| 16 | `openssh-sftp` |
+| 17 | `openssh-sftp-server` |
+| 18 | `openssh-keygen` |
+| 19 | `openssh-misc` |
+| 20 | `openssh-sshd` |
+| 21 | `openssh-scp` |
+| 22 | `git` |
+| 23 | `git-bash-completion` |
+| 24 | `git-perltools` |
+| 25 | `pciutils` |
+| 26 | `screen` |
+| 27 | `make` |
+| 28 | `run-postinsts` |
+| 29 | `libdfx` |
+| 30 | `libgpiod` |
+| 31 | `libusb-compat` |
+| 32 | `libusb-compat-dev` |
+| 33 | `libusb1` |
+| 34 | `libusb1-dev` |
+| 35 | `udev-extraconf` |
+| 36 | `linux-xlnx-udev-rules` |
+| 37 | `gdb` |
+| 38 | `gdbserver` |
+| 39 | `net-tools` |
+| 40 | `packagegroup-core-boot` |
+| 41 | `packagegroup-core-buildessential` |
+| 42 | `python3` |
+| 43 | `python3-numbers` |
+| 44 | `python3-netclient` |
+| 45 | `python3-math` |
+| 46 | `python3-compression` |
+| 47 | `python3-core` |
+| 48 | `python3-shell` |
+| 49 | `python3-threading` |
+| 50 | `python3-mmap` |
+| 51 | `python3-json` |
+| 52 | `python3-multiprocessing` |
+| 53 | `python3-logging` |
+| 54 | `python3-ctypes` |
+| 55 | `python3-sqlite3` |
+| 56 | `python3-fcntl` |
+| 57 | `python3-pickle` |
+| 58 | `python3-setuptools` |
+| 59 | `tcf-agent` |
+| 60 | `bridge-utils` |
+| 61 | `dosfstools` |
+| 62 | `patch` |
+| 63 | `u-boot-tools` |
+| 64 | `pl-app` |
+
+
+```{Warning}
+To reprogram the FPGA after Linux has booted and use segmented configuration, enable the `fpga-manager-script` package.
+```
+
+## Add OpenOCD Package
+
+To program X-HEEP on VPK180, OpenOCD is used to access JTAG and load the `main.elf` file into X-HEEP. The root file system does not include the required OpenOCD build by default, and the OpenOCD recipe needs an X-HEEP-specific patch and configuration options. Add the Yocto override as follows:
 
 1. Create this directory:
 
@@ -59,24 +165,122 @@ SRCREV_openocd = "b9e40161613fd880fc85fdb357365b70e646ff23"
 EXTRA_OECONF:append = " --enable-xlnx-axi-xvc --enable-internal-jimtcl"
 ```
 
-
-3. Put [this patch](LINK TO THE PATCH) file here:
+3. Copy [this patch](../../../hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/openocd-xheep.patch) to:
 
 ```text
 project-spec/meta-user/recipes-devtools/openocd/files/openocd-xheep.patch
 ```
 
 That patch changes OpenOCD RISC-V register probing for X-HEEP:
+
 - checks `misa` before probing `vlenb`
 - skips unsupported `mtopi` and `mtopei` probing
 - avoids an assertion when those registers are treated as unavailable
 
-4. Rebuild OpenOCD after adding/changing this override:
+4. Make OpenOCD visible in the root file system package menu and enable it:
+
+```sh
+grep -qxF "CONFIG_openocd" project-spec/meta-user/conf/user-rootfsconfig || \
+    printf '%s\n' "CONFIG_openocd" >> project-spec/meta-user/conf/user-rootfsconfig
+petalinux-config -c rootfs
+```
+
+In the menu, select `user packages > openocd`, then save and exit.
+
+5. Rebuild OpenOCD after adding or changing this override:
 
 ```sh
 petalinux-build -c openocd -x cleansstate
 petalinux-build -c openocd
+``` 
+
+## Building the PetaLinux Image
+
+Build Linux and package the boot image:
+
+```sh
+petalinux-build
+petalinux-package boot --u-boot --force
 ```
+
+For Versal segmented configuration designs, `petalinux-package boot --u-boot` packages the boot PDI into `BOOT.BIN`; the PLD PDI can be loaded later after Linux is running.
+
+With the EXT4 root file system selected, the SD-card boot files are generated in `images/linux/`: `BOOT.BIN`, `image.ub`, `boot.scr`, and `rootfs.ext4`.
+
+Create an SD card with two partitions: a FAT32 `BOOT` partition for `BOOT.BIN`, `image.ub`, and `boot.scr`, and an ext4 `rootfs` partition for `rootfs.ext4`.
+
+The commands below erase the selected device. Replace `/dev/sdc`, `/dev/sdc1`, and `/dev/sdc2` with the device and partition names for your SD card.
+
+1. Identify the SD card and create the partitions:
+
+```sh
+lsblk -p
+```
+
+In this example, the SD card is `/dev/sdc`. First, unmount any mounted SD-card partitions:
+
+```sh
+sudo umount /dev/sdc* 2>/dev/null
+```
+
+Create the partitions:
+
+```sh
+sudo parted /dev/sdc --script mklabel msdos
+sudo parted /dev/sdc --script mkpart primary fat32 1MiB 1025MiB
+sudo parted /dev/sdc --script set 1 boot on
+sudo parted /dev/sdc --script mkpart primary ext4 1025MiB 100%
+sudo partprobe /dev/sdc
+```
+
+This creates `/dev/sdc1` and `/dev/sdc2` in this example. Format the boot partition:
+
+```sh
+sudo mkfs.vfat -F 32 -n BOOT /dev/sdc1
+```
+
+2. Mount the boot partition and copy the boot files:
+
+```sh
+sudo mkdir -p /tmp/vpk180_boot
+sudo mount /dev/sdc1 /tmp/vpk180_boot
+```
+
+Copy the boot files into this partition:
+
+```sh
+sudo cp images/linux/BOOT.BIN /tmp/vpk180_boot/
+sudo cp images/linux/image.ub /tmp/vpk180_boot/
+sudo cp images/linux/boot.scr /tmp/vpk180_boot/
+```
+
+Unmount the boot partition:
+
+```sh
+sync
+sudo umount /tmp/vpk180_boot
+```
+
+Write the root file system image directly to the second partition:
+
+```sh
+sudo dd if=images/linux/rootfs.ext4 of=/dev/sdc2 bs=4M status=progress conv=fsync
+sync
+```
+
+The SD card is now ready. Insert it into the VPK180 and boot the system.
+
+## VPK180 Boot
+
+To boot from the SD card, insert the card into the VPK180 slot. Set SW1 to `ON OFF OFF OFF` and SW11 to `ON OFF ON ON`.
+
+Connect the board to your host machine with a USB-C cable. The board exposes several USB serial devices under the host `/dev` tree; one of them is the Linux serial console. Open the console with a terminal program such as `screen` at the configured baud rate, typically `115200`:
+
+```sh
+screen /dev/ttyUSB<N> 115200
+```
+
+The serial console shows the boot log and eventually provides a Linux login prompt. It is useful for debugging boot issues and for finding the board IP address. If networking is configured and the board IP address is known, you can also log in through SSH using the Linux username and password configured during the PetaLinux build.
 
 
 ## Registering UART on Linux Runtime
@@ -139,4 +343,3 @@ Now you can verify that the device has been registered:
 ```
 
 You should see a new device listed (ttyUL0).
-
