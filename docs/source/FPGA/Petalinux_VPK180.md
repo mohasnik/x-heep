@@ -134,6 +134,10 @@ Enable the following packages to run the X-HEEP programmer SDK, program the FPGA
 | 62 | `patch` |
 | 63 | `u-boot-tools` |
 | 64 | `pl-app` |
+| 65 | `ssh-server-openssh` |
+| 66 | `hwcodecs` |
+| 67 | `debug-tweaks` |
+| 68 | `systemd` |
 
 
 ```{Warning}
@@ -193,6 +197,25 @@ In the menu, select `user packages > openocd`, then save and exit.
 petalinux-build -c openocd -x cleansstate
 petalinux-build -c openocd
 ``` 
+
+## Limiting Linux Memory
+
+The VPK180 hardware configuration used by this project exposes a 4 GiB DDR region. After importing the XSA, keep the following memory settings in `petalinux-config`:
+
+- `Subsystem Hardware Settings > Memory Settings`: select `axi_noc_0_C3_DDR_LOW1`.
+- DDR base address: `0x800000000`.
+- DDR size: `0x100000000` (4 GiB).
+
+Linux normally treats the entire 4 GiB DDR region as system memory. If the DDR region used by X-HEEP is included in this range, the kernel or user-space processes may allocate pages from it and later overwrite or reuse the data stored there. To keep the last 1 GiB of the configured DDR region available for X-HEEP, limit the memory managed by Linux through the kernel boot arguments. Go to `Kernel Bootargs > Extra bootargs` and add `mem=3G`.
+
+The `mem=3G` boot argument restricts Linux to the first 3 GiB of the 4 GiB DDR region, leaving the remaining 1 GiB outside Linux's managed memory. This prevents normal Linux activity from overwriting X-HEEP data while the system is running. It does not preserve the data across a reboot or power cycle, and it does not prevent other hardware masters from accessing the region. The resulting project configuration contains:
+
+```text
+CONFIG_SUBSYSTEM_MEMORY_AXI_NOC_0_C3_DDR_LOW1_SIZE=0x100000000
+CONFIG_SUBSYSTEM_EXTRA_BOOTARGS="mem=3G"
+```
+
+
 
 ## Building the PetaLinux Image
 
