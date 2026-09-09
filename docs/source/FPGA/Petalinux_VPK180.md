@@ -19,15 +19,17 @@ This creates a fresh project from the BSP with the board-specific configuration 
 
 3. Configure the project with your synthesized hardware platform.
 
-PetaLinux needs the `.xsa` file exported from Vivado so it can import the PS/PL design configuration. You can export the XSA from Vivado with:
+PetaLinux needs the `.xsa` file exported from Vivado so it can import the PS/PL design configuration. The XSA is exported by the X-HEEP Vivado build flow when running `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
+
+
+You can also export the XSA from Vivado with:
 
 ```tcl
 write_hw_platform -fixed -include_bit -force -file file_name.xsa
 ```
 
-The XSA is also exported by the X-HEEP Vivado build flow when running `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
-
 Alternatively, in the Vivado GUI, use `File > Export > Export Hardware ...` and enable the option to include the device image/PDI.
+
 
 After the XSA is available, run the following commands from the PetaLinux project directory:
 
@@ -305,6 +307,17 @@ screen /dev/ttyUSB<N> 115200
 
 The serial console shows the boot log and eventually provides a Linux login prompt. It is useful for debugging boot issues and for finding the board IP address. If networking is configured and the board IP address is known, you can also log in through SSH using the Linux username and password configured during the PetaLinux build.
 
+## Programming the PL from Linux
+
+If segmented configuration was enabled during synthesis and implementation, the Linux boot image contains only the boot configuration, including `boot.pdi`; it does not configure the PL. After Linux has booted, run `fpgautil` to load the PLD PDI:
+
+```sh
+sudo fpgautil -b /path/to/pld.pdi
+```
+
+```{Note}
+In this flow, the PLD PDI (`openhwgroup.org_systems_core-v-mini-mcu_<version>_pld.pdi`) is analogous to the bitstream used to configure the PL in a Zynq-based flow. For more information, see [Running X-HEEP on the FPGA](RunOnFPGA.md).
+```
 
 ## Registering UART on Linux Runtime
 Since the UART device is a PL IP, the generated Linux image does not initially identify the physical address region dedicated to the UARTLite module as an actual UART device. Although it is possible to add this address range to the device tree before building the PetaLinux image, this can result in a boot fault if segmented configuration is enabled for your Vivado project. The reason is that the boot PDI file does not activate the address range related to the PL region, including the region dedicated to the UARTLite IP. Therefore, Linux may fault during boot while checking for all available devices.
@@ -370,3 +383,6 @@ Now you can verify that the device has been registered:
 ```
 
 You should see a new device listed (ttyUL0).
+
+
+You are now ready to use the [xheep-Xilinx-SoCs-interface SDK](https://github.com/x-heep/xheep-Xilinx-SoCs-interface) to program X-HEEP. For instructions on using the SDK from the Linux Processing System (PS), see [Programming the Board](./VPK_180.md#programming-the-board) in the VPK180 guide.
