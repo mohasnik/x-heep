@@ -27,7 +27,7 @@ write_hw_platform -fixed -include_bit -force -file file_name.xsa
 
 The XSA is also exported by the X-HEEP Vivado build flow when running `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
 
-In the Vivado GUI, use `File > Export > Export Hardware ...` and enable the option to include the device image/PDI.
+Alternatively, in the Vivado GUI, use `File > Export > Export Hardware ...` and enable the option to include the device image/PDI.
 
 After the XSA is available, run the following commands from the PetaLinux project directory:
 
