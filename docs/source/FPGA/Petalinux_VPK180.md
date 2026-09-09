@@ -19,7 +19,7 @@ This creates a fresh project from the BSP with the board-specific configuration 
 
 3. Configure the project with your synthesized hardware platform.
 
-PetaLinux needs the `.xsa` file exported from Vivado so it can import the PS/PL design configuration. The XSA is exported by the X-HEEP Vivado build flow when running `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
+PetaLinux needs the `.xsa` file exported from Vivado so it can import the PS/PL design configuration. The XSA is exported by the X-HEEP Vivado build flow when you run `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
 
 
 You can also export the XSA from Vivado with:
@@ -42,7 +42,7 @@ petalinux-config --get-hw-description /path/to/XSA/file.xsa
 
 - `Image Packaging Configuration > Root File System Type`: select `EXT4 (SD/eMMC/SATA/USB)` so the build generates an ext4 root file system image.
 - `FPGA Manager`: enable FPGA manager support if you plan to load PL images or device-tree overlays from Linux.
-- User and network settings: configure a Linux user/password and networking if you plan to log in through SSH.
+- User and network settings: configure a Linux user and password, and set up networking if you plan to log in through SSH.
 
 Then configure the root file system packages:
 
@@ -50,7 +50,7 @@ Then configure the root file system packages:
 petalinux-config -c rootfs
 ```
 
-Enable the packages needed by your runtime flow. At minimum, this guide expects OpenOCD to be available for JTAG access, and the UART runtime overlay flow expects `dtc` and `fpgautil` to be available on the target. Depending on the BSP package menu, `fpgautil` may be provided by the `fpga-manager-script` package.
+Enable the packages needed by your runtime flow. At a minimum, OpenOCD must be available for JTAG access, and the UART runtime overlay flow requires `dtc` and `fpgautil` to be available on the target. Depending on the BSP's package menu, `fpgautil` may be provided by the `fpga-manager-script` package.
 
 ## Configuring the rootfs
 Configure the rootfs to include the packages required by your application. This section describes a minimal configuration for the VPK180 programming flow. Add any other packages required by your application.
@@ -65,7 +65,7 @@ This command opens the rootfs configuration menu. Figure 1 shows this menu:
 
 ![PetaLinux rootfs configuration menu](../images/Petalinux/rootfs-page.png)
 
-To add an additional user and password, go to `PetaLinux RootFS Settings > Add Extra Users`. The default user is `root`; configure an explicit password before booting the image.
+To add an additional user and set its password, go to `PetaLinux RootFS Settings > Add Extra Users`. The default user is `root`; configure an explicit password before booting the image.
 
 ### Packages to Add
 Enable the following packages to run the X-HEEP programmer SDK, program the FPGA, and connect to the board remotely. Search for these packages in the rootfs configuration menu, or use the repository-provided `rootfs_config` file at `hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/rootfs_config` as a reference.
@@ -143,12 +143,39 @@ Enable the following packages to run the X-HEEP programmer SDK, program the FPGA
 
 
 ```{Warning}
-To reprogram the FPGA after Linux has booted and use segmented configuration, enable the `fpga-manager-script` package.
+To reprogram the FPGA after Linux has booted using segmented configuration, enable the `fpga-manager-script` package.
 ```
+
+## Limiting Linux Memory
+
+The VPK180 hardware configuration used by this project exposes a 4 GiB DDR region. After importing the XSA, verify that `petalinux-config` shows the following memory settings:
+
+- `Subsystem Hardware Settings > Memory Settings`: select `axi_noc_0_C3_DDR_LOW1`.
+- DDR base address: `0x800000000`.
+- DDR size: `0x100000000` (4 GiB).
+
+
+Linux normally treats the entire 4 GiB DDR region as system memory. If the DDR region used by X-HEEP overlaps this range, the kernel or user-space processes may allocate pages from it and later overwrite or reuse the data stored there.
+To keep the last 1 GiB of the configured DDR region available for X-HEEP, limit the memory managed by Linux through the kernel boot arguments.
+To do this, open the configuration menu by running:
+
+```sh
+petalinux-config
+```
+
+Then go to `DTG Settings > Kernel Bootargs > Add Extra bootargs` and add `mem=3G` to the boot arguments. Save the changes before exiting.
+
+The `mem=3G` boot argument restricts Linux to the first 3 GiB of the 4 GiB DDR region, leaving the remaining 1 GiB outside the memory managed by Linux. This prevents normal Linux activity from overwriting X-HEEP data while the system is running. It does not preserve the data across a reboot or power cycle, and it does not prevent other hardware masters from accessing the region. The resulting project configuration contains:
+
+```text
+CONFIG_SUBSYSTEM_MEMORY_AXI_NOC_0_C3_DDR_LOW1_SIZE=0x100000000
+CONFIG_SUBSYSTEM_EXTRA_BOOTARGS="mem=3G"
+```
+
 
 ## Add OpenOCD Package
 
-To program X-HEEP on VPK180, OpenOCD is used to access JTAG and load the `main.elf` file into X-HEEP. The root file system does not include the required OpenOCD build by default, and the OpenOCD recipe needs an X-HEEP-specific patch and configuration options. Add the Yocto override as follows:
+To program X-HEEP on VPK180, OpenOCD is used to access JTAG and load the `main.elf` file into X-HEEP. The root file system does not include OpenOCD by default, and the OpenOCD recipe needs an X-HEEP-specific patch and configuration options. Add the Yocto override as follows:
 
 1. Create this directory:
 
@@ -183,7 +210,7 @@ That patch changes OpenOCD RISC-V register probing for X-HEEP:
 - skips unsupported `mtopi` and `mtopei` probing
 - avoids an assertion when those registers are treated as unavailable
 
-4. Make OpenOCD visible in the root file system package menu and enable it:
+4. Add OpenOCD to the root file system package menu and enable it:
 
 ```sh
 grep -qxF "CONFIG_openocd" project-spec/meta-user/conf/user-rootfsconfig || \
@@ -200,24 +227,6 @@ petalinux-build -c openocd -x cleansstate
 petalinux-build -c openocd
 ``` 
 
-## Limiting Linux Memory
-
-The VPK180 hardware configuration used by this project exposes a 4 GiB DDR region. After importing the XSA, keep the following memory settings in `petalinux-config`:
-
-- `Subsystem Hardware Settings > Memory Settings`: select `axi_noc_0_C3_DDR_LOW1`.
-- DDR base address: `0x800000000`.
-- DDR size: `0x100000000` (4 GiB).
-
-Linux normally treats the entire 4 GiB DDR region as system memory. If the DDR region used by X-HEEP is included in this range, the kernel or user-space processes may allocate pages from it and later overwrite or reuse the data stored there. To keep the last 1 GiB of the configured DDR region available for X-HEEP, limit the memory managed by Linux through the kernel boot arguments. Go to `Kernel Bootargs > Extra bootargs` and add `mem=3G`.
-
-The `mem=3G` boot argument restricts Linux to the first 3 GiB of the 4 GiB DDR region, leaving the remaining 1 GiB outside Linux's managed memory. This prevents normal Linux activity from overwriting X-HEEP data while the system is running. It does not preserve the data across a reboot or power cycle, and it does not prevent other hardware masters from accessing the region. The resulting project configuration contains:
-
-```text
-CONFIG_SUBSYSTEM_MEMORY_AXI_NOC_0_C3_DDR_LOW1_SIZE=0x100000000
-CONFIG_SUBSYSTEM_EXTRA_BOOTARGS="mem=3G"
-```
-
-
 
 ## Building the PetaLinux Image
 
@@ -228,7 +237,7 @@ petalinux-build
 petalinux-package boot --u-boot --force
 ```
 
-For Versal segmented configuration designs, `petalinux-package boot --u-boot` packages the boot PDI into `BOOT.BIN`; the PLD PDI can be loaded later after Linux is running.
+For designs using Versal segmented configuration, `petalinux-package boot --u-boot` packages the boot PDI into `BOOT.BIN`; the PLD PDI can be loaded later after Linux is running.
 
 With the EXT4 root file system selected, the SD-card boot files are generated in `images/linux/`: `BOOT.BIN`, `image.ub`, `boot.scr`, and `rootfs.ext4`.
 
@@ -320,9 +329,9 @@ In this flow, the PLD PDI (`openhwgroup.org_systems_core-v-mini-mcu_<version>_pl
 ```
 
 ## Registering UART on Linux Runtime
-Since the UART device is a PL IP, the generated Linux image does not initially identify the physical address region dedicated to the UARTLite module as an actual UART device. Although it is possible to add this address range to the device tree before building the PetaLinux image, this can result in a boot fault if segmented configuration is enabled for your Vivado project. The reason is that the boot PDI file does not activate the address range related to the PL region, including the region dedicated to the UARTLite IP. Therefore, Linux may fault during boot while checking for all available devices.
+Since the UART device is a PL IP, the generated Linux image does not initially identify the UARTLite module's physical address range as a UART device. Although it is possible to add this address range to the device tree before building the PetaLinux image, doing so can result in a boot fault if segmented configuration is enabled for your Vivado project. The reason is that the boot PDI file does not activate the address range related to the PL region, including the region dedicated to the UARTLite IP. Therefore, Linux may fault during boot while checking for all available devices.
 
-One solution is to compile and add the device tree overlay after the Linux image has been built and successfully booted, and after the PL has been successfully programmed. In order to do so, you need to create a .dts file with the following content:
+A solution is to compile and add the device tree overlay after the Linux image has been built and successfully booted and the PL has been successfully programmed. To do this, create a `.dts` file with the following content:
 
 ```
 /dts-v1/;
@@ -355,13 +364,13 @@ One solution is to compile and add the device tree overlay after the Linux image
 ```
 
 ``` {Note}
-The dts file is also available in [`hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/uart_fs_overlay.dts`](../../../hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/uart_fs_overlay.dts)
+The DTS file is also available in [`hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/uart_fs_overlay.dts`](../../../hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/uart_fs_overlay.dts)
 ```
 
-Make sure to configure the physical address of the UART module, the address range size, and the baud rate based on your design. The above file contains the default values from `hw/fpga/xheep_fpga_support/scripts/vpk180/xilinx_generate_ps_wizard.tcl`.
+Make sure to configure the physical address of the UART module, the address range size, and the baud rate based on your design. This file contains the default values from `hw/fpga/xheep_fpga_support/scripts/vpk180/xilinx_generate_ps_wizard.tcl`.
 
 
-Then you can compile the above device tree file using the following command:
+Then compile the device tree file using the following command:
 
 ```bash
     dtc -@ -I dts -O dtb \
@@ -369,20 +378,20 @@ Then you can compile the above device tree file using the following command:
         <DTS_FILE_NAME>.dts
 ```
 
-Finally, add the overlay using the Xilinx `fpgautil` package:
+Finally, add the overlay using Xilinx's `fpgautil` tool:
 
 ```bash
     sudo fpgautil -o "$(pwd)/uart_overlay.dtbo"
 ```
 
 
-Now you can verify that the device has been registered:
+Verify that the device has been registered:
 
 ```bash
     ls /dev/ttyUL*
 ```
 
-You should see a new device listed (ttyUL0).
+You should see a new device listed, `ttyUL0`.
 
 
 You are now ready to use the [xheep-Xilinx-SoCs-interface SDK](https://github.com/x-heep/xheep-Xilinx-SoCs-interface) to program X-HEEP. For instructions on using the SDK from the Linux Processing System (PS), see [Programming the Board](./VPK_180.md#programming-the-board) in the VPK180 guide.

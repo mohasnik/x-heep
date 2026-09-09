@@ -6,8 +6,8 @@
   target_dir: "xheep_fpga_support",
 
   upstream: {
-    url: "https://github.com/mohasnik/x-heep-fpga-support.git",
-    rev: "0bd536fcd22f623da77aa246109cf0d081ac4072",
+    url: "https://github.com/x-heep/x-heep-fpga-support.git",
+    rev: "01103f05c9018d97962322e518593513d491b202",
   },
 
 }

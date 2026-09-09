@@ -6,3 +6,6 @@ scripts/aup-zu3/generate_sram.tcl
 scripts/genesys2/generate_sram.tcl
 scripts/nexys/generate_sram.tcl
 scripts/pynq-z2/generate_sram.tcl
+scripts/vpk180/generate_sram.tcl
+scripts/zcu102/generate_sram.tcl
+scripts/zcu104/generate_sram.tcl
