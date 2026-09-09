@@ -7,6 +7,8 @@ Unlike some other X-HEEP-supported platforms, the VPK180 target may need a local
 
 ## Creating and Configuring the Project
 
+
+### Create the project
 1. Download the Board Support Package (BSP) file for the VPK180 XSCT flow from [this link](https://www.xilinx.com/support/download.html/content/xilinx/en/downloadNav/embedded-design-tools/2024-2.html).
 
 2. Create a new PetaLinux project from the BSP:
@@ -17,7 +19,7 @@ petalinux-create project -s /path/to/BSP/file.bsp -n xheep_versal_linux
 
 This creates a fresh project from the BSP with the board-specific configuration needed by PetaLinux.
 
-3. Configure the project with your synthesized hardware platform.
+### Configure the project with your synthesized hardware platform.
 
 PetaLinux needs the `.xsa` file exported from Vivado so it can import the PS/PL design configuration. The XSA is exported by the X-HEEP Vivado build flow when you run `make vivado-fpga FPGA_BOARD=vpk180`; it can be found under the FuseSoC build directory, for example `build/openhwgroup.org_systems_core-v-mini-mcu_<xheep_version>/vpk180-vivado`.
 
@@ -44,15 +46,15 @@ petalinux-config --get-hw-description /path/to/XSA/file.xsa
 - `FPGA Manager`: enable FPGA manager support if you plan to load PL images or device-tree overlays from Linux.
 - User and network settings: configure a Linux user and password, and set up networking if you plan to log in through SSH.
 
-Then configure the root file system packages:
+<!-- Then configure the root file system packages:
 
 ```bash
 petalinux-config -c rootfs
 ```
 
-Enable the packages needed by your runtime flow. At a minimum, OpenOCD must be available for JTAG access, and the UART runtime overlay flow requires `dtc` and `fpgautil` to be available on the target. Depending on the BSP's package menu, `fpgautil` may be provided by the `fpga-manager-script` package.
+Enable the packages needed by your runtime flow. At a minimum, OpenOCD must be available for JTAG access, and the UART runtime overlay flow requires `dtc` and `fpgautil` to be available on the target. Depending on the BSP's package menu, `fpgautil` may be provided by the `fpga-manager-script` package. -->
 
-## Configuring the rootfs
+### Configuring the rootfs
 Configure the rootfs to include the packages required by your application. This section describes a minimal configuration for the VPK180 programming flow. Add any other packages required by your application.
 
 From the PetaLinux project directory, run:
@@ -67,7 +69,7 @@ This command opens the rootfs configuration menu. Figure 1 shows this menu:
 
 To add an additional user and set its password, go to `PetaLinux RootFS Settings > Add Extra Users`. The default user is `root`; configure an explicit password before booting the image.
 
-### Packages to Add
+#### Packages to Add
 Enable the following packages to run the X-HEEP programmer SDK, program the FPGA, and connect to the board remotely. Search for these packages in the rootfs configuration menu, or use the repository-provided `rootfs_config` file at `hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/rootfs_config` as a reference.
 
 | # | Package to Enable |
@@ -146,7 +148,7 @@ Enable the following packages to run the X-HEEP programmer SDK, program the FPGA
 To reprogram the FPGA after Linux has booted using segmented configuration, enable the `fpga-manager-script` package.
 ```
 
-## Limiting Linux Memory
+### Limit Linux Memory
 
 The VPK180 hardware configuration used by this project exposes a 4 GiB DDR region. After importing the XSA, verify that `petalinux-config` shows the following memory settings:
 
@@ -173,7 +175,7 @@ CONFIG_SUBSYSTEM_EXTRA_BOOTARGS="mem=3G"
 ```
 
 
-## Add OpenOCD Package
+### Add OpenOCD Package
 
 To program X-HEEP on VPK180, OpenOCD is used to access JTAG and load the `main.elf` file into X-HEEP. The root file system does not include OpenOCD by default, and the OpenOCD recipe needs an X-HEEP-specific patch and configuration options. Add the Yocto override as follows:
 
@@ -227,9 +229,21 @@ petalinux-build -c openocd -x cleansstate
 petalinux-build -c openocd
 ``` 
 
+### Ensure a Consistent U-Boot Address Offset
+Based on your hardware configuration, you may need to manually take care of the U-Boot address offset. In some projects using PetaLinux 2024.2, the default offset may not lie within the physical address range.
+
+To prevent this, you can configure BitBake variables. For example, since the default VPK180 settings in X-HEEP have the DDR start address at `0x8_0000_0000`, we will set the U-Boot start address to `0x8_0020_0000`. To do so, append the following variables to `petalinuxbsp.conf`:
+
+```
+FIT_ADDRESS_CELLS = "2"
+UBOOT_LOADADDRESS = "0x8 0x200000"
+UBOOT_ENTRYPOINT = "0x8 0x200000"
+```
+
+
 
 ## Building the PetaLinux Image
-
+### Petalinux project build
 Build Linux and package the boot image:
 
 ```sh
@@ -239,6 +253,8 @@ petalinux-package boot --u-boot --force
 
 For designs using Versal segmented configuration, `petalinux-package boot --u-boot` packages the boot PDI into `BOOT.BIN`; the PLD PDI can be loaded later after Linux is running.
 
+
+### Create the SD Card Image
 With the EXT4 root file system selected, the SD-card boot files are generated in `images/linux/`: `BOOT.BIN`, `image.ub`, `boot.scr`, and `rootfs.ext4`.
 
 Create an SD card with two partitions: a FAT32 `BOOT` partition for `BOOT.BIN`, `image.ub`, and `boot.scr`, and an ext4 `rootfs` partition for `rootfs.ext4`.
@@ -271,6 +287,7 @@ This creates `/dev/sdc1` and `/dev/sdc2` in this example. Format the boot partit
 
 ```sh
 sudo mkfs.vfat -F 32 -n BOOT /dev/sdc1
+sudo mkfs.ext4 -F -L rootfs /dev/sdc2
 ```
 
 2. Mount the boot partition and copy the boot files:
@@ -302,6 +319,12 @@ sudo dd if=images/linux/rootfs.ext4 of=/dev/sdc2 bs=4M status=progress conv=fsyn
 sync
 ```
 
+To check the second partition and perform any necessary repairs, then resize it to occupy all remaining available space, run the following commands:
+
+```sh
+sudo e2fsck -fy /dev/sdc2   # Replace `sdc` with your SD card's device name
+sudo resize2fs /dev/sdc2    # Replace `sdc` with your SD card's device name
+```
 The SD card is now ready. Insert it into the VPK180 and boot the system.
 
 ## VPK180 Boot
