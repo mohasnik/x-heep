@@ -169,7 +169,7 @@ SRCREV_openocd = "b9e40161613fd880fc85fdb357365b70e646ff23"
 EXTRA_OECONF:append = " --enable-xlnx-axi-xvc --enable-internal-jimtcl"
 ```
 
-3. Copy [this patch](../../../hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/openocd-xheep.patch) to:
+3. Copy [`hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/openocd-xheep.patch`](../../../hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/openocd-xheep.patch) to:
 
 ```text
 project-spec/meta-user/recipes-devtools/openocd/files/openocd-xheep.patch
@@ -339,6 +339,10 @@ One solution is to compile and add the device tree overlay after the Linux image
         };
     };
 };
+```
+
+``` {Note}
+The dts file is also available in [`hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/uart_fs_overlay.dts`](../../../hw/fpga/xheep_fpga_support/scripts/vpk180/Petalinux/uart_fs_overlay.dts)
 ```
 
 Make sure to configure the physical address of the UART module, the address range size, and the baud rate based on your design. The above file contains the default values from `hw/fpga/xheep_fpga_support/scripts/vpk180/xilinx_generate_ps_wizard.tcl`.
