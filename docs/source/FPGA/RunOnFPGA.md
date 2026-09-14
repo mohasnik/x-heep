@@ -105,7 +105,7 @@ This ensure the bitstream to be loaded correctly through the PYNQ drivers.
 ```
 
 ```{note}
-The `vivado-fpga-remote-pgm` target does not currently support VPK180. For VPK180, program the ELF manually.
+The `vivado-fpga-remote-pgm` target does not currently support the VPK180 board. For instructions on programming the VPK180, refer to the [VPK180 Getting Started Guide](./VPK_180.md).
 ```
 
 **Program the FPGA on the remote board**
