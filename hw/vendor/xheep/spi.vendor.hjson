@@ -6,8 +6,8 @@
   target_dir: "spi",
 
   upstream: {
-    url: "https://github.com/x-heep/xheep_spi.git",
-    rev: "21d645942155ac3f56bd72dd6c21fdc565b00b5f",
+    url: "https://github.com/mohasnik/xheep_spi.git",
+    rev: "b5b43154b3cc62c7e0a09206b79c084df4915422",
   },
 
   exclude_from_upstream: [
