@@ -132,7 +132,8 @@ Alternatively, you can use the X-HEEP Dockerfile provided by Deeploy. From the d
 ```sh
 docker build -t deeploy-xheep -f Deeploy/Container/Dockerfile.xheep Deeploy
 docker run --rm -it \
-  -v "$/Path/to/Deeploy:/app/Deeploy" \    
+  -v "/Path/to/Deeploy:/app/Deeploy" \    
+  -v "/Path/to/x-heep::/app/x-heep" \
   deeploy-xheep bash
 ```
 
