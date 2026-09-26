@@ -82,3 +82,87 @@ make app PROJECT=example_freertos_blinky
 
 The main FreeRTOS configuration is allocated under `sw\freertos`, in `FreeRTOSConfig.h`. Please, change this file based on your application requirements.
 Moreover, FreeRTOS is being fetched from 'https://github.com/FreeRTOS/FreeRTOS-Kernel.git' by CMake. Specifically, 'V10.5.1' is used. Finally, the fetch repository is located under `sw\build\_deps` after building.
+
+
+## Compiling ML models using Deeploy
+
+You can compile ONNX models for the X-HEEP target using [Deeploy](https://github.com/pulp-platform/Deeploy). Install Deeploy and its dependencies by following the [Deeploy installation guide](https://github.com/pulp-platform/Deeploy/blob/main/docs/install.md). You can either follow the manual installation procedure below or use the Docker image, which includes the required dependencies.
+
+### Manual installation requirements
+
+1. Install Deeploy and its dependencies as described in the [Deeploy installation guide](https://github.com/pulp-platform/Deeploy/blob/main/docs/install.md).
+2. Set `XHEEP_HOME` to the path of your X-HEEP checkout so that Deeploy can locate it:
+
+   ```sh
+   export XHEEP_HOME=/path/to/x-heep
+   ```
+
+3. Set the RISC-V toolchain installation directory:
+
+   ```sh
+   export TOOLCHAIN_INSTALL_DIR=/path/to/riscv-toolchain
+   ```
+
+4. Generate X-HEEP using your desired configuration. `configs/deeploy.py` provides a moderate default configuration:
+
+   ```sh
+   make mcu-gen X_HEEP_CFG=configs/deeploy.py
+   ```
+
+```{Warning}
+Due to the memory-intensive nature of the models, ensure that the generated program fits within the memory available in the selected X-HEEP configuration. Configure sufficient memory capacity for both code and data. Otherwise, compilation may fail because of insufficient memory space.
+```
+
+```{Warning}
+The distribution of the code and data regions, as well as the stack and heap sizes, must also be configured carefully. Deeploy often maps individual layers to function calls, which can result in significant stack usage. Therefore, ensure that sufficient stack space is allocated in `linker_script_config`.
+
+Additionally, Deeploy's code-generation structure performs extensive dynamic memory allocation, which may require a considerable amount of heap space. Because heap allocation occurs at runtime, insufficient heap space may not produce compilation errors but can instead lead to runtime failures or memory corruption, potentially overwriting the code section.
+```
+
+5. Optionally, build Verilator to simulate the compiled program:
+
+   ```sh
+   make verilator-build
+   ```
+
+### Docker setup
+
+Alternatively, you can use the X-HEEP Dockerfile provided by Deeploy. From the directory that contains both the `Deeploy` and `x-heep` checkouts, build the image and start a container:
+
+```sh
+docker build -t deeploy-xheep -f Deeploy/Container/Dockerfile.xheep Deeploy
+docker run --rm -it \
+  -v "$/Path/to/Deeploy:/app/Deeploy" \    
+  deeploy-xheep bash
+```
+
+After installing Deeploy and configuring X-HEEP, run the following command from `Deeploy/DeeployTest` to compile your model:
+
+```sh
+python deeployRunner_xheep.py -t /path/to/your/onnx-model-directory
+```
+
+The script uses Deeploy to generate C code for X-HEEP, compiles it with the GCC toolchain, and simulates it with Verilator. By default, it uses the integer ISA `rv32imc_zicsr`.
+
+```{warning}
+Add `--skipsim` to build without running a Verilator simulation. Without this option, Deeploy attempts to simulate the executable after compilation.
+```
+
+As in the default X-HEEP compilation settings, the ISA is `rv32imc_zicsr`. To compile with single-precision floating-point instructions, use an X-HEEP configuration that supports the `F` extension and override the ISA as follows:
+
+```sh
+python deeployRunner_xheep.py -t /path/to/your/onnx-model-directory -D ISA=rv32imfc_zicsr
+```
+
+Even small models can take more than 10 minutes—and sometimes several hours—to run in Verilator. To run the compiled model on an FPGA instead, select the linker mode that matches your boot flow (`on_chip`, `flash_load`, or `flash_exec`). The build generates the ELF and HEX files required to deploy the application to the FPGA.
+
+For example, to generate and compile a model for the ZCU104 using the `flash_load` linker mode, run the following command from `Deeploy/DeeployTest`:
+
+```sh
+python deeployRunner_xheep.py \
+  -t /path/to/your/onnx-model-directory \
+  -D XHEEP_TARGET=zcu104 XHEEP_LINKER=flash_load \
+  --skipsim
+```
+
+This command generates the model code and builds it for the ZCU104 without running a Verilator simulation. To program the resulting files onto the FPGA, refer to the [Run on FPGA guide.](./../FPGA/RunOnFPGA.md).
