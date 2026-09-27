@@ -131,11 +131,18 @@ Alternatively, you can use the X-HEEP Dockerfile provided by Deeploy. From the d
 
 ```sh
 docker build -t deeploy-xheep -f Deeploy/Container/Dockerfile.xheep Deeploy
-docker run --rm -it \
-  -v "/Path/to/Deeploy:/app/Deeploy" \    
-  -v "/Path/to/x-heep::/app/x-heep" \
-  deeploy-xheep bash
+docker run -it \
+  -v "/Path/to/Deeploy:/app/Deeploy" \
+  -v "/Path/to/x-heep:/app/x-heep" \
+  deeploy-xheep
 ```
+
+To use the Docker container with X-HEEP, create the X-HEEP Python virtual environment inside the container:
+```sh
+cd /app/x-heep
+make venv
+```
+
 
 After installing Deeploy and configuring X-HEEP, run the following command from `Deeploy/DeeployTest` to compile your model:
 
