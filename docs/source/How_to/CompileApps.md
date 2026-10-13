@@ -169,8 +169,8 @@ For example, to generate and compile a model for the ZCU104 using the `flash_loa
 ```sh
 python deeployRunner_xheep.py \
   -t /path/to/your/onnx-model-directory \
-  -D XHEEP_TARGET=zcu104 XHEEP_LINKER=flash_load \
+  --target=zcu104 --linker=flash_load \
   --skipsim
 ```
 
-This command generates the model code and builds it for the ZCU104 without running a Verilator simulation. To program the resulting files onto the FPGA, refer to the [Run on FPGA guide.](./../FPGA/RunOnFPGA.md).
+This command generates the model code and builds it for the ZCU104 without running a Verilator simulation. You can choose any target supported by X-HEEP and select the linker type based on how you program the FPGA and the target hardware's requirements or limitations. To program the resulting files onto the FPGA, refer to the [Run on FPGA guide.](./../FPGA/RunOnFPGA.md).
